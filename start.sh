@@ -122,9 +122,41 @@ stopvmess(){
 	echo "已停掉vmess!"
 }
 
+configvless(){
+	cd ${installpath}/serv00-play/vless
+	
+	if [ -f "vless.json" ]; then
+		cat vless.json
+		read -p "配置文件已存在，是否还要重新配置 (y/n) [y]?" input
+		input=${input:-y}
+		if [ "$input" != "y" ]; then
+			return
+		else
+			read -p "请输入UUID:" uuid
+			read -p "请输入PORT:" port
+
+			cat > vless.json <<EOF
+			{
+				"UUID":"$uuid",
+				"PORT":$port
+
+			}
+EOF
+  	fi
+		echo -e "${YELLOW} 配置完毕! ${RESET}"
+	fi
+}
+
+configvmess(){
+	cd ${installpath}/serv00-play/vmess
+
+	if [ -f ./vmes
+
+}
+
 echo "请选择一个选项:"
 
-options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess" "退出")
+options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess" "退出" "配置vless" "配置vmess")
 
 select opt in "${options[@]}"
 do
@@ -156,6 +188,12 @@ do
         "停止vmess")
             stopvmess
             ;;
+			  "配置vless")
+				    configvless
+						;;
+			  "配置vmess")
+				    configvmess
+						;;
         "退出")
             echo "退出"
             break
