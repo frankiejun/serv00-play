@@ -10,49 +10,84 @@ CYAN='\033[0;36m'
 WHITE='\033[0;37m'
 RESET='\033[0m'
 
+installpath="$HOME"
 art_wrod=$(figlet "serv00-play")
 echo "<------------------------------------------------------------------>"
 echo -e "${CYAN}${art_wrod}${RESET}"
-echo "Toys on serv00"
+echo -e "${WRITE} 饭奇骏频道:https://www.youtube.com/@frankiejun8965 ${RESET}"
+echo -e "${WRITE} TG交流群:https://t.me/fanyousuiqun ${RESET}"
 echo "<------------------------------------------------------------------>"
 
 install(){
 	cd 
 	if [ -d serv00-play ]; then
-		echo "请勿重复安装!"
+		echo -e "${RED}请勿重复安装!${RESET}"
 		exit 1
   fi
 	echo "正在安装..."
 	if ! git clone https://github.com/frankiejun/serv00-play.git; then
-		echo "安装失败!"
+		echo -e "${RED}安装失败!${RESET}"
 		exit 1;
   fi
-	echo "安装成功"
+	echo -e "${YELLOW}安装成功${RESET}"
+}
+
+checkvlessAlive(){
+	if  ps  aux | grep app.js | grep -v "grep" ; then
+		return 0
+  else 
+		return 1
+	fi	
+}
+
+checkvmessAlive(){
+	local c=0
+	if ps  aux | grep web.js | grep -v "grep" > /dev/null ; then
+		((c+1))
+	fi
+
+	if ps aux | grep cloud | grep -v "grep" > /dev/null ; then
+		((c+1))
+	fi	
+	if ps aux | grep server.js | grep -v "grep" > /dev/null ; then
+		((c+1))
+	fi	
+
+	echo "c=$c"
+	if [ $c -eq 3 ]; then
+		return 0
+	fi
+
+	return 1 # 有一个或多个进程不在运行
+
 }
 
 startvless(){
 	cd ${installpath}/serv00-play/vless
 	
-	if ! (ps  aux | grep app.js | grep -v grep ); then
-		echo "vless 已在运行，请勿重复操作!"
+	if checkvlessAlive; then
+		echo -e "${RED}vless 已在运行，请勿重复操作!${RESET}"
 		exit 1
 	fi
 
 	if ! ./start.sh; then
-		echo "vless启动失败！"
+		echo e "${RED}vless启动失败！${RESET}"
 		exit 1
 	fi
 
-	echo "启动成功!"
+	echo -e "${YELLOW}启动成功!${RESET}"
 
 }
 
 startvmess(){
 	cd ${installpath}/serv00-play/vmess
 	
-	if ! (ps  aux | grep web.js | grep -v grep ); then
-		echo "vmess 已在运行，请勿重复操作!"
+	if checkvmessAlive; then
+		echo -e "$RED}vmess 已在运行，请勿重复操作!${RESET}"
 		exit 1
+	else
+		chmod 755 ./killvmess.sh
+		./killvmess.sh
 	fi
 
 	if ! ./start.sh; then
@@ -60,13 +95,16 @@ startvmess(){
 		exit 1
 	fi
 
-	echo "启动成功!"
+	echo -e "${YELLOW}启动成功!${RESET}"
 
 }
 
 stopvless(){
-	r=$(ps aux | grep app.js | grep -v grep | awk '{print $2}' ) 
-	if "$r"; then
+	r=$(ps aux | grep app.js | grep -v "grep" | awk '{print $2}' ) 
+	if [ -z "$r" ]; then
+		echo "没有运行!"
+		exit 0
+	else	
 		kill -9 $r
 	fi
 	echo "已停掉vless!"
@@ -75,6 +113,7 @@ stopvless(){
 stopvmess(){
 	cd ${installpath}/serv00-play/vmess
 	if [ -f killvmess.sh ]; then
+		chmod 755 ./killvmess.sh
 		./killvmess.sh
 	else
 		echo "请先安装serv00-play!!!"
@@ -85,7 +124,6 @@ stopvmess(){
 
 echo "请选择一个选项:"
 
-installpath="~/"
 options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess" "退出")
 
 select opt in "${options[@]}"
