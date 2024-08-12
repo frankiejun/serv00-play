@@ -122,16 +122,8 @@ stopvmess(){
 	echo "已停掉vmess!"
 }
 
-configvless(){
-	cd ${installpath}/serv00-play/vless
-	
-	if [ -f "vless.json" ]; then
-		cat vless.json
-		read -p "配置文件已存在，是否还要重新配置 (y/n) [y]?" input
-		input=${input:-y}
-		if [ "$input" != "y" ]; then
-			return
-		else
+createVlesConfig(){
+
 			read -p "请输入UUID:" uuid
 			read -p "请输入PORT:" port
 
@@ -142,15 +134,77 @@ configvless(){
 
 			}
 EOF
-  	fi
-		echo -e "${YELLOW} 配置完毕! ${RESET}"
-	fi
+}
+
+configvless(){
+	cd ${installpath}/serv00-play/vless
+	
+	if [ -f "vless.json" ]; then
+		 cat vless.json
+    read -p "配置文件已存在，是否还要重新配置 (y/n) [y]?" input
+		input=${input:-y}
+		if [ "$input" != "y" ]; then
+			return
+		else
+		 createVlesConfig
+    fi
+  else
+     createVlesConfig
+  fi
+		echo -e "${YELLOW} vless配置完毕! ${RESET}"
+	
+}
+
+createVmesConfig(){
+   read -p "请输入web管理端口:" webport
+   read -p "请输入vmess代理端口:" vmport
+   read -p "请输入uuid:" uuid
+   read -p "请输入WSPATH,默认是[serv00]" wspath
+   wspath=${wspath:-serv00}
+
+   read -p "请输入ARGO隧道token，如果没有按回车跳过:" token
+   read -p "请输入ARGO隧道的域名，如果没有按回车跳过:" domain
+
+   read -p "请输入管理网页的登录用户名[默认为 admin ]:" web_username
+   web_username=${web_username:-admin}
+   read -p "请输入管理页面的登录密码[默认为 password]:" web_pass
+   web_pass=${web_pass:-password}
+
+  cat > vmess.json <<EOF
+  {
+     "WEBPORT": $webport,
+     "VMPORT": $vmport,
+     "UUID": $uuid,
+     "WSPATH": $wspath,
+     "ARGO_AUTH": $token,
+     "ARGO_DOMAIN": $domain,
+     "WEB_USERNAME": $web_username,
+     "WEB_PASSWORD": $web_pass
+  }
+
+EOF
+   echo -e "${YELLOW} vmess配置完毕! ${RESET}"
+
+
 }
 
 configvmess(){
 	cd ${installpath}/serv00-play/vmess
 
-	if [ -f ./vmes
+	if [ -f ./vmess.json ]; then
+    cat ./vmess.json
+    read -p "配置文件已存在，是否还要重新配置 (y/n) [y]?" input
+		input=${input:-y}
+		if [ "$input" != "y" ]; then
+			return
+		else
+		 createVmesConfig
+    fi
+  else
+     createVmesConfig
+  fi
+		echo -e "${YELLOW} 配置完毕! ${RESET}"
+
 
 }
 
