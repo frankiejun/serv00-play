@@ -15,7 +15,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 安装依赖
-        run: sudo apt-get install expect
+        run: |
+          sudo apt-get install expect
           sudo apt-get intall jq
 
       - name: 登录各个serv00并执行保活脚本
