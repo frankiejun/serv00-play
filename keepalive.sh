@@ -25,10 +25,10 @@ checkvmessAlive() {
 
   echo "c=$c"
   if [ $c -eq 3 ]; then
-    return 0
+    return 1
   fi
 
-  return 1 # 有一个或多个进程不在运行
+  return 0 # 有一个或多个进程不在运行
 
 }
 
@@ -39,23 +39,25 @@ if [ ! -f config.json ]; then
   exit 0
 fi
 monitor=$(jq -r ".item[]" config.json)
-for obj in "${monitor[@]}"; do
+for obj in $monitor; do
+	cd ${installpath}/serv00-play/
+	echo "obj: $obj"
   if [ "$obj" == "vless" ]; then
     if ! checkvlessAlive; then
       cd ${installpath}/serv00-play/vless
       if ! ./start.sh; then
-        echo "RESPONSE:vless restarts failure."
+        echo "RESPONSE:vless restarted failure."
       else
-        echo "RESPONSE:vless restarts successfully."
+        echo "RESPONSE:vless restarted successfully."
       fi
     fi
   elif [ "$obj" == "vmess" ]; then
     if ! checkvmessAlive; then
       cd ${installpath}/serv00-play/vmess
       if ! ./start.sh; then
-        echo "vmess restarts failure."
+        echo "RESPONSE:vmess restarted failure."
       else
-        echo "vmess restarts successfully."
+        echo "RESPONSE:vmess restarted successfully."
       fi
     fi
   fi
