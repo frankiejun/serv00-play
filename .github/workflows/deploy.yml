@@ -20,11 +20,11 @@ jobs:
 
       - name: 登录各个serv00并执行保活脚本
         env:
-          HOST_JSON: ${{ secrets.HOST_JSON }}
+          HOSTS_JSON: ${{ secrets.HOSTS_JSON }}
           TELEGRAM_TOKEN: ${{secrets.TELEGRAM_TOKEN}}
           TELEGRAM_USERID: ${{secrets.TELEGRAM_USERID}}
           WXSENDKEY: ${{secrets.WXSENDKEY}}
+          SENDTYPE: ${{secrets.SENDTYPE}}
         run: |
           chmod +x ./revive.sh
           ./revive.sh
-          echo "ok"
