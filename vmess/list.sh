@@ -1,5 +1,8 @@
 #!/bin/bash
 
+GREEN='\033[0;32m'
+RESET='\033[0m'
+param=$1
 argo_token=$(jq -r ".ARGO_AUTH" vmess.json)
 argo_domain=$(jq -r ".ARGO_DOMAIN" vmess.json)
 uuid=$(jq -r ".UUID" vmess.json)
@@ -32,3 +35,12 @@ EOF
   cat list
 }
 export_list
+
+if [ -n $param ] && [ "$param" = "main" ];then
+	echo -e "订阅链接:"
+	echo -e "${GREEN} $urlStr  ${RESET}"
+fi
+
+
+
+

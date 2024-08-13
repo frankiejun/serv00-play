@@ -274,6 +274,7 @@ setConfig(){
 		echo "目前已有配置:"
 		cat config.json
 		read -p "是否修改? [y/n] [y]" input
+		input=${input:-y}
 		if [ "$input" != "y" ]; then
 			return
 		fi
@@ -283,7 +284,7 @@ setConfig(){
 
 echo "请选择一个选项:"
 
-options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "置保活的项目" "退出")
+options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "设置保活的项目" "退出")
 
 select opt in "${options[@]}"
 do
