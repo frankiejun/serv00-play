@@ -11,8 +11,7 @@ sendtype=$SENDTYPE
 #}
 #]
 #}'
-#hosts_info=$(echo ${HOSTS_JSON} | jq -r ".info[]")
-
+#echo "host info:$HOSTS_JSON"
 # 使用 jq 提取 JSON 数组，并将其加载为 Bash 数组
 mapfile -t hosts_info < <(echo "${HOSTS_JSON}" | jq -r ".info[]")
 
@@ -30,21 +29,20 @@ for info in "${hosts_info[@]}"; do
 
   echo "$output" | while IFS= read -r line; do
 
-  if [[ "$line" == *"RESPONSE:"* ]]; then
-    echo "revied.sh: $line"
-    msg=$(echo "$line" | sed 's/RESPONSE://g')
-    echo "revied.sh:msg:$msg"
-    sendmsg="Host:$host, user:$user, $msg"
-    if [ $sendtype -eq 1 ]; then
-      ./tgsend.sh "$sendmsg"
-    elif [ $sendtype -eq 2 ]; then
-      ./wxsend.sh "$sendmsg" 
-    elif [ $sendtype -eq 3 ]; then
-      ./tgsend.sh "$sendmsg"
-      ./wxsend.sh "$snedmsg"
+    if [[ "$line" == *"RESPONSE:"* ]]; then
+      echo "revied.sh: $line"
+      msg=$(echo "$line" | sed 's/RESPONSE://g')
+      echo "revied.sh:msg:$msg"
+      sendmsg="Host:$host, user:$user, $msg"
+      if [ $sendtype -eq 1 ]; then
+        ./tgsend.sh "$sendmsg"
+      elif [ $sendtype -eq 2 ]; then
+        ./wxsend.sh "$sendmsg"
+      elif [ $sendtype -eq 3 ]; then
+        ./tgsend.sh "$sendmsg"
+        ./wxsend.sh "$snedmsg"
+      fi
     fi
-  fi
-  done 
+  done
 
 done
-  
