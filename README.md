@@ -50,7 +50,7 @@ https://www.youtube.com/@frankiejun8965
 
 ## 项目鸣谢
 
-本项目基于以下项目做的集成，少量的代码优化
+本项目基于以下项目做的集成，少量的代码优化  
 感谢原作者的开源贡献。
 
 vless 项目来自于： https://github.com/qwer-search/serv00-vless
