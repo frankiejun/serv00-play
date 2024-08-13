@@ -224,9 +224,62 @@ showVlessInfo(){
 	echo -e "${GREEN}   $url ${RESET}"
 }
 
+showVmessInfo(){
+	cd ${installpath}/serv00-play/vmess
+
+	if [ ! -f vmess.json ]; then
+      echo -e "${RED} 配置文件不存在，请先行配置! ${RESET}"
+	    return
+	fi
+	chmod +x ./list.sh && ./list.sh main
+}
+
+createConfigFile(){
+	echo "请选择要保活的项目:"
+	echo "1. vless "
+	echo "2. vmess "
+	echo "3. 以上皆是 "
+	read -p "请选择:" num
+	item=()
+
+	if [ "$num" = "1" ]; then
+		item+=("vless")
+	elif [ "$num" = "2" ]; then
+		item+=("vmess")
+	elif [ "$num" = "3" ];then
+		item+=("vless")
+		item+=("vmess")
+	else
+		echo "无效选择"
+		return 
+	fi
+
+	cd ${installpath}/serv00-play/
+	json_content='{"item":['
+	for item in "${item[@]}"; do
+		json_content+="\"$item\","
+	done
+	json_content="${json_content%,}]}"
+
+}
+
+setConfig(){
+	cd ${installpath}/serv00-play/
+
+	if [ -f config.json ]; then
+		echo "目前已有配置:"
+		cat config.json
+		read -p "是否修改? [y/n] [y]" input
+		if [ "$input" != "y" ]; then
+			return
+		fi
+	fi
+	createConfigFile
+}
+
 echo "请选择一个选项:"
 
-options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "退出")
+options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "置保活的项目" "退出")
 
 select opt in "${options[@]}"
 do
@@ -270,7 +323,9 @@ do
 				"显示vmess的订阅链接")
 						showVmessInfo
 						;;
-
+			  "设置保活的项目")
+				   setConfig
+					 ;;
         "退出")
             echo "退出"
             break
