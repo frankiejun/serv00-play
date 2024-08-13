@@ -105,8 +105,8 @@ generate_argo() {
   cat > argo.sh << ABC
 #!/usr/bin/env bash
 
-ARGO_AUTH=${ARGO_AUTH}
-ARGO_DOMAIN=${ARGO_DOMAIN}
+ARGO_AUTH=${ARGO_AUTH/null/}
+ARGO_DOMAIN=${ARGO_DOMAIN/null/}
 
 # 下载并运行 Argo
 check_file() {
@@ -172,5 +172,5 @@ ABC
 generate_config
 generate_argo
 
-echo "begin to run argo.sh"
-[ -e argo.sh ] && bash argo.sh
+#echo "begin to run argo.sh"
+#[ -e argo.sh ] && bash argo.sh

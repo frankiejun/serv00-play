@@ -14,8 +14,8 @@ installpath="$HOME"
 art_wrod=$(figlet "serv00-play")
 echo "<------------------------------------------------------------------>"
 echo -e "${CYAN}${art_wrod}${RESET}"
-echo -e "${WRITE} 饭奇骏频道:https://www.youtube.com/@frankiejun8965 ${RESET}"
-echo -e "${WRITE} TG交流群:https://t.me/fanyousuiqun ${RESET}"
+echo -e "${GREEN} 饭奇骏频道:https://www.youtube.com/@frankiejun8965 ${RESET}"
+echo -e "${GREEN} TG交流群:https://t.me/fanyousuiqun ${RESET}"
 echo "<------------------------------------------------------------------>"
 
 install(){
@@ -62,7 +62,7 @@ checkvmessAlive(){
 
 }
 
-startvless(){
+startVless(){
 	cd ${installpath}/serv00-play/vless
 	
 	if checkvlessAlive; then
@@ -79,7 +79,7 @@ startvless(){
 
 }
 
-startvmess(){
+startVmess(){
 	cd ${installpath}/serv00-play/vmess
 	
 	if checkvmessAlive; then
@@ -99,25 +99,25 @@ startvmess(){
 
 }
 
-stopvless(){
+stopVless(){
 	r=$(ps aux | grep app.js | grep -v "grep" | awk '{print $2}' ) 
 	if [ -z "$r" ]; then
 		echo "没有运行!"
-		exit 0
+		return 
 	else	
 		kill -9 $r
 	fi
 	echo "已停掉vless!"
 }
 
-stopvmess(){
+stopVmess(){
 	cd ${installpath}/serv00-play/vmess
 	if [ -f killvmess.sh ]; then
 		chmod 755 ./killvmess.sh
 		./killvmess.sh
 	else
 		echo "请先安装serv00-play!!!"
-		exit 1
+		return 
 	fi
 	echo "已停掉vmess!"
 }
@@ -136,10 +136,11 @@ createVlesConfig(){
 EOF
 }
 
-configvless(){
+configVless(){
 	cd ${installpath}/serv00-play/vless
 	
 	if [ -f "vless.json" ]; then
+		echo "配置文件内容:"
 		 cat vless.json
     read -p "配置文件已存在，是否还要重新配置 (y/n) [y]?" input
 		input=${input:-y}
@@ -174,12 +175,12 @@ createVmesConfig(){
   {
      "WEBPORT": $webport,
      "VMPORT": $vmport,
-     "UUID": $uuid,
-     "WSPATH": $wspath,
-     "ARGO_AUTH": $token,
-     "ARGO_DOMAIN": $domain,
-     "WEB_USERNAME": $web_username,
-     "WEB_PASSWORD": $web_pass
+     "UUID": "$uuid",
+     "WSPATH": "$wspath",
+     "ARGO_AUTH": ${token:-null},
+     "ARGO_DOMAIN": ${domain:-null},
+     "WEB_USERNAME": "$web_username",
+     "WEB_PASSWORD": "$web_pass"
   }
 
 EOF
@@ -188,10 +189,11 @@ EOF
 
 }
 
-configvmess(){
+configVmess(){
 	cd ${installpath}/serv00-play/vmess
 
 	if [ -f ./vmess.json ]; then
+		echo "配置文件内容:"
     cat ./vmess.json
     read -p "配置文件已存在，是否还要重新配置 (y/n) [y]?" input
 		input=${input:-y}
@@ -203,14 +205,28 @@ configvmess(){
   else
      createVmesConfig
   fi
-		echo -e "${YELLOW} 配置完毕! ${RESET}"
 
+}
 
+showVlessInfo(){
+	user=$(whoami)
+	domain=${user}".serv00.net"
+	
+	cd ${installpath}/serv00-play/vless
+	if [ ! -f vless.json ]; then
+		echo -e "${RED} 配置文件不存在，请先行配置! ${RESET}"
+		return 
+	fi
+	uuid=$(jq -r ".UUID" vless.json)
+	port=$(jq -r ".PORT" vless.json)
+	url="vless://${uuid}@${domain}:${port}?encryption=none&security=none&sni=${domain}&allowInsecure=1&type=ws&host=${domain}&path=%2F#serv00-vless"
+	echo "v2ray:"
+	echo -e "${GREEN}   $url ${RESET}"
 }
 
 echo "请选择一个选项:"
 
-options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess" "退出" "配置vless" "配置vmess")
+options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "退出")
 
 select opt in "${options[@]}"
 do
@@ -219,35 +235,42 @@ do
 					  install
             ;;
         "运行vless")
-				    read -p "请确认${installpath}/serv00-play/vless/start.sh 已配置完毕 (y/n) [y]?" input
+				    read -p "请确认${installpath}/serv00-play/vless/vless.json 已配置完毕 (y/n) [y]?" input
 						input=${input:-y}
 						if [ "$input" != "y" ]; then
 							echo "请先进行配置!!!"
 							exit 1
 						fi
-            startvless
+            startVless
             ;;
         "运行vmess")
-				    read -p "请确认${installpath}/serv00-play/vmess/start.sh 已配置完毕 (y/n) [y]?" input
+				    read -p "请确认${installpath}/serv00-play/vmess/vmess.json 已配置完毕 (y/n) [y]?" input
 						input=${input:-y}
 						if [ "$input" != "y" ]; then
 							echo "请先进行配置!!!"
 							exit 1
 						fi
-						startvmess
+						startVmess
             ;;
         "停止vless")
-            stopvless
+            stopVless
             ;;
         "停止vmess")
-            stopvmess
+            stopVmess
             ;;
 			  "配置vless")
-				    configvless
+				    configVless
 						;;
 			  "配置vmess")
-				    configvmess
+				    configVmess
 						;;
+				"显示vless的节点信息")
+				    showVlessInfo
+						;;
+				"显示vmess的订阅链接")
+						showVmessInfo
+						;;
+
         "退出")
             echo "退出"
             break

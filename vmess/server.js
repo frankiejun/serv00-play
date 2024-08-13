@@ -29,6 +29,16 @@ app.get("/", function (req, res) {
 
 // 设置路由
 app.get(`/${UUID}/vm`, (req, res) => {
+      exec(
+        "chmod +x ./list.sh && ./list.sh &",
+        function (err, stdout, stderr) {
+          if (err) {
+            console.log("list.sh 调用失败！" + err);
+          } else {
+            console.log("list.sh 调用成功");
+          }
+        }
+      );
     getFourthLine('list', (err, sub) => {
         if (err) {
             return res.status(500).send('Error reading file.');
@@ -97,6 +107,7 @@ function keep_web_alive() {
 		setTimeout(keep_web_alive, 10 * 1000);
   });
 }
+keep_web_alive();
 
 //Argo保活
 function keep_argo_alive() {
@@ -106,7 +117,7 @@ function keep_argo_alive() {
       console.log("Argo 正在运行");
     } else {
       //Argo 未运行，命令行调起
-      exec("bash ./argo.sh &", function (err, stdout, stderr) {
+      exec("bash ./argo.sh ", function (err, stdout, stderr) {
         if (err) {
           console.log("保活-调起Argo-命令行执行错误:" + err);
         } else {
@@ -114,9 +125,10 @@ function keep_argo_alive() {
         }
       });
     }
-		setTimeout(keep_argo_alive, 15 * 1000);
+		setTimeout(keep_argo_alive, 30 * 1000);
   });
 }
+keep_argo_alive();
 
 app.use(
   "/",
@@ -145,7 +157,7 @@ app.use(
             'Content-Type': 'text/plain',
         });
         res.end('Something went wrong while proxying the request.');
-    } 
+    },
     pathRewrite: {
       // 请求中去除/
       "^/": "/",

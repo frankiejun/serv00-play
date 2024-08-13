@@ -1,13 +1,17 @@
-# serv00 上的一些应用，包括vless、vmess等等
+# serv00 上的一些应用，包括vless、vmess等, 自动化部署、批量保号、防杀  
 
 ## 说明  
 
 本项目基于以下项目做的集成，少量的代码优化
-感谢原作者的付出。
-vless项目来自于： https://github.com/qwer-search/serv00-vless
-vmess项目来自于： https://github.com/k0baya/X-for-serv00.git
+感谢原作者的付出。  
+
+vless项目来自于： https://github.com/qwer-search/serv00-vless  
+
+vmess项目来自于： https://github.com/k0baya/X-for-serv00.git  
+
 
 ## 安装说明视频  
+https://www.youtube.com/@frankiejun8965   
 
 
 ## 免责声明
