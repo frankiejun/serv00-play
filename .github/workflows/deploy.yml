@@ -27,3 +27,4 @@ jobs:
         run: |
           chmod +x ./revive.sh
           ./revive.sh
+          echo "ok"
