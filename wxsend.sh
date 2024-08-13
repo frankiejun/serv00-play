@@ -1,8 +1,8 @@
 #!/bin/bash
 
-text=''
+text=$1
 
-sendKey=
+sendKey=${WXSENDKEY}
 title="msg_from_serv00-play"
 URL="https://sctapi.ftqq.com/$sendKey.send?"
 

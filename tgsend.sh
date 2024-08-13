@@ -4,8 +4,8 @@ message_text=$1
 #解析模式，可选HTML或Markdown
 MODE='HTML'
 #api接口
-telegramBotToken=
-telegramBotUserId=
+telegramBotToken=${TELEGRAM_TOKEN}
+telegramBotUserId=${TELEGRAM_USERID}
 
 URL="https://api.telegram.org/bot${telegramBotToken}/sendMessage"
 if [[ -z ${telegramBotToken} ]]; then
