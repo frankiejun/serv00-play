@@ -1,0 +1,29 @@
+name: 批量保活进程
+
+on:
+  schedule:
+    # 使用cron表达式定义任务运行的时间
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: 安装依赖
+        run: sudo apt-get install expect
+          sudo apt-get intall jq
+
+      - name: 登录各个serv00并执行保活脚本
+        env:
+          HOST_JSON: ${{ secrets.HOST_JSON }}
+          TELEGRAM_TOKEN: ${{secrets.TELEGRAM_TOKEN}}
+          TELEGRAM_USERID: ${{secrets.TELEGRAM_USERID}}
+          WXSENDKEY: ${{secrets.WXSENDKEY}}
+        run: |
+          chmod +x ./revive.sh
+          ./revive.sh

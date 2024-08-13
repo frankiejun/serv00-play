@@ -261,6 +261,10 @@ createConfigFile(){
 	done
 	json_content="${json_content%,}]}"
 
+  echo $json_content > ./config.json
+
+  echo -e "${YELLOW} 设置完成! ${RESET} "
+
 }
 
 setConfig(){
