@@ -52,7 +52,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 ## 安装说明视频
 
-https://www.youtube.com/@frankiejun8965
+[这里](https://youtu.be/1N7SGqBWooY)
 
 ## 项目鸣谢
 
