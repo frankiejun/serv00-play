@@ -1,4 +1,6 @@
-# serv00 上的一些应用，包括vless、vmess等, 自动化部署、批量保号、进程防杀、消息推送
+# serv00 上的一些应用，包括 vless、vmess 等, 自动化部署、批量保号、进程防杀、消息推送
+
+💖 如果你在用这个项目，请给我打个 star，好让我知道有多少人从这个项目中受益。
 
 ## 前置工作
 
@@ -24,7 +26,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 ## 消息推送
 
-支持向 Telegram 和微信用户发送通知  
+支持向 Telegram 和微信用户发送通知
 
 关于如何配置 Telegram 以实现消息推送，可以看 [这个视频](https://www.youtube.com/watch?v=l8fPnMfq86c&t=3s)
 
@@ -55,10 +57,21 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 [这里](https://youtu.be/1N7SGqBWooY)
 
+## 赞助
+
+<left><details><summary><strong> [点击展开] 请作者喝杯咖啡 ~🧧</strong></summary>
+_捐赠将是对我最大的支持，它将激励我持续的创新和创作。_
+
+![](https://look.pics.cloudns.ch/img/%E6%AC%A7%E6%98%93%E8%B5%9E%E5%8A%A9%E7%A0%81.png)
+
+- **USDT-TRC20:** `TUa2hLirmyq6tUPpfxHuMmWJExR91vHo5t`
+
+</details></left>
+
 ## 项目鸣谢
 
 本项目基于以下项目做的集成，少量的代码优化  
-感谢原作者的开源贡献。  
+感谢原作者的开源贡献。
 
 vless 项目来自于： https://github.com/qwer-search/serv00-vless
 
