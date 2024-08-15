@@ -40,7 +40,7 @@ for info in "${hosts_info[@]}"; do
         ./wxsend.sh "$sendmsg"
       elif [ $sendtype -eq 3 ]; then
         ./tgsend.sh "$sendmsg"
-        ./wxsend.sh "$snedmsg"
+        ./wxsend.sh "$sendmsg"
       fi
     fi
   done
