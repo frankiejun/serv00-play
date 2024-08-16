@@ -177,8 +177,8 @@ createVmesConfig(){
      "VMPORT": $vmport,
      "UUID": "$uuid",
      "WSPATH": "$wspath",
-     "ARGO_AUTH": ${token:-null},
-     "ARGO_DOMAIN": ${domain:-null},
+     "ARGO_AUTH": "${token:-null}",
+     "ARGO_DOMAIN": "${domain:-null}",
      "WEB_USERNAME": "$web_username",
      "WEB_PASSWORD": "$web_pass"
   }
