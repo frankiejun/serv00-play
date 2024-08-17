@@ -18,11 +18,15 @@ echo -e "${GREEN} 饭奇骏频道:https://www.youtube.com/@frankiejun8965 ${RESE
 echo -e "${GREEN} TG交流群:https://t.me/fanyousuiqun ${RESET}"
 echo "<------------------------------------------------------------------>"
 
+PS3="请选择: "
 install(){
 	cd 
 	if [ -d serv00-play ]; then
-		echo -e "${RED}请勿重复安装!${RESET}"
-		exit 1
+		cd "serv00-play"
+		if git pull; then
+			echo "更新完毕"
+			return 
+		fi
   fi
 	echo "正在安装..."
 	if ! git clone https://github.com/frankiejun/serv00-play.git; then
@@ -282,14 +286,27 @@ setConfig(){
 	createConfigFile
 }
 
+uninstall(){
+	read -p "确定卸载吗? [y/n] [n]" input
+	input=${input:-n}
+
+	if [ "$input" == "y" ]; then
+		stopVless
+		stopVmess
+		cd $HOME
+		rm -rf serv00-play
+		echo "bye!"
+	fi
+}
+
 echo "请选择一个选项:"
 
-options=("安装serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "设置保活的项目" "退出")
+options=("安装/更新serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "设置保活的项目" "卸载" "退出")
 
 select opt in "${options[@]}"
 do
     case $opt in
-        "安装serv00-play项目")
+        "安装/更新serv00-play项目")
 					  install
             ;;
         "运行vless")
@@ -330,6 +347,9 @@ do
 						;;
 			  "设置保活的项目")
 				   setConfig
+					 ;;
+				"卸载")
+				   uninstall
 					 ;;
         "退出")
             echo "退出"
