@@ -12,7 +12,7 @@ ARGO_AUTH=${argo_token/null/}
 ARGO_DOMAIN=${argo_domain/null/}
 
 if [ -z $ARGO_DOMAIN ]; then
-	ARGO_DOMAIN=$(wget -qO- $(sockstat -4 -l -P tcp | grep cloudflare | awk '{print $6}')/quicktunnel | jq -r '.hostname')
+     ARGO_DOMAIN=$(wget -qO- $(sockstat -4 -l -P tcp | grep cloudflare | awk '{for(i=1;i<=NF;i++) if($i ~ /127\.0\.0\.1/) print $i}')/quicktunnel | jq -r '.hostname')
 fi
 
 urlStr="http://$host:$webport/$uuid/vm"
