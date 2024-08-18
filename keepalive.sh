@@ -36,13 +36,13 @@ checkvmessAlive() {
 #main
 cd ${installpath}/serv00-play/
 if [ ! -f config.json ]; then
-  echo "未配置保活项目，请先行配置!" >>a.log
+  echo "未配置保活项目，请先行配置!"
   exit 0
 fi
 monitor=($(jq -r ".item[]" config.json))
 for obj in "${monitor[@]}"; do
   if [ "$obj" == "vless" ]; then
-    if ! checkvlessAlive ; then
+    if ! checkvlessAlive; then
       cd ${installpath}/serv00-play/vless
       if ! ./start.sh; then
         echo "RESPONSE:vless restarted failure."
@@ -51,9 +51,8 @@ for obj in "${monitor[@]}"; do
       fi
     fi
   elif [ "$obj" == "vmess" ]; then
-    if ! checkvmessAlive ; then
+    if ! checkvmessAlive; then
       cd ${installpath}/serv00-play/vmess
-			echo "start vmess"
       if ! ./start.sh; then
         echo "RESPONSE:vmess restarted failure."
       else
