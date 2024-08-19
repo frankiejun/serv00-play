@@ -17,7 +17,7 @@ echo -e "${CYAN}${art_wrod}${RESET}"
 echo -e "${GREEN} 饭奇骏频道:https://www.youtube.com/@frankiejun8965 ${RESET}"
 echo -e "${GREEN} TG交流群:https://t.me/fanyousuiqun ${RESET}"
 echo "<------------------------------------------------------------------>"
-###
+
 PS3="请选择(输入0退出): "
 install(){
 	cd 
