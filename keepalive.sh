@@ -1,6 +1,10 @@
 #!/bin/bash
 
 installpath="$HOME"
+sendtype=$1
+export TELEGRAM_TOKEN="$2"
+export TELEGRAM_USERID="$3"
+export WXSENDKEY="$4"
 
 #返回0表示成功， 1表示失败
 #在if条件中，0会执行，1不会执行
@@ -36,29 +40,42 @@ checkvmessAlive() {
 #main
 cd ${installpath}/serv00-play/
 if [ ! -f config.json ]; then
-  echo "未配置保活项目，请先行配置!" >>a.log
+  echo "未配置保活项目，请先行配置!"
   exit 0
 fi
+
 monitor=($(jq -r ".item[]" config.json))
 for obj in "${monitor[@]}"; do
   if [ "$obj" == "vless" ]; then
-    if ! checkvlessAlive ; then
+    if ! checkvlessAlive; then
       cd ${installpath}/serv00-play/vless
       if ! ./start.sh; then
-        echo "RESPONSE:vless restarted failure."
+        msg="vless restarted failure."
       else
-        echo "RESPONSE:vless restarted successfully."
+        msg="vless restarted successfully."
       fi
     fi
   elif [ "$obj" == "vmess" ]; then
-    if ! checkvmessAlive ; then
+    if ! checkvmessAlive; then
       cd ${installpath}/serv00-play/vmess
-			echo "start vmess"
       if ! ./start.sh; then
-        echo "RESPONSE:vmess restarted failure."
+        msg="vmess restarted failure."
       else
-        echo "RESPONSE:vmess restarted successfully."
+        msg="vmess restarted successfully."
       fi
     fi
+  else 
+    continue
   fi
+
+ 	cd $installpath/serv00-play 
+  if [ "$sendtype" == "1" ]; then
+    ./tgsend.sh "$msg"
+  elif [ "$sendtype" == "2" ]; then
+    ./wxsend.sh "$msg"
+  elif [ "$sendtype" == "3" ]; then
+    ./tgsend.sh "$msg"
+    ./wxsend.sh "$msg"
+  fi
+
 done
