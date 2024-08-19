@@ -18,7 +18,7 @@ echo -e "${GREEN} 饭奇骏频道:https://www.youtube.com/@frankiejun8965 ${RESE
 echo -e "${GREEN} TG交流群:https://t.me/fanyousuiqun ${RESET}"
 echo "<------------------------------------------------------------------>"
 
-PS3="请选择: "
+PS3="请选择(输入0退出): "
 install(){
 	cd 
 	if [ -d serv00-play ]; then
@@ -28,6 +28,7 @@ install(){
 			return 
 		fi
   fi
+
 	echo "正在安装..."
 	if ! git clone https://github.com/frankiejun/serv00-play.git; then
 		echo -e "${RED}安装失败!${RESET}"
@@ -301,15 +302,15 @@ uninstall(){
 
 echo "请选择一个选项:"
 
-options=("安装/更新serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "设置保活的项目" "卸载" "退出")
+options=("安装/更新serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "设置保活的项目" "卸载" )
 
 select opt in "${options[@]}"
 do
-    case $opt in
-        "安装/更新serv00-play项目")
+    case $REPLY in
+        1)
 					  install
             ;;
-        "运行vless")
+        2)
 				    read -p "请确认${installpath}/serv00-play/vless/vless.json 已配置完毕 (y/n) [y]?" input
 						input=${input:-y}
 						if [ "$input" != "y" ]; then
@@ -318,7 +319,7 @@ do
 						fi
             startVless
             ;;
-        "运行vmess")
+        3)
 				    read -p "请确认${installpath}/serv00-play/vmess/vmess.json 已配置完毕 (y/n) [y]?" input
 						input=${input:-y}
 						if [ "$input" != "y" ]; then
@@ -327,31 +328,31 @@ do
 						fi
 						startVmess
             ;;
-        "停止vless")
+        4)
             stopVless
             ;;
-        "停止vmess")
+        5)
             stopVmess
             ;;
-			  "配置vless")
+			  6)
 				    configVless
 						;;
-			  "配置vmess")
+			  7)
 				    configVmess
 						;;
-				"显示vless的节点信息")
+				8)
 				    showVlessInfo
 						;;
-				"显示vmess的订阅链接")
+				9)
 						showVmessInfo
 						;;
-			  "设置保活的项目")
+			  10)
 				   setConfig
 					 ;;
-				"卸载")
+				11)
 				   uninstall
 					 ;;
-        "退出")
+        0)
             echo "退出"
             break
             ;;
