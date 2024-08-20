@@ -61,6 +61,9 @@ if [ -z "$sendtype" ]; then
   sendtype=$(jq -r ".sendtype" config.json)
 fi
 
+host=$(hostname)
+user=$(whoami)
+
 for obj in "${monitor[@]}"; do
   if [ "$obj" == "vless" ]; then
     if ! checkvlessAlive; then
@@ -86,6 +89,7 @@ for obj in "${monitor[@]}"; do
   
   if [ -n "$msg" ]; then
   	cd $installpath/serv00-play 
+    msg="Host:$host, user:$user, $msg"
    if [ "$sendtype" == "1" ]; then
      ./tgsend.sh "$msg"
    elif [ "$sendtype" == "2" ]; then
