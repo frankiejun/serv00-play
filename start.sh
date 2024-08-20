@@ -259,15 +259,32 @@ createConfigFile(){
 		return 
 	fi
 
+  read -p "配置保活检查的时间间隔(单位分钟，默认5分钟):" tm
+	tm=${tm:-"5"}
 	cd ${installpath}/serv00-play/
-	json_content='{"item":['
+	
+	json_content="{\n"
+	json_content+="   \"item\": [\n"
+	
 	for item in "${item[@]}"; do
-		json_content+="\"$item\","
+	    json_content+="      \"$item\","
 	done
-	json_content="${json_content%,}]}"
+	
+	# 删除最后一个逗号并换行
+	json_content="${json_content%,}\n"
+	
+	json_content+="   ],\n"
+	json_content+="   \"chktime\": \"$tm\"\n"
+	json_content+="}\n"
+	
+	# 使用 printf 生成文件
+	printf "$json_content" > ./config.json
 
-  echo $json_content > ./config.json
-
+  crontab -l | grep -v "keepalive" > mycron
+  echo "*/$tm * * * * bash ${installpath}/serv00-play/keepalive.sh" >> mycron
+  crontab mycron
+  rm mycron
+	chmod +x ${installpath}/serv00-play/keepalive.sh
   echo -e "${YELLOW} 设置完成! ${RESET} "
 
 }
