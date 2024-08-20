@@ -23,6 +23,7 @@ install(){
 	cd 
 	if [ -d serv00-play ]; then
 		cd "serv00-play"
+    git stash 
 		if git pull; then
 			echo "更新完毕"
 			return 
