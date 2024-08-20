@@ -282,7 +282,7 @@ createConfigFile(){
 	printf "$json_content" > ./config.json
 
   crontab -l | grep -v "keepalive" > mycron
-  echo "*/$tm * * * * bash ${installpath}/serv00-play/keepalive.sh" >> mycron
+  echo "*/$tm * * * * bash ${installpath}/serv00-play/keepalive.sh > /dev/null 2>&1 " >> mycron
   crontab mycron
   rm mycron
 	chmod +x ${installpath}/serv00-play/keepalive.sh
