@@ -24,6 +24,9 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 | WXSENDKEY       | 略     | server 酱的 sendkey，用于接收微信消息    |
 | SENDTYPE        | 3      | 选择推送方式，1.Telegram, 2.微信, 3.都有 |
 
+PS. 保进程逻辑已挪到serv00上做，actions只做保号，降低访问频率. github上只需配置HOSTS_JSON  
+
+
 ## 消息推送
 
 支持向 Telegram 和微信用户发送通知
