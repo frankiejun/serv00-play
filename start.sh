@@ -240,6 +240,53 @@ showVmessInfo(){
 	chmod +x ./list.sh && ./list.sh main
 }
 
+writeWX(){
+  has_fd=$(echo "$config_content" | jq 'has("wxsendkey")')
+  if [ "$has_fd" == "true" ]; then
+     wx_sendkey=$(echo "$config_content" | jq -r ".wxsendkey")
+     read -p "已有 WXSENDKEY ($wx_sendkey), 是否修改? [y/n] [n]" input
+     input=${input:-n}
+    if [ "$input" == "y" ]; then
+      read -p "请输入 WXSENDKEY:" wx_sendkey
+    fi
+    json_content+="  \"wxsendkey\": \"${wx_sendkey}\", \n"
+ else
+    read -p "请输入 WXSENDKEY:" wx_sendkey
+    json_content+="  \"wxsendkey\": \"${wx_sendkey}\", \n"
+ fi
+
+}
+
+writeTG(){
+  has_fd=$(echo "$config_content" | jq 'has("telegram_token")')
+  if [ "$has_fd" == "true" ]; then
+    tg_token=$(echo "$config_content" | jq -r ".telegram_token")
+    read -p "已有 TELEGRAM_TOKEN ($tg_token), 是否修改? [y/n] [n]" input
+    input=${input:-n}
+    if [ "$input" == "y" ]; then
+       read -p "请输入 TELEGRAM_TOKEN:" tg_token
+    fi
+    json_content+="  \"telegram_token\": \"${tg_token}\", \n"
+  else
+    read -p "请输入 TELEGRAM_TOKEN:" tg_token
+    json_content+="  \"telegram_token\": \"${tg_token}\", \n"
+  fi
+
+  has_fd=$(echo "$config_content" | jq 'has("telegram_userid")')
+  if [ "$has_fd" == "true" ]; then
+     tg_userid=$(echo "$config_content" | jq -r ".telegram_userid")
+     read -p "已有 TELEGRAM_USERID ($tg_userid), 是否修改? [y/n] [n]" input
+     input=${input:-n}
+     if [ "$input" == "y" ]; then
+       read -p "请输入 TELEGRAM_USERID:" tg_userid
+     fi
+     json_content+="  \"telegram_userid\": \"${tg_userid}\", \n"
+  else
+    read -p "请输入 TELEGRAM_USERID:" tg_userid
+    json_content+="  \"telegram_userid\": \"${tg_userid}\",\n"
+    fi
+}
+
 createConfigFile(){
 	echo "请选择要保活的项目:"
 	echo "1. vless "
@@ -260,6 +307,7 @@ createConfigFile(){
 		return 
 	fi
 
+
   read -p "配置保活检查的时间间隔(单位分钟，默认5分钟):" tm
 	tm=${tm:-"5"}
 	cd ${installpath}/serv00-play/
@@ -275,7 +323,35 @@ createConfigFile(){
 	json_content="${json_content%,}\n"
 	
 	json_content+="   ],\n"
-	json_content+="   \"chktime\": \"$tm\"\n"
+	json_content+="   \"chktime\": \"$tm\""
+
+  read -p "是否需要配置消息推送? [y/n] [n]" input
+  input=${input:-n}
+
+  if [ "${input}" == "y" ]; then
+    json_content+=",\n"
+
+    echo "选择要推送的app:"
+    echo "1) Telegram "
+    echo "2) 微信 "
+    echo "3) 以上皆是"
+
+    read -p "请选择:" sendtype
+    
+    if [ "$sendtype" == "1" ]; then
+      writeTG
+   elif [ "$sendtype" == "2" ]; then
+      writeWX
+   elif [ "$sendtype" == "3" ]; then
+      writeTG
+      writeWX
+   else
+		echo "无效选择"
+		return 
+	 fi
+ fi
+
+  json_content+="\n \"sendtype\": $sendtype \n"
 	json_content+="}\n"
 	
 	# 使用 printf 生成文件
@@ -286,6 +362,8 @@ createConfigFile(){
   crontab mycron
   rm mycron
 	chmod +x ${installpath}/serv00-play/keepalive.sh
+  
+
   echo -e "${YELLOW} 设置完成! ${RESET} "
 
 }
@@ -295,7 +373,8 @@ setConfig(){
 
 	if [ -f config.json ]; then
 		echo "目前已有配置:"
-		cat config.json
+		config_content=$(cat config.json)
+    echo $config_content
 		read -p "是否修改? [y/n] [y]" input
 		input=${input:-y}
 		if [ "$input" != "y" ]; then
@@ -320,7 +399,7 @@ uninstall(){
 
 echo "请选择一个选项:"
 
-options=("安装/更新serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "设置保活的项目" "卸载" )
+options=("安装/更新serv00-play项目" "运行vless" "运行vmess" "停止vless" "停止vmess"  "配置vless" "配置vmess" "显示vless的节点信息" "显示vmess的订阅链接" "设置保活的项目"  "卸载" )
 
 select opt in "${options[@]}"
 do

@@ -45,6 +45,22 @@ if [ ! -f config.json ]; then
 fi
 
 monitor=($(jq -r ".item[]" config.json))
+if [ -z "$TELEGRAM_TOKEN" ]; then
+  TELEGRAM_TOKEN=$(jq -r ".telegram_token" config.json)
+fi
+
+if [ -z "$TELEGRAM_USERID" ]; then
+  TELEGRAM_USERID=$(jq -r ".telegram_userid" config.json)
+fi
+
+if [ -z "$WXSENDKEY" ]; then 
+  WXSENDKEY=$(jq -r ".wxsendkey" config.json)
+fi
+
+if [ -z "$sendtype" ]; then
+  sendtype=$(jq -r ".sendtype" config.json)
+fi
+
 for obj in "${monitor[@]}"; do
   if [ "$obj" == "vless" ]; then
     if ! checkvlessAlive; then
