@@ -83,15 +83,17 @@ for obj in "${monitor[@]}"; do
   else 
     continue
   fi
-
- 	cd $installpath/serv00-play 
-  if [ "$sendtype" == "1" ]; then
-    ./tgsend.sh "$msg"
-  elif [ "$sendtype" == "2" ]; then
-    ./wxsend.sh "$msg"
-  elif [ "$sendtype" == "3" ]; then
-    ./tgsend.sh "$msg"
-    ./wxsend.sh "$msg"
+  
+  if [ -n "$msg" ]; then
+  	cd $installpath/serv00-play 
+   if [ "$sendtype" == "1" ]; then
+     ./tgsend.sh "$msg"
+   elif [ "$sendtype" == "2" ]; then
+     ./wxsend.sh "$msg"
+   elif [ "$sendtype" == "3" ]; then
+     ./tgsend.sh "$msg"
+     ./wxsend.sh "$msg"
+   fi
   fi
 
 done
