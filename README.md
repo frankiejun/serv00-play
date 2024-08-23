@@ -60,6 +60,9 @@ PS. 保进程逻辑已挪到serv00上做，actions只做保号，降低访问频
 
 [这里](https://youtu.be/1N7SGqBWooY)
 
+临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)  
+
+
 ## 赞助
 
 <left><details><summary><strong> [点击展开] 请作者喝杯咖啡 ~🧧</strong></summary>
