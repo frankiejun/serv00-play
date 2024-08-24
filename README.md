@@ -5,7 +5,7 @@
 ## 前置工作
 
 1. 你需要有一个 serv00 帐号
-2. 预留了 1~3 个端口，vless+vmess 一共需要 3 个端口，vless 1 个，vmess 2 个，按实际情况使用。
+2. 预留了 1~2 个端口，vless+vmess 一共需要 2 个端口，vless 1 个，vmess 1 个，按实际情况使用。
 3. serv00 管理面板 Run your own applications 已设置为 Enable
 
 ## 安装说明
