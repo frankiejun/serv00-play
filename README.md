@@ -58,7 +58,10 @@ PS. 保进程逻辑已挪到serv00上做，actions只做保号，降低访问频
 
 ## 安装说明视频
 
-[这里](https://youtu.be/1N7SGqBWooY)
+安装使用看[这里](https://youtu.be/1N7SGqBWooY)  
+
+临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)  
+
 
 ## 赞助
 
