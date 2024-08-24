@@ -55,12 +55,9 @@ checkvmessAlive(){
 	if ps aux | grep cloud | grep -v "grep" > /dev/null ; then
 		((c+1))
 	fi	
-	if ps aux | grep server.js | grep -v "grep" > /dev/null ; then
-		((c+1))
-	fi	
 
 	echo "c=$c"
-	if [ $c -eq 3 ]; then
+	if [ $c -eq 2 ]; then
 		return 0
 	fi
 
@@ -177,7 +174,7 @@ createVmesConfig(){
      "UUID": "$uuid",
      "WSPATH": "$wspath",
      "ARGO_AUTH": "${token:-null}",
-     "ARGO_DOMAIN": "${domain:-null}",
+     "ARGO_DOMAIN": "${domain:-null}"
   }
 
 EOF

@@ -1,9 +1,7 @@
 #!/bin/bash
 
 # 端口参数 （必填）
-WEBPORT=$(jq -r ".WEBPORT" vmess.json)
 VMPORT=$(jq -r ".VMPORT" vmess.json)
-export WEBPORT=$WEBPORT
 export VMPORT=$VMPORT
 
 # web.js 参数 （必填）
@@ -36,6 +34,10 @@ chmod +x ./entrypoint.sh
 ./entrypoint.sh > /dev/null 2>&1
 mkdir -p tmp && cd tmp && wget -q https://github.com/XTLS/Xray-core/releases/latest/download/Xray-freebsd-64.zip \
 && unzip Xray-freebsd-64.zip && cd .. && mv -f ./tmp/xray ./web.js && rm -rf tmp && chmod +x web.js
+if ps aux | grep web.js | grep -v "grep" > /dev/null; then
+	exit 0
+fi
+
 nohup ./web.js -c ./config.json  > /dev/null 2>&1 &
 
 
