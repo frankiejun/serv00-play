@@ -163,7 +163,6 @@ configVless(){
 }
 
 createVmesConfig(){
-   read -p "请输入web管理端口:" webport
    read -p "请输入vmess代理端口:" vmport
    read -p "请输入uuid:" uuid
    read -p "请输入WSPATH,默认是[serv00]" wspath
@@ -172,21 +171,13 @@ createVmesConfig(){
    read -p "请输入ARGO隧道token，如果没有按回车跳过:" token
    read -p "请输入ARGO隧道的域名，如果没有按回车跳过:" domain
 
-   read -p "请输入管理网页的登录用户名[默认为 admin ]:" web_username
-   web_username=${web_username:-admin}
-   read -p "请输入管理页面的登录密码[默认为 password]:" web_pass
-   web_pass=${web_pass:-password}
-
   cat > vmess.json <<EOF
   {
-     "WEBPORT": $webport,
      "VMPORT": $vmport,
      "UUID": "$uuid",
      "WSPATH": "$wspath",
      "ARGO_AUTH": "${token:-null}",
      "ARGO_DOMAIN": "${domain:-null}",
-     "WEB_USERNAME": "$web_username",
-     "WEB_PASSWORD": "$web_pass"
   }
 
 EOF

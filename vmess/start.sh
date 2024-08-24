@@ -22,11 +22,20 @@ if [ ! -z $ARGO_DOMAIN ]; then
 fi
 
 # 网页的用户名和密码（可不填，默认为 admin 和 password ，如果不填请删掉这两行）dd
-WEB_USERNAME=$(jq -r ".WEB_USERNAME" vmess.json)
-WEB_PASSWORD=$(jq -r ".WEB_PASSWORD" vmess.json)
-export WEB_USERNAME=$WEB_USERNAME
-export WEB_PASSWORD=$WEB_PASSWORD
+#WEB_USERNAME=$(jq -r ".WEB_USERNAME" vmess.json)
+#WEB_PASSWORD=$(jq -r ".WEB_PASSWORD" vmess.json)
+#export WEB_USERNAME=$WEB_USERNAME
+#export WEB_PASSWORD=$WEB_PASSWORD
+
 
 # 启动程序
-npm install
-nohup node server.js > a.log 2>&1 &
+#npm install
+#nohup node server.js > a.log 2>&1 &
+
+chmod +x ./entrypoint.sh
+./entrypoint.sh > /dev/null 2>&1
+mkdir -p tmp && cd tmp && wget -q https://github.com/XTLS/Xray-core/releases/latest/download/Xray-freebsd-64.zip \
+&& unzip Xray-freebsd-64.zip && cd .. && mv -f ./tmp/xray ./web.js && rm -rf tmp && chmod +x web.js
+nohup ./web.js -c ./config.json  > /dev/null 2>&1 &
+
+

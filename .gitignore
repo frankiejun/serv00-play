@@ -1,0 +1,9 @@
+*.log
+*.json
+*.out
+*.js
+a.*
+vmess/node_modules
+vmess/list
+vmess/cloudflared
+vless/node_modules

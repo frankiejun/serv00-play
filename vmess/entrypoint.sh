@@ -1,7 +1,6 @@
 WSPATH=${WSPATH:-'serv00'}  # WS 路径前缀。(注意:伪装路径不需要 / 符号开始,为避免不必要的麻烦,请不要使用特殊符号.)
 UUID=${UUID:-'de04add9-5c68-8bab-950c-08cd5320df18'}
 VMPORT=${VMPORT:-'3001'}
-WEBPORT=${WEBPORT:-'3002'}
 
 generate_config() {
     cat > config.json << EOF
@@ -101,9 +100,6 @@ generate_config() {
 EOF
 }
 
-generate_argo() {
-  cat > argo.sh << ABC
-#!/usr/bin/env bash
 
 ARGO_AUTH=${ARGO_AUTH/null/}
 ARGO_DOMAIN=${ARGO_DOMAIN/null/}
@@ -114,16 +110,19 @@ check_file() {
 }
 
 run() {
-  if [[ -n "\${ARGO_AUTH}" && -n "\${ARGO_DOMAIN}" ]]; then
-    if [[ "\$ARGO_AUTH" =~ TunnelSecret ]]; then
-      echo "\$ARGO_AUTH" | sed 's@{@{"@g;s@[,:]@"\0"@g;s@}@"}@g' > tunnel.json
+	if ps aux | grep cloudflared | grep -v "grep" > /dev/null; then
+		return
+	fi
+  if [[ -n "${ARGO_AUTH}" && -n "${ARGO_DOMAIN}" ]]; then
+    if [[ "$ARGO_AUTH" =~ TunnelSecret ]]; then
+      echo "$ARGO_AUTH" | sed 's@{@{"@g;s@[,:]@"\0"@g;s@}@"}@g' > tunnel.json
       cat > tunnel.yml << EOF
-tunnel: \$(sed "s@.*TunnelID:\(.*\)}@\1@g" <<< "\$ARGO_AUTH")
+tunnel: \$(sed "s@.*TunnelID:(.*)}@\1@g" <<< "$ARGO_AUTH")
 credentials-file: /app/tunnel.json
 protocol: http2
 
 ingress:
-  - hostname: \$ARGO_DOMAIN
+  - hostname: $ARGO_DOMAIN
     service: http://localhost:${VMPORT}
 EOF
       cat >> tunnel.yml << EOF
@@ -132,14 +131,13 @@ EOF
   - service: http_status:404
 EOF
       nohup ./cloudflared tunnel --edge-ip-version auto --config tunnel.yml run 2>/dev/null 2>&1 &
-    elif [[ "\$ARGO_AUTH" =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
+    elif [[ "$ARGO_AUTH" =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
       nohup ./cloudflared tunnel --edge-ip-version auto --protocol http2 run --token ${ARGO_AUTH} 2>/dev/null 2>&1 &
     fi
   else
     nohup ./cloudflared tunnel --edge-ip-version auto --protocol http2 --no-autoupdate --url http://localhost:${VMPORT} 2>/dev/null 2>&1 &
     sleep 12
-    #local LOCALHOST=\$(sockstat -4 -l -P tcp | grep cloudflare | awk '{print \$6}')
-    ARGO_DOMAIN=\$(wget -qO- \$(sockstat -4 -l -P tcp | grep cloudflare | awk '{print \$6}')/quicktunnel | jq -r '.hostname')
+    ARGO_DOMAIN=$(wget -qO- $(sockstat -4 -l -P tcp | grep cloudflare | awk '{for(i=1;i<=NF;i++) if($i ~ /127\.0\.0\.1/) print $i}')/quicktunnel | jq -r '.hostname')
 		echo "ARGO_DOMAIN:$ARGO_DOMAIN"
   fi
 }
@@ -166,11 +164,10 @@ EOF
 check_file
 run
 export_list
-ABC
-}
 
 generate_config
-generate_argo
 
 #echo "begin to run argo.sh"
-#[ -e argo.sh ] && bash argo.sh
+#if [ -e argo.sh ]; then 
+#	bash argo.sh
+#fi

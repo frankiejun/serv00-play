@@ -25,12 +25,9 @@ checkvmessAlive() {
   if ps aux | grep cloud | grep -v "grep" >/dev/null; then
     c=$((c + 1))
   fi
-  if ps aux | grep server.js | grep -v "grep" >/dev/null; then
-    c=$((c + 1))
-  fi
 
   echo "c=$c"
-  if [ $c -eq 3 ]; then
+  if [ $c -eq 2 ]; then
     return 0
   fi
   return 1 # 有一个或多个进程不在运行
