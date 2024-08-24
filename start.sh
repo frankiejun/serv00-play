@@ -228,7 +228,7 @@ showVmessInfo(){
       echo -e "${RED} 配置文件不存在，请先行配置! ${RESET}"
 	    return
 	fi
-	chmod +x ./list.sh && ./list.sh main
+	chmod +x ./list.sh && ./list.sh 
 }
 
 writeWX(){

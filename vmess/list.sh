@@ -15,7 +15,7 @@ if [ -z $ARGO_DOMAIN ]; then
      ARGO_DOMAIN=$(wget -qO- $(sockstat -4 -l -P tcp | grep cloudflare | awk '{for(i=1;i<=NF;i++) if($i ~ /127\.0\.0\.1/) print $i}')/quicktunnel | jq -r '.hostname')
 fi
 
-urlStr="http://$host:$webport/$uuid/vm"
+#urlStr="http://$host:$webport/$uuid/vm"
 export_list() {
   VMESS="{ \"v\": \"2\", \"ps\": \"Argo-k0baya-Vmess\", \"add\": \"alejandracaiccedo.com\", \"port\": \"443\", \"id\": \"${uuid}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${ARGO_DOMAIN}\", \"path\": \"/serv00-vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"${ARGO_DOMAIN}\", \"alpn\": \"\" }"
   cat > list << EOF
@@ -36,10 +36,10 @@ EOF
 }
 export_list
 
-if [ -n $param ] && [ "$param" = "main" ];then
-	echo -e "订阅链接:"
-	echo -e "${GREEN} $urlStr  ${RESET}"
-fi
+#if [ -n $param ] && [ "$param" = "main" ];then
+#	echo -e "订阅链接:"
+#	echo -e "${GREEN} $urlStr  ${RESET}"
+#fi
 
 
 
