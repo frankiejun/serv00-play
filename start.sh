@@ -127,12 +127,12 @@ stopVmess(){
 
 createVlesConfig(){
 
-			read -p "请输入UUID:" uuid
+			#read -p "请输入UUID:" uuid
 			read -p "请输入PORT:" port
 
 			cat > vless.json <<EOF
 			{
-				"UUID":"$uuid",
+				"UUID":"$(uuidgen -r)",
 				"PORT":$port
 
 			}
@@ -161,7 +161,7 @@ configVless(){
 
 createVmesConfig(){
    read -p "请输入vmess代理端口:" vmport
-   read -p "请输入uuid:" uuid
+  # read -p "请输入uuid:" uuid
    read -p "请输入WSPATH,默认是[serv00]" wspath
    wspath=${wspath:-serv00}
 
@@ -171,7 +171,7 @@ createVmesConfig(){
   cat > vmess.json <<EOF
   {
      "VMPORT": $vmport,
-     "UUID": "$uuid",
+     "UUID": "$(uuidgen -r)",
      "WSPATH": "$wspath",
      "ARGO_AUTH": "${token:-null}",
      "ARGO_DOMAIN": "${domain:-null}"
