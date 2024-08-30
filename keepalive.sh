@@ -18,19 +18,27 @@ checkvlessAlive() {
 
 checkvmessAlive() {
   local c=0
-  if ps aux | grep web.js | grep -v "grep" >/dev/null; then
+  if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
     c=$((c + 1))
   fi
 
-  if ps aux | grep cloud | grep -v "grep" >/dev/null; then
+  if ps aux | grep cloudflare | grep -v "grep" >/dev/null; then
     c=$((c + 1))
   fi
 
-  echo "c=$c"
   if [ $c -eq 2 ]; then
     return 0
   fi
   return 1 # 有一个或多个进程不在运行
+
+}
+
+checkHy2Alive() {
+  if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
+    return 0
+  else
+    return 1
+  fi
 
 }
 
@@ -50,7 +58,7 @@ if [ -z "$TELEGRAM_USERID" ]; then
   TELEGRAM_USERID=$(jq -r ".telegram_userid" config.json)
 fi
 
-if [ -z "$WXSENDKEY" ]; then 
+if [ -z "$WXSENDKEY" ]; then
   WXSENDKEY=$(jq -r ".wxsendkey" config.json)
 fi
 
@@ -73,28 +81,37 @@ for obj in "${monitor[@]}"; do
     fi
   elif [ "$obj" == "vmess" ]; then
     if ! checkvmessAlive; then
-      cd ${installpath}/serv00-play/vmess
-      if ! ./start.sh; then
+      cd ${installpath}/serv00-play/singbox
+      if ! ./start.sh 1; then
         msg="vmess restarted failure."
       else
         msg="vmess restarted successfully."
       fi
     fi
-  else 
+  elif [ "$obj" == "hy2" ]; then
+    if ! checkHy2Alive; then
+      cd ${installpath}/serv00-play/singbox
+      if ! ./start.sh 2; then
+        msg="hy2 restarted failure."
+      else
+        msg="hy2 restarted successfully."
+      fi
+    fi
+  else
     continue
   fi
-  
+
   if [ -n "$msg" ]; then
-  	cd $installpath/serv00-play 
+    cd $installpath/serv00-play
     msg="Host:$host, user:$user, $msg"
-   if [ "$sendtype" == "1" ]; then
-     ./tgsend.sh "$msg"
-   elif [ "$sendtype" == "2" ]; then
-     ./wxsend.sh "$msg"
-   elif [ "$sendtype" == "3" ]; then
-     ./tgsend.sh "$msg"
-     ./wxsend.sh "$msg"
-   fi
+    if [ "$sendtype" == "1" ]; then
+      ./tgsend.sh "$msg"
+    elif [ "$sendtype" == "2" ]; then
+      ./wxsend.sh "$msg"
+    elif [ "$sendtype" == "3" ]; then
+      ./tgsend.sh "$msg"
+      ./wxsend.sh "$msg"
+    fi
   fi
 
 done

@@ -1,11 +1,12 @@
-# serv00 上的一些应用，包括 vless、vmess 等, 自动化部署、批量保号、进程防杀、消息推送
+# serv00 上的一些应用，包括 vless/vmess/hy2 等, 自动化部署、批量保号、进程防杀、消息推送
 
 💖 如果你在用这个项目，请给我打个 star，好让我知道有多少人从这个项目中受益。
 
 ## 前置工作
 
 1. 你需要有一个 serv00 帐号
-2. 预留了 1~2 个端口，vless+vmess 一共需要 2 个端口，vless 1 个，vmess 1 个，按实际情况使用。
+2. 预留了 1~3 个端口，vless+vmess+hy2 一共需要 3 个端口，  
+   vless/vmess tcp 端口，hy2 udp 端口，3 种协议不必同时绑定，按需绑定端口。
 3. serv00 管理面板 Run your own applications 已设置为 Enable
 
 ## 安装说明
@@ -24,8 +25,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 | WXSENDKEY       | 略     | server 酱的 sendkey，用于接收微信消息    |
 | SENDTYPE        | 3      | 选择推送方式，1.Telegram, 2.微信, 3.都有 |
 
-PS. 保进程逻辑已挪到serv00上做，actions只做保号，降低访问频率. github上只需配置HOSTS_JSON  
-
+PS. 保进程逻辑已挪到 serv00 上做，actions 只做保号，降低访问频率. github 上只需配置 HOSTS_JSON
 
 ## 消息推送
 
@@ -58,10 +58,9 @@ PS. 保进程逻辑已挪到serv00上做，actions只做保号，降低访问频
 
 ## 安装说明视频
 
-安装使用看[这里](https://youtu.be/1N7SGqBWooY)  
+安装使用看[这里](https://youtu.be/1N7SGqBWooY)
 
-临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)  
-
+临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)
 
 ## 赞助
 
@@ -76,12 +75,7 @@ _捐赠将是对我最大的支持，它将激励我持续的创新和创作。_
 
 ## 项目鸣谢
 
-本项目基于以下项目做的集成，少量的代码优化  
-感谢原作者的开源贡献。
-
-vless 项目来自于： https://github.com/qwer-search/serv00-vless
-
-vmess 项目来自于： https://github.com/k0baya/X-for-serv00.git
+[qwer-search](https://github.com/qwer-search) 、[k0baya](https://github.com/k0baya) 、[eooce](https://github.com/eooce)
 
 ## 免责声明
 
