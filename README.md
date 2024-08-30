@@ -60,6 +60,8 @@ PS. 保进程逻辑已挪到 serv00 上做，actions 只做保号，降低访问
 
 安装使用看[这里](https://youtu.be/1N7SGqBWooY)
 
+使用密码在视频里[这里](https://youtu.be/nmb2F6uBKsg)
+
 临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)
 
 ## 赞助
