@@ -662,6 +662,11 @@ startSingBox(){
         rm -f serv00sb
         return
     fi
+    #下载失败
+    if [ ! -e serv00sb ]; then
+       echo "无法下载核心程序，可能使用密码不对或者网络问题，请检查！"
+       return 
+    fi
     echo "done!"
   fi
 
