@@ -648,28 +648,48 @@ EOF
 
 }
 
+checkDownload(){
+  local file=$1
+  local filegz="$file.gz"
+    #检查并下载核心程序
+  if [[ ! -e $file ]] || [[ $(file $file) == *"text"* ]]; then
+    echo "正在下载 $file..."
+    url="https://gfg.fkjdemo.us.kg/app/serv00/$filegz?pwd=$password"
+    curl -L -sS --max-time 10 -o $filegz "$url"
+
+    if file $filegz | grep "text" ; then
+        echo "使用密码不正确!!!"
+        rm -f $filegz
+        return 1
+    fi
+    if [ -e $filegz ];  then
+       gzip -d $filegz
+    else 
+       echo "下载失败，可能是网络问题."
+       return 1
+    fi
+    #下载失败
+    if [ ! -e $file ]; then
+       echo "无法下载核心程序，可能使用密码不对或者网络问题，请检查！"
+       return  1
+    fi
+    chmod +x $file
+    echo "下载完毕!"
+  fi
+  return 0
+}
+
 startSingBox(){
 
   cd ${installpath}/serv00-play/singbox
   
-  
-  if [[ ! -e serv00sb ]] || [[ $(file serv00sb) == *"text"* ]]; then
-    echo "downloading serv00sb..."
-    url="https://gfg.fkjdemo.us.kg/app/serv00/serv00sb?pwd=$password"
-    curl -L -sS --max-time 10 -o serv00sb "$url"
-    if file serv00sb | grep "text" ; then
-        echo "使用密码不正确!!!"
-        rm -f serv00sb
-        return
-    fi
-    #下载失败
-    if [ ! -e serv00sb ]; then
-       echo "无法下载核心程序，可能使用密码不对或者网络问题，请检查！"
-       return 
-    fi
-    echo "done!"
+  if ! checkDownload "serv00sb"; then
+     return 
   fi
-
+  if ! checkDownload "cloudflared"; then
+     return 
+  fi
+  
   if checkSingboxAlive; then
     red "sing-box 已在运行，请勿重复操作!"
     exit 1
@@ -718,7 +738,7 @@ uninstall(){
 }
 
 
-if [ ! -e ${installpath}/serv00-play/singbox/serv00sb ]; then
+if [[ ! -e ${installpath}/serv00-play/singbox/serv00sb ]] || [[ ! -e ${installpath}/serv00-play/singbox/cloudflared ]]; then
   read -sp "请输入使用密码:" password
   echo ""
 fi

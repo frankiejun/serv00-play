@@ -49,11 +49,6 @@ EOF
     echo "ARGO_DOMAIN:$ARGO_DOMAIN"
   fi
 }
-# 下载并运行 Argo
-check_file() {
-
-  [ ! -e cloudflared ] && wget https://cloudflared.bowring.uk/binaries/cloudflared-freebsd-latest.7z && 7z x cloudflared-freebsd-latest.7z && rm cloudflared-freebsd-latest.7z && mv -f ./temp/* ./cloudflared && rm -rf temp && chmod +x cloudflared
-}
 
 export_list() {
   user="$(whoami)"
@@ -76,7 +71,6 @@ EOF
 }
 
 if [[ "$type" == "1" || "$type" == "3" ]]; then
-  check_file
   run
 fi
 if [[ "$type" == "2" || "$type" == "3" ]]; then
