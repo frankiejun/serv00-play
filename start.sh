@@ -881,7 +881,7 @@ InitServer(){
   read -p "$(red "将初始化帐号系统，要继续？[y/n] [n]:")" input
   input=${input:-n}
   read -p "是否保留用户配置？[y/n] [y]:" saveProfile
-  saveProfile=$(saveProfile:-y)
+  saveProfile=${saveProfile:-y}
 
   if [[ "$input" == "y" ]] || [[ "$input" == "Y" ]]; then
     cleanCron
@@ -889,16 +889,47 @@ InitServer(){
     killUserProc
     green "清理磁盘中..."
     if [[ "$saveProfile" = "y" ]] || [[ "$saveProfile" = "Y" ]]; then
-      rm -rf ~/* 
+      rm -rf ~/* 2>/dev/null
     else
-      rm -rf ~/* ~/.*
+      rm -rf ~/* ~/.* 2>/dev/null
     fi
-    
     yellow "初始化完毕"
    exit 0
   fi
 }
 
+setCnTimeZone(){
+  read -p "确定设置中国上海时区? [y/n] [y]:" input
+  input=${input:-y}
+
+  if [ "$input" = "y" ]; then
+    if [ -e ~/.profile ]; then
+       if ! grep "TZ=Asia/Shanghai" ~/.profile ; then
+          echo "插入配置中..."
+          echo "export TZ=Asia/Shanghai" >> ~/.profile
+          echo "export EDITOR=vim" >>  ~/.profile
+          echo "export VISUAL=vim" >> ~/.profile
+          echo "alias l='ls -ltr'" >> ~/.profile
+       else
+          green "已经配置，无需重复配置!"
+          return
+       fi
+    else
+        echo "生成配置中..."
+        echo "export TZ=Asia/Shanghai" > ~/.profile
+        echo "export EDITOR=vim" >>  ~/.profile
+        echo "export VISUAL=vim" >> ~/.profile
+        echo "alias l='ls -ltr'" >> ~/.profile
+    fi
+    read -p "$(yellow "设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:" )" input
+    input=${input:-y}
+
+    if [ "$input" = "y" ]; then
+       kill -9 $PPID
+    fi
+  fi
+  
+}
 
 showMenu(){
   art_wrod=$(figlet "serv00-play")
@@ -910,7 +941,7 @@ showMenu(){
   echo "请选择一个选项:"
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
-          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "镜像恢复" "系统初始化" "卸载" )
+          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "镜像恢复" "系统初始化" "设置中国时区" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -958,7 +989,10 @@ showMenu(){
         12)
             InitServer
             ;;
-          13)
+        13)
+           setCnTimeZone
+           ;;
+          14)
             uninstall
             ;;
           0)
