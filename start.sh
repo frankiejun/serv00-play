@@ -819,18 +819,19 @@ ImageRecovery(){
         echo "$i. $folder:"
         results="${foundArr[${folder}]}"
         #echo "results211:$results"
-        read -r -a paths <<< "$results"
+        IFS=$'\n' read -r -d '' -a paths <<< "$results"
         local j=1
         for path in "${paths[@]}"; do
-          echo "  $j. $path"
           indexPathArr["$i"."$j"]="$path"
+          echo "  $j. $path"
+          
           j=$((j+1))
         done
         i=$((i+1))
       done
       
       while [ true ]; do
-        read -p "输入要恢复的文件序号，格式:日期序号.文件序号, 多个以逗号分隔.(如第一个日期目录中的第二个文件,及第三个日期中的第二个文件，输入 1.2,3.2)[按enter返回]:" input
+        read -p "输入要恢复的文件序号，格式:日期序号.文件序号, 多个以逗号分隔.(如输入 1.2,3.2)[按enter返回]:" input
         regex='^([0-9]+\.[0-9]+)(,[0-9]+\.[0-9]+)*$'
 
         if [ -z "$input" ]; then
@@ -847,7 +848,6 @@ ImageRecovery(){
           fi
 
           for pairNo in "${pairNos[@]}"; do
-          # echo "pairNo: $pairNo"
             srcpath="${indexPathArr[$pairNo]}"
             cp -r $srcpath $targetPath/
           done
