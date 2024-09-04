@@ -42,6 +42,42 @@ checkHy2Alive() {
 
 }
 
+addCron() {
+  local tm=$1
+  crontab -l | grep -v "keepalive" >mycron
+  echo "*/$tm * * * * bash ${installpath}/serv00-play/keepalive.sh > /dev/null 2>&1 " >>mycron
+  crontab mycron
+  rm mycron
+
+}
+
+sendMsg() {
+  local msg=$1
+  if [ -n "$msg" ]; then
+    cd $installpath/serv00-play
+    msg="Host:$host, user:$user, $msg"
+    if [ "$sendtype" == "1" ]; then
+      ./tgsend.sh "$msg"
+    elif [ "$sendtype" == "2" ]; then
+      ./wxsend.sh "$msg"
+    elif [ "$sendtype" == "3" ]; then
+      ./tgsend.sh "$msg"
+      ./wxsend.sh "$msg"
+    fi
+  fi
+}
+
+checkResetCron() {
+  local msg=""
+  cd ${installpath}/serv00-play/
+  if ! crontab -l | grep keepalive; then
+    msg="crontab记录被删过,并且已重建。"
+    tm=$(jq -r ".chktime" config.json)
+    addCron "$tm"
+    sendMsg $msg
+  fi
+}
+
 #main
 cd ${installpath}/serv00-play/
 if [ ! -f config.json ]; then
@@ -101,17 +137,8 @@ for obj in "${monitor[@]}"; do
     continue
   fi
 
-  if [ -n "$msg" ]; then
-    cd $installpath/serv00-play
-    msg="Host:$host, user:$user, $msg"
-    if [ "$sendtype" == "1" ]; then
-      ./tgsend.sh "$msg"
-    elif [ "$sendtype" == "2" ]; then
-      ./wxsend.sh "$msg"
-    elif [ "$sendtype" == "3" ]; then
-      ./tgsend.sh "$msg"
-      ./wxsend.sh "$msg"
-    fi
-  fi
+  sendMsg $msg
 
 done
+
+checkResetCron
