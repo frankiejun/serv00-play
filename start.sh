@@ -803,7 +803,6 @@ ImageRecovery(){
       
       for folder in "${!snapshot_paths[@]}"; do
           path="${snapshot_paths[$folder]}"
-         # echo "folder:$folder, path:$path"
          results=$(find "${path}" -name "$infile" 2>/dev/null)
         # echo "111results:|$results|"     
          if [[ -n "$results" ]]; then
@@ -817,7 +816,6 @@ ImageRecovery(){
       for folder in "${sortedFoundArr[@]}"; do
         echo "$i. $folder:"
         results="${foundArr[${folder}]}"
-        #echo "results211:$results"
         IFS=$'\n' read -r -d '' -a paths <<< "$results"
         local j=1
         for path in "${paths[@]}"; do
@@ -858,8 +856,12 @@ ImageRecovery(){
             if [ "$targetDir" = "1" ]; then
               local user=$(whoami)
               targetPath=${srcpath#*${user}}
-                echo "print: cp -r $srcpath $HOME/$targetPath"
+              if [ -d $srcpath ]; then
+                 targetPath=${targetPath%/*}
+              fi
+              echo "cp -r $srcpath $HOME/$targetPath"
               cp -r ${srcpath} $HOME/${targetPath}
+              
             elif [ "$targetDir" = "2" ]; then
               targetPath="${installpath}/restore"
               if [ ! -e "$targetPath" ]; then
@@ -868,7 +870,7 @@ ImageRecovery(){
               cp -r $srcpath $targetPath/
             fi  
           done
-          echo "完成文件恢复"
+          green "完成文件恢复"
           
         else
           red "输入格式不对，请重新输入！"
@@ -926,6 +928,7 @@ setCnTimeZone(){
           echo "export EDITOR=vim" >>  ~/.profile
           echo "export VISUAL=vim" >> ~/.profile
           echo "alias l='ls -ltr'" >> ~/.profile
+          echo "alias pp='ps aux'" >> ~/.profile
        else
           green "已经配置，无需重复配置!"
           return
@@ -936,6 +939,7 @@ setCnTimeZone(){
         echo "export EDITOR=vim" >>  ~/.profile
         echo "export VISUAL=vim" >> ~/.profile
         echo "alias l='ls -ltr'" >> ~/.profile
+        echo "alias pp='ps aux'" >> ~/.profile
     fi
     read -p "$(yellow "设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:" )" input
     input=${input:-y}
