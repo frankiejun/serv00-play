@@ -146,7 +146,6 @@ stopVmess(){
 }
 
 createVlesConfig(){
-
       #read -p "请输入UUID:" uuid
       read -p "请输入PORT:" port
 
@@ -382,7 +381,7 @@ createConfigFile(){
   input=${input:-n}
 
   if [ "${input}" == "y" ]; then
-    json_content+=",\n"
+    json_content+="\n"
 
     echo "选择要推送的app:"
     echo "1) Telegram "
@@ -756,11 +755,11 @@ ImageRecovery(){
   size=${#snapshot_paths[@]}
   sorted_keys=($(echo "${!snapshot_paths[@]}" | tr ' ' '\n' | sort -r))
   if [ $size -eq 0 ]; then
-    echo "未有备份镜像!"
+    echo "未有备份快照!"
     return   
   fi
   echo  "选择你需要恢复的内容:"
-  echo "1. 完整镜像恢复 "
+  echo "1. 完整快照恢复 "
   echo "2. 恢复某个文件或目录"
   read -p "请选择:" input
 
@@ -796,7 +795,7 @@ ImageRecovery(){
       #echo "srcpath:$srcpath"
        rm -rf ~/* > /dev/null 2>&1  
        rsync -a $srcpath/ ~/  2>/dev/null  
-      yellow "镜像恢复完成!"
+      yellow "快照恢复完成!"
       return
   elif [ "$input" = "2" ]; then
       declare -A foundArr
@@ -842,20 +841,37 @@ ImageRecovery(){
           declare -a pairNos
           declare -a fileNos 
           IFS=',' read -r -a pairNos <<< "$input"
-          targetPath="${installpath}/restore"
-          if [ ! -e "$targetPath" ]; then
-            mkdir -p "$targetPath" 
+
+          echo "请选择文件恢复的目标路径:" 
+          echo "1.原路返回 "
+          echo "2.${installpath}/restore "
+          read -p "请选择:" targetDir
+
+          if [[ "$targetDir" != "1" ]] && [[ "$targetDir" != "2" ]];then
+              red "无效输入!"
+              return
           fi
 
           for pairNo in "${pairNos[@]}"; do
             srcpath="${indexPathArr[$pairNo]}"
-            cp -r $srcpath $targetPath/
+
+            if [ "$targetDir" = "1" ]; then
+              local user=$(whoami)
+              targetPath=${srcpath#*${user}}
+                echo "print: cp -r $srcpath $HOME/$targetPath"
+              cp -r ${srcpath} $HOME/${targetPath}
+            elif [ "$targetDir" = "2" ]; then
+              targetPath="${installpath}/restore"
+              if [ ! -e "$targetPath" ]; then
+                mkdir -p "$targetPath" 
+              fi
+              cp -r $srcpath $targetPath/
+            fi  
           done
           echo "完成文件恢复"
           
         else
           red "输入格式不对，请重新输入！"
-          
         fi
       done
   fi
@@ -941,7 +957,7 @@ showMenu(){
   echo "请选择一个选项:"
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
-          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "镜像恢复" "系统初始化" "设置中国时区" "卸载" )
+          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区" "卸载" )
 
   select opt in "${options[@]}"
   do
