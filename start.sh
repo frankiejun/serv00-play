@@ -19,12 +19,7 @@ red(){
   echo -e "${RED} $1 ${RESET}"
 }
 installpath="$HOME"
-art_wrod=$(figlet "serv00-play")
-echo "<------------------------------------------------------------------>"
-echo -e "${CYAN}${art_wrod}${RESET}"
-echo -e "${GREEN} 饭奇骏频道:https://www.youtube.com/@frankiejun8965 ${RESET}"
-echo -e "${GREEN} TG交流群:https://t.me/fanyousuiqun ${RESET}"
-echo "<------------------------------------------------------------------>"
+
 
 PS3="请选择(输入0退出): "
 install(){
@@ -151,7 +146,6 @@ stopVmess(){
 }
 
 createVlesConfig(){
-
       #read -p "请输入UUID:" uuid
       read -p "请输入PORT:" port
 
@@ -374,9 +368,7 @@ createConfigFile(){
     json_content+="}\n"
     printf "$json_content" > ./config.json
     echo -e "${YELLOW} 设置完成! ${RESET} "
-    crontab -l | grep -v "keepalive" > mycron
-    crontab mycron
-    rm mycron
+    delCron
     return
   fi
 
@@ -417,15 +409,30 @@ createConfigFile(){
   
   # 使用 printf 生成文件
   printf "$json_content" > ./config.json
+  addCron $tm
+  chmod +x ${installpath}/serv00-play/keepalive.sh
+  echo -e "${YELLOW} 设置完成! ${RESET} "
 
+}
+
+cleanCron(){
+  echo "" > null
+  crontab null
+  rm null
+}
+
+delCron(){
+    crontab -l | grep -v "keepalive" > mycron
+    crontab mycron
+    rm mycron
+}
+
+addCron(){
+  local tm=$1
   crontab -l | grep -v "keepalive" > mycron
   echo "*/$tm * * * * bash ${installpath}/serv00-play/keepalive.sh > /dev/null 2>&1 " >> mycron
   crontab mycron
   rm mycron
-  chmod +x ${installpath}/serv00-play/keepalive.sh
-  
-
-  echo -e "${YELLOW} 设置完成! ${RESET} "
 
 }
 
@@ -682,6 +689,11 @@ checkDownload(){
 startSingBox(){
 
   cd ${installpath}/serv00-play/singbox
+
+  
+  if [[ ! -e ${installpath}/serv00-play/singbox/serv00sb ]] || [[ ! -e ${installpath}/serv00-play/singbox/cloudflared ]]; then
+    read -sp "请输入使用密码:" password
+  fi
   
   if ! checkDownload "serv00sb"; then
      return 
@@ -709,7 +721,6 @@ startSingBox(){
 
 
 stopSingBox(){
-
   cd ${installpath}/serv00-play/singbox
   if [ -f killsing-box.sh ]; then
     chmod 755 ./killsing-box.sh
@@ -719,8 +730,152 @@ stopSingBox(){
     return
   fi
   echo "已停掉sing-box!"
+}
+
+killUserProc(){
+  local user=$(whoami)
+  pkill -kill -u $user
+}
+
+ImageRecovery(){
+  cd ${installpath}/backups/local
+  # 定义一个关联数组
+  declare -A snapshot_paths
+
+  # 遍历每个符号链接，并将文件夹名称及真实路径保存到数组中
+  while read -r line; do
+    # 提取文件夹名称和对应的真实路径
+    folder=$(echo "$line" | awk '{print $9}')
+    real_path=$(echo "$line" | awk '{print $11}')
+    
+    # 将文件夹名称和真实路径存入数组
+    snapshot_paths["$folder"]="$real_path"
+  done < <(ls -trl | grep -F "lrwxr")
+
+  size=${#snapshot_paths[@]}
+  sorted_keys=($(echo "${!snapshot_paths[@]}" | tr ' ' '\n' | sort -r))
+  if [ $size -eq 0 ]; then
+    echo "未有备份快照!"
+    return   
+  fi
+  echo  "选择你需要恢复的内容:"
+  echo "1. 完整快照恢复 "
+  echo "2. 恢复某个文件或目录"
+  read -p "请选择:" input
 
 
+  if [ "$input" = "1" ]; then
+      local i=1
+      declare -a folders
+      for folder in "${sorted_keys[@]}"; do
+        echo "${i}. ${folder} "
+        i=$((i+1))
+      done
+      retries=3
+      while [ $retries -gt 0 ]; do
+        read -p  "请选择恢复到哪一天(序号)？" input
+         # 检查输入是否有效
+         if [[ $input =~ ^[0-9]+$ ]] && [ "$input" -gt 0 ] && [ "$input" -le $size ]; then
+          # 输入有效，退出循环
+           targetFolder="${sorted_keys[@]:$input-1:1}"
+           echo "你选择的恢复日期是：${targetFolder}"
+           break
+         else
+           # 输入无效，减少重试次数
+            retries=$((retries-1))
+            echo "输入有误，请重新输入！你还有 $retries 次机会。"
+         fi
+         if [ $retries -eq 0 ]; then
+           echo "输入错误次数过多，操作已取消。"
+           return  
+         fi
+      done
+      killUserProc
+      srcpath=${snapshot_paths["${targetFolder}"]}
+      #echo "srcpath:$srcpath"
+       rm -rf ~/* > /dev/null 2>&1  
+       rsync -a $srcpath/ ~/  2>/dev/null  
+      yellow "快照恢复完成!"
+      return
+  elif [ "$input" = "2" ]; then
+      declare -A foundArr
+      read -p "输入你要恢复到文件或目录:" infile
+      
+      for folder in "${!snapshot_paths[@]}"; do
+          path="${snapshot_paths[$folder]}"
+         # echo "folder:$folder, path:$path"
+         results=$(find "${path}" -name "$infile" 2>/dev/null)
+        # echo "111results:|$results|"     
+         if [[ -n "$results" ]]; then
+          #echo "put |$results| to folder:$folder"
+          foundArr["$folder"]="$results"
+         fi
+      done
+      local i=1
+      sortedFoundArr=($(echo "${!foundArr[@]}" | tr ' ' '\n' | sort -r))
+      declare -A indexPathArr
+      for folder in "${sortedFoundArr[@]}"; do
+        echo "$i. $folder:"
+        results="${foundArr[${folder}]}"
+        #echo "results211:$results"
+        IFS=$'\n' read -r -d '' -a paths <<< "$results"
+        local j=1
+        for path in "${paths[@]}"; do
+          indexPathArr["$i"."$j"]="$path"
+          echo "  $j. $path"
+          
+          j=$((j+1))
+        done
+        i=$((i+1))
+      done
+      
+      while [ true ]; do
+        read -p "输入要恢复的文件序号，格式:日期序号.文件序号, 多个以逗号分隔.(如输入 1.2,3.2)[按enter返回]:" input
+        regex='^([0-9]+\.[0-9]+)(,[0-9]+\.[0-9]+)*$'
+
+        if [ -z "$input" ]; then
+            return
+        fi
+      
+        if [[ "$input" =~ $regex ]]; then
+          declare -a pairNos
+          declare -a fileNos 
+          IFS=',' read -r -a pairNos <<< "$input"
+
+          echo "请选择文件恢复的目标路径:" 
+          echo "1.原路返回 "
+          echo "2.${installpath}/restore "
+          read -p "请选择:" targetDir
+
+          if [[ "$targetDir" != "1" ]] && [[ "$targetDir" != "2" ]];then
+              red "无效输入!"
+              return
+          fi
+
+          for pairNo in "${pairNos[@]}"; do
+            srcpath="${indexPathArr[$pairNo]}"
+
+            if [ "$targetDir" = "1" ]; then
+              local user=$(whoami)
+              targetPath=${srcpath#*${user}}
+                echo "print: cp -r $srcpath $HOME/$targetPath"
+              cp -r ${srcpath} $HOME/${targetPath}
+            elif [ "$targetDir" = "2" ]; then
+              targetPath="${installpath}/restore"
+              if [ ! -e "$targetPath" ]; then
+                mkdir -p "$targetPath" 
+              fi
+              cp -r $srcpath $targetPath/
+            fi  
+          done
+          echo "完成文件恢复"
+          
+        else
+          red "输入格式不对，请重新输入！"
+        fi
+      done
+  fi
+ 
 }
 
 uninstall(){
@@ -728,6 +883,7 @@ uninstall(){
   input=${input:-n}
 
   if [ "$input" == "y" ]; then
+    delCron
     stopVless
     stopVmess
     stopSingBox
@@ -737,64 +893,135 @@ uninstall(){
   fi
 }
 
+InitServer(){
+  read -p "$(red "将初始化帐号系统，要继续？[y/n] [n]:")" input
+  input=${input:-n}
+  read -p "是否保留用户配置？[y/n] [y]:" saveProfile
+  saveProfile=${saveProfile:-y}
 
-if [[ ! -e ${installpath}/serv00-play/singbox/serv00sb ]] || [[ ! -e ${installpath}/serv00-play/singbox/cloudflared ]]; then
-  read -sp "请输入使用密码:" password
-  echo ""
-fi
-echo "请选择一个选项:"
+  if [[ "$input" == "y" ]] || [[ "$input" == "Y" ]]; then
+    cleanCron
+    green "清理进程中..."
+    killUserProc
+    green "清理磁盘中..."
+    if [[ "$saveProfile" = "y" ]] || [[ "$saveProfile" = "Y" ]]; then
+      rm -rf ~/* 2>/dev/null
+    else
+      rm -rf ~/* ~/.* 2>/dev/null
+    fi
+    yellow "初始化完毕"
+   exit 0
+  fi
+}
 
-options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" "运行sing-box" "停止sing-box" "显示sing-box节点信息" "卸载" )
+setCnTimeZone(){
+  read -p "确定设置中国上海时区? [y/n] [y]:" input
+  input=${input:-y}
 
-select opt in "${options[@]}"
-do
-    case $REPLY in
-        1)
-            install
-            ;;
-        2)
-            read -p "请确认${installpath}/serv00-play/vless/vless.json 已配置完毕 (y/n) [y]?" input
-            input=${input:-y}
-            if [ "$input" != "y" ]; then
-              echo "请先进行配置!!!"
-              exit 1
-            fi
-            startVless
-            ;;
-        3)
-            stopVless
-            ;;
+  if [ "$input" = "y" ]; then
+    if [ -e ~/.profile ]; then
+       if ! grep "TZ=Asia/Shanghai" ~/.profile ; then
+          echo "插入配置中..."
+          echo "export TZ=Asia/Shanghai" >> ~/.profile
+          echo "export EDITOR=vim" >>  ~/.profile
+          echo "export VISUAL=vim" >> ~/.profile
+          echo "alias l='ls -ltr'" >> ~/.profile
+       else
+          green "已经配置，无需重复配置!"
+          return
+       fi
+    else
+        echo "生成配置中..."
+        echo "export TZ=Asia/Shanghai" > ~/.profile
+        echo "export EDITOR=vim" >>  ~/.profile
+        echo "export VISUAL=vim" >> ~/.profile
+        echo "alias l='ls -ltr'" >> ~/.profile
+    fi
+    read -p "$(yellow "设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:" )" input
+    input=${input:-y}
 
-        4)
-            configVless
+    if [ "$input" = "y" ]; then
+       kill -9 $PPID
+    fi
+  fi
+  
+}
+
+showMenu(){
+  art_wrod=$(figlet "serv00-play")
+  echo "<------------------------------------------------------------------>"
+  echo -e "${CYAN}${art_wrod}${RESET}"
+  echo -e "${GREEN} 饭奇骏频道:https://www.youtube.com/@frankiejun8965 ${RESET}"
+  echo -e "${GREEN} TG交流群:https://t.me/fanyousuiqun ${RESET}"
+  echo "<------------------------------------------------------------------>"
+  echo "请选择一个选项:"
+
+  options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
+          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区" "卸载" )
+
+  select opt in "${options[@]}"
+  do
+      case $REPLY in
+          1)
+              install
+              ;;
+          2)
+              read -p "请确认${installpath}/serv00-play/vless/vless.json 已配置完毕 (y/n) [y]?" input
+              input=${input:-y}
+              if [ "$input" != "y" ]; then
+                echo "请先进行配置!!!"
+                exit 1
+              fi
+              startVless
+              ;;
+          3)
+              stopVless
+              ;;
+
+          4)
+              configVless
+              ;;
+          5)
+              showVlessInfo
+              ;;
+          6)
+            setConfig
             ;;
-        5)
-            showVlessInfo
+          7)
+            configSingBox
             ;;
-        6)
-           setConfig
-           ;;
-        7)
-          configSingBox
-          ;;
-        8)
-          startSingBox
-          ;;
-       9)
-          stopSingBox
-          ;;
-       10)
-          showSingBoxInfo
-          ;;
+          8)
+            startSingBox
+            ;;
+        9)
+            stopSingBox
+            ;;
+        10)
+            showSingBoxInfo
+            ;;
         11)
-           uninstall
+            ImageRecovery
+            ;;
+        12)
+            InitServer
+            ;;
+        13)
+           setCnTimeZone
            ;;
-        0)
-            echo "退出"
-            break
+          14)
+            uninstall
             ;;
-        *)
-            echo "无效的选项 "
-            ;;
-    esac
-done
+          0)
+              echo "退出"
+              exit 0
+              ;;
+          *)
+              echo "无效的选项 "
+              ;;
+      esac
+  done
+
+}
+
+
+showMenu
