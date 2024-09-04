@@ -385,11 +385,11 @@ createConfigFile(){
 
   json_content+="   \"chktime\": \"$tm\","
 
-  read -p "是否需要配置消息推送? [y/n] [n]" input
+  read -p "是否需要配置消息推送? [y/n] [n]:" input
   input=${input:-n}
 
   if [ "${input}" == "y" ]; then
-    json_content+=",\n"
+    json_content+="\n"
 
     echo "选择要推送的app:"
     echo "1) Telegram "
