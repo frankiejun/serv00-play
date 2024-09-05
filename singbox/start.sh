@@ -73,7 +73,7 @@ EOF
 if [[ "$type" == "1" || "$type" == "3" ]]; then
   run
 fi
-if [[ "$type" == "2" || "$type" == "3" ]]; then
+if [[ "$type" == "1" || "$type" == "2" || "$type" == "3" ]]; then
   chmod +x ./serv00sb
   if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
     exit 0
