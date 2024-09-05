@@ -78,7 +78,17 @@ checkResetCron() {
   fi
 }
 
+autoUpdate() {
+  if [ -d ${installpath}/serv00-play ]; then
+    cd ${installpath}/serv00-play/
+    git stash
+    if git pull; then
+      echo "更新完毕"
+    fi
+  fi
+}
 #main
+autoUpdate
 cd ${installpath}/serv00-play/
 if [ ! -f config.json ]; then
   echo "未配置保活项目，请先行配置!"
