@@ -661,7 +661,7 @@ checkDownload(){
     #检查并下载核心程序
   if [[ ! -e $file ]] || [[ $(file $file) == *"text"* ]]; then
     echo "正在下载 $file..."
-    url="https://gfg.fkjdemo.us.kg/app/serv00/$filegz?pwd=$password"
+    url="https://gfg.fkj.pp.ua/app/serv00/$filegz?pwd=$password"
     curl -L -sS --max-time 10 -o $filegz "$url"
 
     if file $filegz | grep "text" ; then
