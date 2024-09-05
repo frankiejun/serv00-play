@@ -106,19 +106,24 @@ host=$(hostname)
 user=$(whoami)
 
 for obj in "${monitor[@]}"; do
+  msg=""
   if [ "$obj" == "vless" ]; then
     if ! checkvlessAlive; then
       cd ${installpath}/serv00-play/vless
-      if ! ./start.sh; then
+      ./start.sh
+      sleep 3
+      if ! checkvlessAlive; then
         msg="vless restarted failure."
       else
-        msg="vless restarted successfully."
+        msg="vless restarted failure."
       fi
     fi
   elif [ "$obj" == "vmess" ]; then
     if ! checkvmessAlive; then
       cd ${installpath}/serv00-play/singbox
-      if ! ./start.sh 1; then
+      ./start.sh 1
+      sleep 2
+      if ! checkvmessAlive; then
         msg="vmess restarted failure."
       else
         msg="vmess restarted successfully."
@@ -127,7 +132,9 @@ for obj in "${monitor[@]}"; do
   elif [ "$obj" == "hy2" ]; then
     if ! checkHy2Alive; then
       cd ${installpath}/serv00-play/singbox
-      if ! ./start.sh 2; then
+      ./start.sh 2
+      sleep 2
+      if ! checkHy2Alive; then
         msg="hy2 restarted failure."
       else
         msg="hy2 restarted successfully."
@@ -137,7 +144,7 @@ for obj in "${monitor[@]}"; do
     continue
   fi
 
-  sendMsg $msg
+  sendMsg "$msg"
 
 done
 
