@@ -692,7 +692,7 @@ startSingBox(){
 
   
   if [[ ! -e ${installpath}/serv00-play/singbox/serv00sb ]] || [[ ! -e ${installpath}/serv00-play/singbox/cloudflared ]]; then
-    read -sp "请输入使用密码:" password
+    read -p "请输入使用密码:" password
   fi
   
   if ! checkDownload "serv00sb"; then
