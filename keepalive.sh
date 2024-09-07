@@ -139,7 +139,7 @@ for obj in "${monitor[@]}"; do
         msg="vmess restarted successfully."
       fi
     fi
-  elif [ "$obj" == "hy2" ]; then
+  elif [ "$obj" == "hy2/vmess+ws" ]; then
     if ! checkHy2Alive; then
       cd ${installpath}/serv00-play/singbox
       ./start.sh 2

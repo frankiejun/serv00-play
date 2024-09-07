@@ -11,11 +11,15 @@ WSPATH=$(jq -r ".WSPATH" $config)
 ARGO_AUTH=$(jq -r ".ARGO_AUTH" $config)
 ARGO_DOMAIN=$(jq -r ".ARGO_DOMAIN" $config)
 
+GOOD_DOMAIN=$(jq -r ".GOOD_DOMAIN" $config)
+
 if [ -z $1 ]; then
   type=$(jq -r ".TYPE" $config)
 else
   type=$1
 fi
+
+echo "type:$type"
 
 run() {
   if ps aux | grep cloudflared | grep -v "grep" >/dev/null; then
@@ -56,29 +60,45 @@ export_list() {
   myip="$(curl -s ifconfig.me)"
   vmessname="Argo-vmess-$host-$user"
   hy2name="Hy2-$host-$user"
-  VMESS="{ \"v\": \"2\", \"ps\": \"$vmessname\", \"add\": \"www.visa.com.tw\", \"port\": \"443\", \"id\": \"${UUID}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${ARGO_DOMAIN}\", \"path\": \"/${WSPATH}?ed=2048\", \"tls\": \"tls\", \"sni\": \"${ARGO_DOMAIN}\", \"alpn\": \"\" }"
+  VMESSWS="{\"v\":\"2\",\"ps\": \"Vmessws-${host}-${user}\", \"add\":\"www.visa.com.tw\", \"port\":\"443\", \"id\": \"${UUID}\", \"aid\": \"0\",  \"scy\": \"none\",  \"net\": \"ws\",  \"type\": \"none\",  \"host\": \"${GOOD_DOMAIN}\",  \"path\": \"/${WSPATH}?ed=2048\",  \"tls\": \"tls\",  \"sni\": \"${GOOD_DOMAIN}\",  \"alpn\": \"\",  \"fp\": \"\"}"
+  ARGOVMESS="{ \"v\": \"2\", \"ps\": \"$vmessname\", \"add\": \"www.visa.com.tw\", \"port\": \"443\", \"id\": \"${UUID}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${ARGO_DOMAIN}\", \"path\": \"/${WSPATH}?ed=2048\", \"tls\": \"tls\", \"sni\": \"${ARGO_DOMAIN}\", \"alpn\": \"\" }"
   hysteria2="hysteria2://$UUID@$myip:$HY2PORT/?sni=www.bing.com&alpn=h3&insecure=1#$hy2name"
 
   cat >list <<EOF
 *******************************************
 V2-rayN:
 ----------------------------
-$([[ "$type" == "1" || "$type" == "3" ]] && echo "vmess://$(echo -n ${VMESS} | base64 | tr -d '\n')")
+
+$([[ "$type" == "1.1" || "$type" == "3" ]] && echo "vmess://$(echo -n ${ARGOVMESS} | base64 | tr -d '\n')")
+$([[ "$type" == "1.2" || "$type" == "3" ]] && echo "vmess://$(echo -n ${VMESSWS} | base64 | tr -d '\n')")
 $([[ "$type" == "2" || "$type" == "3" ]] && echo $hysteria2)
 
 EOF
   cat list
 }
 
-if [[ "$type" == "1" || "$type" == "3" ]]; then
+echo "type: $type"
+if [[ "$type" == "1.1" || "$type" == "3" ]]; then
   run
 fi
-if [[ "$type" == "1" || "$type" == "2" || "$type" == "3" ]]; then
+
+#如果只有hy2和vmess+ws
+if [[ "$type" == "1.2" || "$type" == "2" ]]; then
+  r=$(ps aux | grep cloudflare | grep -v grep | awk '{print $2}')
+  if [ -n "$r" ]; then
+  echo $r
+  kill -9 $r
+  fi
   chmod +x ./serv00sb
   if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
     exit 0
   fi
   nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
-
+else 
+   chmod +x ./serv00sb
+  if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
+    exit 0
+  fi
+  nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
 fi
 export_list

@@ -308,14 +308,18 @@ writeTG(){
 }
 
 chooseSingbox(){
-  read -p "保活sing-box中哪个项目: 1.hy2, 2.vmess, 3.all 请选择:" input
+   echo "保活sing-box中哪个项目: "
+   echo " 1.hy2/vmess+ws "
+   echo " 2.vmess "
+   echo " 3.all "
+   read -p "请选择:" input
   
   if [ "$input" = "1" ]; then
-     item+=("hy2")
+     item+=("hy2/vmess+ws")
   elif [ "$input" = "2" ]; then
       item+=("vmess")
   elif [ "$input" = "3" ]; then
-  item+=("hy2")
+  item+=("hy2/vmess+ws")
   item+=("vmess")
   else 
       red "无效选择!"
@@ -504,7 +508,7 @@ generate_config() {
     openssl ecparam -genkey -name prime256v1 -out "private.key"
     openssl req -new -x509 -days 3650 -key "private.key" -out "cert.pem" -subj "/CN=www.bing.com"
   fi
-  if [ "$type" = "1" ]; then
+  if [[ "$type" == "1.1" || "$type" == "1.2" ]]; then
     make_vmess_config
   elif [ "$type" = "2" ]; then
     make_hy2_config
@@ -544,7 +548,7 @@ generate_config() {
     "disable_expire": false
   },
     "inbounds": [
-    $([[ "$type" == "1" || "$type" == "3" ]] && cat tempvmess.json)
+    $([[ "$type" == "1.1" || "$type" == "1.2" || "$type" == "3" ]] && cat tempvmess.json)
     $comma
     $([[ "$type" == "2" || "$type" == "3" ]] && cat temphy2.json)
    ],
@@ -604,48 +608,101 @@ configSingBox(){
     cat singbox.json
     read -p "$(echo -e "${RED}继续配置将会覆盖原有配置:[y/n] [n]${RESET}") " input
     input=${input:-n}
-    if [ "$input" = "n" ]; then
-       return 
+    if [ "$input" != "y" ]; then
+       return 1
     fi
   fi
-  echo "选择你要配置的项目:"  
+  echo "选择你要配置的项目（可多选，用空格分隔）:"
   echo "1. vmess"
-  echo "2. hy2 "
-  echo "3. all "
-  
-  read -p "请选择:" type
-  type=${type:-"3"}
+  echo "2. hy2"
+  echo "3. all"
 
-  if [[ "$type" = "1" ]]; then
-   read -p "请输入vmess代理端口(tcp):" vmport
-   read -p "请输入WSPATH,默认是[serv00]" wspath
-   read -p "请输入ARGO隧道token:" token
-   read -p "请输入ARGO隧道的域名:" domain
-  elif [[ "$type" == "2" ]]; then
-   read -p "请输入hy2代理端口(udp):" hy2_port
-  elif [[ "$type" == "3" ]]; then
-   read -p "请输入vmess代理端口(tcp):" vmport
-   read -p "请输入WSPATH,默认是[serv00]" wspath
-   read -p "请输入ARGO隧道token:" token
-   read -p "请输入ARGO隧道的域名:" domain
-   read -p "请输入hy2代理端口(udp):" hy2_port
- 
-  else
-     red "选择无效!"
-     return
+  read -p "请选择: " choices
+  choices=($choices)  
+
+  if [[ "${choices[@]}" =~ "3" ]]; then
+    choices=("3")
   fi
+
+
+  #过滤重复
+  choices=($(echo "${choices[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
+  # 根据选择来询问对应的配置
+  for choice in "${choices[@]}"; do
+    case "$choice" in
+      1)
+        echo "请选择协议(2选1):"
+        echo "1. argo+vmess"
+        echo "2. vmess+ws "
+        read -p "请选择:" co
+        
+        if [[ "$co" != "1" && "$co" != "2" ]]; then 
+          echo "无效输入!"
+          return 1
+        fi
+        
+        if [[ "$co" == "1" ]]; then
+          type="1.1"
+          read -p "请输入vmess代理端口(tcp): " vmport
+          read -p "请输入WSPATH,默认是[serv00]: " wspath
+          read -p "请输入ARGO隧道token: " token
+          read -p "请输入ARGO隧道的域名: " domain
+        else
+          type="1.2"
+          read -p "请输入vmess代理端口(tcp): " vmport
+          read -p "请输入WSPATH,默认是[serv00]: " wspath
+          read -p "请输入优选域名:"  goodDomain
+        fi
+        ;;
+      2)
+        type="2"
+        read -p "请输入hy2代理端口(udp): " hy2_port
+        ;;
+      3)
+        echo "请选择协议(2选1):"
+        echo "1. argo+vmess"
+        echo "2. vmess+ws "
+        read -p "请选择:" co
+        
+        if [[ "$co" != "1" && "$co" != "2" ]]; then 
+          echo "无效输入!"
+          return 1
+        fi
+        
+        if [[ "$co" == "1" ]]; then
+          read -p "请输入vmess代理端口(tcp): " vmport
+          read -p "请输入WSPATH,默认是[serv00]: " wspath
+          read -p "请输入ARGO隧道token: " token
+          read -p "请输入ARGO隧道的域名: " domain
+        else
+          read -p "请输入vmess代理端口(tcp): " vmport
+          read -p "请输入WSPATH,默认是[serv00]: " wspath
+          read -p "请输入优选域名:"  goodDomain
+        fi
+        # 配置 hy2
+        type="3"
+        read -p "请输入hy2代理端口(udp): " hy2_port
+        ;;
+      *)
+        echo "无效的选择: $choice"
+        ;;
+    esac
+ done
+
   wspath=${wspath:-serv00}
   uuid=$(uuidgen -r)
    
    cat > singbox.json <<EOF
   {
-     "TYPE": $type,
+     "TYPE": "$type",
      "VMPORT": ${vmport:-null},
      "HY2PORT": ${hy2_port:-null},
      "UUID": "$uuid",
      "WSPATH": "${wspath}",
      "ARGO_AUTH": "${token:-null}",
-     "ARGO_DOMAIN": "${domain:-null}"
+     "ARGO_DOMAIN": "${domain:-null}",
+     "GOOD_DOMAIN": "${goodDomain:-null}"
   }
 
 EOF
