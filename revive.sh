@@ -20,7 +20,7 @@ for info in "${hosts_info[@]}"; do
   port=$(echo $info | jq -r ".port")
   pass=$(echo $info | jq -r ".password")
 
-  script="/home/$user/serv00-play/keepalive.sh ${SENDTYPE} ${TELEGRAM_TOKEN} ${TELEGRAM_USERID} ${WXSENDKEY}" 
+  script="/home/$user/serv00-play/keepalive.sh autoupdate ${SENDTYPE} ${TELEGRAM_TOKEN} ${TELEGRAM_USERID} ${WXSENDKEY}"
 
   output=$(./toserv.sh $user $host $port $pass "$script")
 

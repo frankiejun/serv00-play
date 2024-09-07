@@ -1,10 +1,11 @@
 #!/bin/bash
 
 installpath="$HOME"
-sendtype=$1
-export TELEGRAM_TOKEN="$2"
-export TELEGRAM_USERID="$3"
-export WXSENDKEY="$4"
+autoUp=$1
+sendtype=$2
+export TELEGRAM_TOKEN="$3"
+export TELEGRAM_USERID="$4"
+export WXSENDKEY="$5"
 
 #返回0表示成功， 1表示失败
 #在if条件中，0会执行，1不会执行
@@ -95,7 +96,10 @@ autoUpdate() {
 
 }
 #main
-autoUpdate
+if [ -n "$autoUp" ]; then
+  autoUpdate
+fi
+
 cd ${installpath}/serv00-play/
 if [ ! -f config.json ]; then
   echo "未配置保活项目，请先行配置!"
