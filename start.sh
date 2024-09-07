@@ -29,6 +29,12 @@ install(){
     git stash
     if git pull; then
       echo "更新完毕"
+     #重新给各个脚本赋权限
+      chmod +x ./start.sh
+      chmod +x ./keepalive.sh
+      chmod +x ${installpath}/serv00-play/vless/start.sh
+      chmod +x ${installpath}/serv00-play/singbox/start.sh
+      chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
       return
     fi
   fi
