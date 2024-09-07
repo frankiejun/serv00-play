@@ -85,7 +85,14 @@ autoUpdate() {
     if git pull; then
       echo "更新完毕"
     fi
+    #重新给各个脚本赋权限
+    chmod +x ./start.sh
+    chmod +x ./keepalive.sh
+    chmod +x ${installpath}/serv00-play/vless/start.sh
+    chmod +x ${installpath}/serv00-play/singbox/start.sh
+    chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
   fi
+
 }
 #main
 autoUpdate
@@ -120,7 +127,7 @@ for obj in "${monitor[@]}"; do
   if [ "$obj" == "vless" ]; then
     if ! checkvlessAlive; then
       cd ${installpath}/serv00-play/vless
-      ./start.sh
+      chmod +x ./start.sh && ./start.sh
       sleep 3
       if ! checkvlessAlive; then
         msg="vless restarted failure."
@@ -131,7 +138,7 @@ for obj in "${monitor[@]}"; do
   elif [ "$obj" == "vmess" ]; then
     if ! checkvmessAlive; then
       cd ${installpath}/serv00-play/singbox
-      ./start.sh 1
+      chmod +x ./start.sh && ./start.sh 1
       sleep 2
       if ! checkvmessAlive; then
         msg="vmess restarted failure."
@@ -142,7 +149,7 @@ for obj in "${monitor[@]}"; do
   elif [ "$obj" == "hy2" ]; then
     if ! checkHy2Alive; then
       cd ${installpath}/serv00-play/singbox
-      ./start.sh 2
+      chmod +x ./start.sh && ./start.sh 2
       sleep 2
       if ! checkHy2Alive; then
         msg="hy2 restarted failure."
