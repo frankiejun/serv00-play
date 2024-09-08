@@ -259,11 +259,13 @@ showSingBoxInfo(){
       red "配置文件不存在，请先行配置!"
       return
   fi
-  
   if [ ! -e list ]; then
      red "请先运行sing-box"
   fi
-  cat ./list
+  config="singbox.json"
+  type=$(jq -r ".TYPE" $config)
+  chmod +x ./start.sh && ./start.sh $type list
+
 }
 
 writeWX(){

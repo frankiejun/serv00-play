@@ -19,7 +19,7 @@ else
   type=$1
 fi
 
-echo "type:$type"
+keep=$2
 
 run() {
   if ps aux | grep cloudflared | grep -v "grep" >/dev/null; then
@@ -77,8 +77,12 @@ EOF
   cat list
 }
 
-echo "type: $type"
-if [[ "$type" == "1.1" || "$type" == "3" ]]; then
+if [ "$keep" = "list" ]; then
+  export_list
+  exit 0
+fi
+
+if [[ "$type" == "1" || "$type" == "3" ]]; then
   run
 fi
 
@@ -90,15 +94,10 @@ if [[ "$type" == "1.2" || "$type" == "2" ]]; then
   kill -9 $r
   fi
   chmod +x ./serv00sb
-  if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
-    exit 0
+  if ! ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
+    nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
   fi
-  nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
-else 
-   chmod +x ./serv00sb
-  if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
-    exit 0
-  fi
-  nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
 fi
-export_list
+if [ -z "$keep" ]; then
+  export_list
+fi
