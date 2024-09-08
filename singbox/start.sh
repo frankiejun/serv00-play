@@ -69,9 +69,11 @@ export_list() {
 V2-rayN:
 ----------------------------
 
-$([[ "$type" == "1.1" || "$type" == "3" ]] && echo "vmess://$(echo -n ${ARGOVMESS} | base64 | tr -d '\n')")
-$([[ "$type" == "1.2" || "$type" == "3" ]] && echo "vmess://$(echo -n ${VMESSWS} | base64 | tr -d '\n')")
-$([[ "$type" == "2" || "$type" == "3" ]] && echo $hysteria2)
+$([[ "$type" == "1.1" || "$type" == "3.1" ]] && echo "vmess://$(echo -n ${ARGOVMESS} | base64 | tr -d '\n')")
+
+$([[ "$type" == "1.2" || "$type" == "3.2" ]] && echo "vmess://$(echo -n ${VMESSWS} | base64 | tr -d '\n')")
+
+$([[ "$type" == "2" || "$type" =~ ^3\.[0-9]+$  ]] && echo $hysteria2)
 
 EOF
   cat list
@@ -81,23 +83,31 @@ if [ "$keep" = "list" ]; then
   export_list
   exit 0
 fi
-
-if [[ "$type" == "1" || "$type" == "3" ]]; then
+#echo "type:$type"
+#如果只有argo+vmess
+if [[ "$type" == "1.1" || "$type" == "3.1" ]]; then
   run
 fi
 
 #如果只有hy2和vmess+ws
-if [[ "$type" == "1.2" || "$type" == "2" ]]; then
-  r=$(ps aux | grep cloudflare | grep -v grep | awk '{print $2}')
-  if [ -n "$r" ]; then
-  echo $r
-  kill -9 $r
-  fi
-  chmod +x ./serv00sb
-  if ! ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
-    nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
-  fi
+if [[ "$type" == "1.2" || "$type" == "2" || "$type" == "3.2" ]]; then
+    r=$(ps aux | grep cloudflare | grep -v grep | awk '{print $2}')
+    if [ -n "$r" ]; then
+      echo $r
+      kill -9 $r
+    fi
+    chmod +x ./serv00sb
+    if ! ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
+      nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
+    fi
+elif [[ "$type" == "3.1" ]]; then
+    chmod +x ./serv00sb
+    if ! ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
+      nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
+    fi
 fi
+
 if [ -z "$keep" ]; then
   export_list
 fi
+exit 0

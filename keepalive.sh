@@ -142,19 +142,20 @@ for obj in "${monitor[@]}"; do
   elif [ "$obj" == "vmess" ]; then
     if ! checkvmessAlive; then
       cd ${installpath}/serv00-play/singbox
-      chmod +x ./start.sh && ./start.sh 1
-      sleep 2
+      chmod +x ./start.sh && ./start.sh 1 keep
+      sleep 3
       if ! checkvmessAlive; then
         msg="vmess restarted failure."
       else
         msg="vmess restarted successfully."
       fi
     fi
+    #hy2和vmess+ws都只需要启动serv00sb，所以可以这么写
   elif [ "$obj" == "hy2/vmess+ws" ]; then
     if ! checkHy2Alive; then
       cd ${installpath}/serv00-play/singbox
-      chmod +x ./start.sh && ./start.sh 2
-      sleep 2
+      chmod +x ./start.sh && ./start.sh 2 keep
+      sleep 3
       if ! checkHy2Alive; then
         msg="hy2 restarted failure."
       else
