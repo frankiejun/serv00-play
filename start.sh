@@ -554,9 +554,9 @@ generate_config() {
     "disable_expire": false
   },
     "inbounds": [
-    $([[ "$type" == "1.1" || "$type" == "1.2" || "$type" == "3" ]] && cat tempvmess.json)
+    $([[ "$type" == "1.1" || "$type" == "1.2" || "$type" =~ ^3\.[0-9]+$ ]] && cat tempvmess.json)
     $comma
-    $([[ "$type" == "2" || "$type" == "3" ]] && cat temphy2.json)
+    $([[ "$type" == "2" || "$type" =~ ^3\.[0-9]+$ ]] && cat temphy2.json)
    ],
     "outbounds": [
     {
@@ -677,17 +677,18 @@ configSingBox(){
         fi
         
         if [[ "$co" == "1" ]]; then
+          type="3.1"
           read -p "请输入vmess代理端口(tcp): " vmport
           read -p "请输入WSPATH,默认是[serv00]: " wspath
           read -p "请输入ARGO隧道token: " token
           read -p "请输入ARGO隧道的域名: " domain
         else
+          type="3.2"
           read -p "请输入vmess代理端口(tcp): " vmport
           read -p "请输入WSPATH,默认是[serv00]: " wspath
           read -p "请输入优选域名:"  goodDomain
         fi
         # 配置 hy2
-        type="3"
         read -p "请输入hy2代理端口(udp): " hy2_port
         ;;
       *)
