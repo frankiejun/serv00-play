@@ -580,7 +580,7 @@ generate_config() {
         "protocol": "dns",
         "outbound": "dns-out"
       },
-      {
+      { 
         "ip_is_private": true,
         "outbound": "direct"
       },
@@ -607,10 +607,88 @@ EOF
 rm -rf tempvmess.json temphy2.json
 }
 
+#获取端口
+getPort(){
+  local type=$1
+  local opts=$2
+
+  local key="$type|$opts"
+  #echo "key: $key"
+  #port list中查找，如果没有随机分配一个
+  if [[ -n "${port_array["$key"]}" ]]; then
+    # echo "找到list中的port"
+     echo "${port_array["$key"]}"
+  else
+   # echo "devil port add $type random $opts"
+     rt=$(devil port add $type random $opts)
+     if [[ "$rt" =~ .*succesfully.*$ ]]; then
+        loadPort
+         if [[ -n "$port_array["$key"]" ]]; then
+           echo "${port_array["$key"]}"
+         else
+           echo "failed"
+         fi
+     else
+        echo "failed"
+    fi    
+  fi
+}
+
+randomPort(){
+    local type=$1
+    local opts=$2
+    port=""
+    #echo "type:$type, opts:$opts"
+    read -p "是否自动分配${opts}端口($type)？[y/n] [y]:" input
+    input=${input:-y}
+    if [[ "$input" == "y" ]]; then
+        port=$(getPort $type $opts )
+        if [[ "$port" == "failed" ]]; then
+          read -p "自动分配端口失败，请手动输入${opts}端口:" port
+        else
+          green "自动分配${opts}端口为:${port}"
+        fi
+    else
+       read -p "请输入${opts}端口($type):" port
+    fi
+}
+
+declare -A port_array
+#检查是否可以自动分配端口
+loadPort(){
+  output=$(devil port list)
+
+  port_array=()
+  # 解析输出内容
+  index=0
+  while read -r port typ opis; do
+      # 跳过标题行
+      if [[ "$port" == "Port" ]]; then
+          continue
+      fi
+      #echo "port:$port,typ:$typ, opis:$opis"
+      if [[ "$port" == "Brak" ]]; then
+          echo "未分配端口"
+          return 0
+      fi
+      # 将 Typ 和 Opis 合并并存储到数组中
+      if [[ -n "$typ" ]]; then
+          # 如果 Opis 为空则用空字符串代替
+          opis=${opis:-""}
+          combined="${typ}|${opis}"
+          port_array["$combined"]="$port"
+         # echo "port_array 读入 key=$combined, value=$port"
+          ((index++))
+      fi
+  done <<< "$output"
+
+  return 0
+}
 
 configSingBox(){
   cd ${installpath}/serv00-play/singbox
 
+  loadPort
   if [ -e singbox.json ]; then
     red "目前已有配置如下:"
     cat singbox.json
@@ -632,7 +710,6 @@ configSingBox(){
     choices=("3")
   fi
 
-
   #过滤重复
   choices=($(echo "${choices[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
 
@@ -652,20 +729,29 @@ configSingBox(){
         
         if [[ "$co" == "1" ]]; then
           type="1.1"
-          read -p "请输入vmess代理端口(tcp): " vmport
+           randomPort tcp vmess
+           if [[ -n "$port" ]]; then
+              vmport="$port"
+           fi
           read -p "请输入WSPATH,默认是[serv00]: " wspath
           read -p "请输入ARGO隧道token: " token
           read -p "请输入ARGO隧道的域名: " domain
         else
           type="1.2"
-          read -p "请输入vmess代理端口(tcp): " vmport
+           randomPort tcp vmess
+           if [[ -n "$port" ]]; then
+              vmport="$port"
+           fi
           read -p "请输入WSPATH,默认是[serv00]: " wspath
           read -p "请输入优选域名:"  goodDomain
         fi
         ;;
       2)
         type="2"
-        read -p "请输入hy2代理端口(udp): " hy2_port
+        randomPort udp hy2
+        if [[ -n "$port" ]]; then
+          hy2_port="$port"
+        fi
         ;;
       3)
         echo "请选择协议(2选1):"
@@ -680,18 +766,27 @@ configSingBox(){
         
         if [[ "$co" == "1" ]]; then
           type="3.1"
-          read -p "请输入vmess代理端口(tcp): " vmport
+           randomPort tcp vmess
+           if [[ -n "$port" ]]; then
+              vmport="$port"
+           fi
           read -p "请输入WSPATH,默认是[serv00]: " wspath
           read -p "请输入ARGO隧道token: " token
           read -p "请输入ARGO隧道的域名: " domain
         else
           type="3.2"
-          read -p "请输入vmess代理端口(tcp): " vmport
+           randomPort tcp vmess
+           if [[ -n "$port" ]]; then
+              vmport="$port"
+           fi
           read -p "请输入WSPATH,默认是[serv00]: " wspath
           read -p "请输入优选域名:"  goodDomain
         fi
         # 配置 hy2
-        read -p "请输入hy2代理端口(udp): " hy2_port
+        randomPort udp hy2
+        if [[ -n "$port" ]]; then
+          hy2_port="$port"
+        fi
         ;;
       *)
         echo "无效的选择: $choice"
@@ -700,7 +795,13 @@ configSingBox(){
  done
 
   wspath=${wspath:-serv00}
-  uuid=$(uuidgen -r)
+  read -p "是否自动分配UUID? [y/n] [y]:" input
+  input=${input:-y}
+  if [[ "$input" == "y" ]]; then
+     uuid=$(uuidgen -r)
+  else
+     read -p "请输入UUID:" uuid
+  fi
    
    cat > singbox.json <<EOF
   {
@@ -717,7 +818,7 @@ configSingBox(){
 EOF
 
     generate_config
-    yellow "vmess配置完毕!"  
+    yellow "sing-box配置完毕!"  
 
 }
 
