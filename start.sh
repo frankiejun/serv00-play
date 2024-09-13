@@ -48,11 +48,19 @@ install(){
 }
 
 checkvlessAlive(){
-  if  ps  aux | grep app.js | grep -v "grep" ; then
+  if  ps  aux | grep app.js | grep -v "grep" > /dev/null ; then
     return 0
   else
     return 1
   fi  
+}
+
+checknezhaAgentAlive(){
+   if ps aux | grep nezha-agent | grep -v "grep" >/dev/null ; then
+      return 0
+   else
+      return 1
+   fi
 }
 
 checkvmessAlive(){
@@ -90,6 +98,17 @@ checkSingboxAlive(){
   return 1 # 有一个或多个进程不在运行
 
 }
+
+stopNeZhaAgent(){
+  r=$(ps aux | grep nezha-agent | grep -v "grep" | awk '{print $2}' )
+  if [ -z "$r" ]; then
+    return 0
+  else  
+    kill -9 $r
+  fi
+  echo "已停掉nezha-agent!"
+}
+
 
 startVless(){
   cd ${installpath}/serv00-play/vless
@@ -340,29 +359,58 @@ chooseSingbox(){
 createConfigFile(){
    cd ${installpath}/serv00-play/
   
-  echo "请选择要保活的项目:"
+  echo "选择你要保活的项目（可多选，用空格分隔）:"
   echo "1. vless "
   echo "2. sing-box "
-  echo "3. 以上皆是"
-  echo "4. 以上皆不是(暂停所有保活功能)"
-  read -p "请选择:" num
+  echo "3. 哪吒探针 "
+  echo "4. 以上皆是"
+  echo "5. 以上皆不是(暂停所有保活功能)"
   item=()
 
-  if [ "$num" = "1" ]; then
-    item+=("vless")
-  elif [ "$num" = "2" ]; then
-     if ! chooseSingbox; then
-      return 
-     fi
-  elif [ "$num" = "3" ];then
-    item+=("vless")
-    chooseSingbox 
-  elif [ "$num" = "4" ]; then
-    item=()
-  else
-    echo "无效选择"
-    return
+  read -p "请选择: " choices
+  choices=($choices)  
+
+  if [[ "${choices[@]}" =~ "5" && ${#choices[@]} -gt 1 ]]; then
+     red "选择出现了矛盾项，请重新选择!"
+     return 1
   fi
+  if [[ "${choices[@]}" =~ "4" ]]; then
+    choices=("4")
+  fi
+
+  #过滤重复
+  choices=($(echo "${choices[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
+  # 根据选择来询问对应的配置
+  for choice in "${choices[@]}"; do
+    case "$choice" in
+    1) 
+       item+=("vless")
+       ;;
+    2)
+      if ! chooseSingbox; then
+      return 
+      fi
+      ;;
+    3) 
+      item+=("nezha-agent")
+       ;;
+    4)
+      item+=("vless")
+      item+=("nezha-agent")
+      if ! chooseSingbox; then
+        return 
+      fi
+      ;;
+    5)
+       item=()
+       ;;
+    *)
+       echo "无效选择"
+       return 1
+       ;;
+   esac
+done
 
   json_content="{\n"
   json_content+="   \"item\": [\n"
@@ -455,7 +503,7 @@ setConfig(){
     echo "目前已有配置:"
     config_content=$(cat config.json)
     echo $config_content
-    read -p "是否修改? [y/n] [y]" input
+    read -p "是否修改? [y/n] [y]:" input
     input=${input:-y}
     if [ "$input" != "y" ]; then
       return
@@ -741,6 +789,9 @@ configSingBox(){
            randomPort tcp vmess
            if [[ -n "$port" ]]; then
               vmport="$port"
+           else
+              red "未输入端口号"
+              return 1
            fi
           read -p "请输入WSPATH,默认是[serv00]: " wspath
           read -p "请输入优选域名:"  goodDomain
@@ -751,6 +802,9 @@ configSingBox(){
         randomPort udp hy2
         if [[ -n "$port" ]]; then
           hy2_port="$port"
+        else
+          red "未输入端口号"
+          return 1
         fi
         ;;
       3)
@@ -769,7 +823,10 @@ configSingBox(){
            randomPort tcp vmess
            if [[ -n "$port" ]]; then
               vmport="$port"
-           fi
+          else
+              red "未输入端口号"
+              return 1
+          fi
           read -p "请输入WSPATH,默认是[serv00]: " wspath
           read -p "请输入ARGO隧道token: " token
           read -p "请输入ARGO隧道的域名: " domain
@@ -778,7 +835,10 @@ configSingBox(){
            randomPort tcp vmess
            if [[ -n "$port" ]]; then
               vmport="$port"
-           fi
+          else
+              red "未输入端口号"
+              return 1
+          fi
           read -p "请输入WSPATH,默认是[serv00]: " wspath
           read -p "请输入优选域名:"  goodDomain
         fi
@@ -786,7 +846,10 @@ configSingBox(){
         randomPort udp hy2
         if [[ -n "$port" ]]; then
           hy2_port="$port"
-        fi
+        else
+           red "未输入端口号"
+           return 1
+          fi
         ;;
       *)
         echo "无效的选择: $choice"
@@ -1083,11 +1146,76 @@ InitServer(){
   fi
 }
 
+installNeZhaAgent(){
+  local workedir="${installpath}/serv00-play/nezha"
+  if [ ! -e "${workedir}" ]; then
+     mkdir -p "${workedir}"
+  fi
+   cd ${workedir}
+   if [[ ! -e nezha-agent ]]; then
+    echo "正在下载哪吒探针..."
+    local url="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_freebsd_amd64.zip"
+    agentZip="nezha-agent.zip"
+    if ! wget -qO "$agentZip" "$url"; then
+        red "下载哪吒探针失败"
+        return 1
+    fi
+    unzip $agentZip  > /dev/null 2>&1 
+    chmod +x ./nezha-agent
+    green "下载完毕"
+  fi
+  
+  local config="nezha.json"
+  local input="y"
+  if [[ -e "$config" ]]; then
+    echo "哪吒探针配置如下:"
+    cat "$config"
+    read -p "是否修改？ [y/n] [n]:" input
+    input=${input:-n}
+  fi
+  
+  if [[ "$input" == "y" ]]; then
+    read -p "请输入哪吒面板的域名或ip:" nezha_domain
+    read -p "请输入哪吒面板RPC端口(默认 5555):" nezha_port
+    nezha_port=${nezha_port:-5555}
+    read -p "请输入服务器密钥(从哪吒面板中获取):" nezha_pwd
+  else
+    nezha_domain=$(jq -r ".nezha_domain" $config)
+    nezha_port=$(jq -r ".nezha_port" $config)
+    nezha_pwd=$(jq -r ".nezha_pwd" $config)
+  fi
+
+  if [[ -z "$nezha_domain" || -z "$nezha_port" || -z "$nezha_pwd" ]]; then
+      red "以上参数都不能为空！"
+      return 1
+  fi
+
+    cat > $config <<EOF
+    {
+      "nezha_domain": "$nezha_domain",
+      "nezha_port": "$nezha_port",
+      "nezha_pwd": "$nezha_pwd"
+    }
+EOF
+
+
+  if checknezhaAgentAlive; then
+      stopNeZhaAgent
+  fi
+
+  nohup ./nezha-agent  -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" > /dev/null 2>&1 &
+
+  green "哪吒探针成功启动!"
+  
+
+}
+
 setCnTimeZone(){
   read -p "确定设置中国上海时区? [y/n] [y]:" input
   input=${input:-y}
 
   if [ "$input" = "y" ]; then
+    devil binexec on
     if [ -e ~/.profile ]; then
        if ! grep "TZ=Asia/Shanghai" ~/.profile ; then
           echo "插入配置中..."
@@ -1128,7 +1256,7 @@ showMenu(){
   echo "请选择一个选项:"
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
-          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区" "卸载" )
+          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区" "安装/启动/重启哪吒探针" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -1179,7 +1307,10 @@ showMenu(){
         13)
            setCnTimeZone
            ;;
-          14)
+        14)
+           installNeZhaAgent
+           ;;
+        15)
             uninstall
             ;;
           0)

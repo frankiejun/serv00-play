@@ -34,6 +34,14 @@ checkvmessAlive() {
 
 }
 
+checknezhaAgentAlive() {
+  if ps aux | grep nezha-agent | grep -v "grep" >/dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 checkHy2Alive() {
   if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
     return 0
@@ -95,6 +103,37 @@ autoUpdate() {
   fi
 
 }
+
+stopNeZhaAgent() {
+  r=$(ps aux | grep nezha-agent | grep -v "grep" | awk '{print $2}')
+  if [ -z "$r" ]; then
+    return 0
+  else
+    kill -9 $r
+  fi
+  echo "已停掉nezha-agent!"
+}
+
+startNeZhaAgent() {
+  local workedir="${installpath}/serv00-play/nezha"
+  cd ${workedir}
+  local config="nezha.json"
+  if [[ ! -e "$config" ]]; then
+    red "未安装哪吒探针，请先进行安装！"
+    return 1
+  fi
+  nezha_domain=$(jq -r ".nezha_domain" $config)
+  nezha_port=$(jq -r ".nezha_port" $config)
+  nezha_pwd=$(jq -r ".nezha_pwd" $config)
+
+  if checknezhaAgentAlive; then
+    stopNeZhaAgent
+  fi
+
+  nohup ./nezha-agent -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
+
+}
+
 #main
 if [ -n "$autoUp" ]; then
   autoUpdate
@@ -128,6 +167,7 @@ user=$(whoami)
 
 for obj in "${monitor[@]}"; do
   msg=""
+  #   echo "obj= $obj"
   if [ "$obj" == "vless" ]; then
     if ! checkvlessAlive; then
       cd ${installpath}/serv00-play/vless
@@ -143,7 +183,7 @@ for obj in "${monitor[@]}"; do
     if ! checkvmessAlive; then
       cd ${installpath}/serv00-play/singbox
       chmod +x ./start.sh && ./start.sh 1 keep
-      sleep 3
+      sleep 5
       if ! checkvmessAlive; then
         msg="vmess restarted failure."
       else
@@ -155,11 +195,22 @@ for obj in "${monitor[@]}"; do
     if ! checkHy2Alive; then
       cd ${installpath}/serv00-play/singbox
       chmod +x ./start.sh && ./start.sh 2 keep
-      sleep 3
+      sleep 5
       if ! checkHy2Alive; then
         msg="hy2 restarted failure."
       else
         msg="hy2 restarted successfully."
+      fi
+    fi
+  elif [ "$obj" == "nezha-agent" ]; then
+    if ! checknezhaAgentAlive; then
+      cd ${installpath}/serv00-play/nezha
+      startNeZhaAgent
+      sleep 5
+      if ! checknezhaAgentAlive; then
+        msg="nezha-agent restarted failure."
+      else
+        msg="nezha-agent restarted successfully."
       fi
     fi
   else
