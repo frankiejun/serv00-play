@@ -5,9 +5,6 @@
 ## 前置工作
 
 1. 你需要有一个 serv00 帐号
-   ~~2. 预留了 1~3 个端口，vless+vmess+hy2 一共需要 3 个端口， ~~ ``~~
-   ~~ vless/vmess tcp 端口，hy2 udp 端口，3 种协议不必同时绑定，按需绑定端口。~~
-   ~~3. serv00 管理面板 Run your own applications 已设置为 Enable ~~
 2. 无需使用面板，安装 serv00-play 后，按 13 即可
 
 ## 安装说明
