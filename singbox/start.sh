@@ -91,8 +91,8 @@ if [[ "$type" == "1" || "$type" == "1.1" || "$type" == "3.1" || "$type" == "3"  
 fi
 
 #如果只有hy2和vmess+ws
-if [[ "$type" == "1" || "$type" == "3" || "$type" == "1.2" || "$type" == "2" || "$type" == "3.2" ]]; then
-   if [[  "$type" == "1.2" || "$type" == "2" || "$type" == "3.2" ]]; then
+
+if [[ "$type" == "1.2" || "$type" == "2" || "$type" == "3.2" ]]; then
       r=$(ps aux | grep cloudflare | grep -v grep | awk '{print $2}')
       if [ -n "$r" ]; then
         echo $r
@@ -103,7 +103,7 @@ if [[ "$type" == "1" || "$type" == "3" || "$type" == "1.2" || "$type" == "2" || 
     if ! ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
       nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
     fi
-elif [[ "$type" == "3.1" ]]; then
+elif [[ "$type" == "1" || "$type" == "3" || "$type" == "1.1" || "$type" == "3.1" ]]; then
     chmod +x ./serv00sb
     if ! ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
       nohup ./serv00sb run -c ./config.json >/dev/null 2>&1 &
