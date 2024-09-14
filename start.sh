@@ -1203,7 +1203,8 @@ EOF
       stopNeZhaAgent
   fi
 
-  nohup ./nezha-agent  -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" > /dev/null 2>&1 &
+  nohup ./nezha-agent --report-delay 4 --disable-auto-update --disable-force-update -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
+
 
   green "哪吒探针成功启动!"
   
