@@ -1256,7 +1256,7 @@ showMenu(){
   echo "请选择一个选项:"
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
-          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区" "安装/启动/重启哪吒探针" "卸载" )
+          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "安装/启动/重启哪吒探针" "停止探针" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -1311,6 +1311,9 @@ showMenu(){
            installNeZhaAgent
            ;;
         15)
+           stopNeZhaAgent
+           ;;
+        16)
             uninstall
             ;;
           0)
