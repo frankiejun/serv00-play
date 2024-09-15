@@ -357,14 +357,14 @@ chooseSingbox(){
 
 
 createConfigFile(){
-   cd ${installpath}/serv00-play/
   
   echo "选择你要保活的项目（可多选，用空格分隔）:"
   echo "1. vless "
   echo "2. sing-box "
   echo "3. 哪吒探针 "
   echo "4. 以上皆是"
-  echo "5. 以上皆不是(暂停所有保活功能)"
+  echo "5. 暂停所有保活功能"
+  echo "6. 复通所有保活功能(之前有配置的情况下)"
   item=()
 
   read -p "请选择: " choices
@@ -404,6 +404,16 @@ createConfigFile(){
       ;;
     5)
        delCron
+       green "设置完毕!"
+       return 0
+       ;;
+    6)
+       if [[ ! -e config.json ]]; then
+          red "之前未有配置，未能复通!"
+          return 1
+       fi
+       tm=$(jq -r ".chktime" config.json)
+       addCron $tm
        green "设置完毕!"
        return 0
        ;;
