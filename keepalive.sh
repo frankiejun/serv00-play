@@ -125,12 +125,18 @@ startNeZhaAgent() {
   nezha_domain=$(jq -r ".nezha_domain" $config)
   nezha_port=$(jq -r ".nezha_port" $config)
   nezha_pwd=$(jq -r ".nezha_pwd" $config)
+  tls=$(jq -r ".tls" $config)
 
   if checknezhaAgentAlive; then
     stopNeZhaAgent
   fi
 
-  nohup ./nezha-agent -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
+  local args="--report-delay 4 --disable-auto-update --disable-force-update "
+  if [[ "$tls" == "y" ]]; then
+    args="${args} --tls "
+  fi
+
+  nohup ./nezha-agent ${args} -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
 
 }
 

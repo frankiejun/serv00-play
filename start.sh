@@ -1179,6 +1179,8 @@ installNeZhaAgent(){
     read -p "请输入哪吒面板RPC端口(默认 5555):" nezha_port
     nezha_port=${nezha_port:-5555}
     read -p "请输入服务器密钥(从哪吒面板中获取):" nezha_pwd
+    read -p "是否启用针对 gRPC 端口的 SSL/TLS加密 (--tls)，需要请按 [y]，默认是不需要，不理解用户可回车跳过: " tls
+    tls=${tls:-"N"}
   else
     nezha_domain=$(jq -r ".nezha_domain" $config)
     nezha_port=$(jq -r ".nezha_port" $config)
@@ -1194,16 +1196,21 @@ installNeZhaAgent(){
     {
       "nezha_domain": "$nezha_domain",
       "nezha_port": "$nezha_port",
-      "nezha_pwd": "$nezha_pwd"
+      "nezha_pwd": "$nezha_pwd",
+      "tls": "$tls"
     }
 EOF
 
+  local args="--report-delay 4 --disable-auto-update --disable-force-update "
+  if [[ "$tls" == "y" ]]; then
+     args="${args} --tls "
+  fi
 
   if checknezhaAgentAlive; then
       stopNeZhaAgent
   fi
 
-  nohup ./nezha-agent --report-delay 4 --disable-auto-update --disable-force-update -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
+  nohup ./nezha-agent ${args} -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
 
 
   green "哪吒探针成功启动!"
