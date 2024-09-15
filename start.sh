@@ -403,7 +403,9 @@ createConfigFile(){
       fi
       ;;
     5)
-       item=()
+       delCron
+       green "设置完毕!"
+       return 0
        ;;
     *)
        echo "无效选择"
