@@ -197,7 +197,7 @@ for obj in "${monitor[@]}"; do
       fi
     fi
     #hy2和vmess+ws都只需要启动serv00sb，所以可以这么写
-  elif [ "$obj" == "hy2/vmess+ws" ]; then
+  elif [[ "$obj" == "hy2/vmess+ws" || "$obj" == "hy2" ]]; then
     if ! checkHy2Alive; then
       cd ${installpath}/serv00-play/singbox
       chmod +x ./start.sh && ./start.sh 2 keep
