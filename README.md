@@ -56,7 +56,7 @@ PS. 保进程逻辑已挪到 serv00 上做，actions 只做保号，降低访问
 
 ## 安装说明视频
 
-安装使用说明及使用密码可以看[这里](https://youtu.be/nmb2F6uBKsg)
+安装使用说明及使用密码可以看[这里](https://youtu.be/bpYV8r85F-8)
 
 临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)
 
