@@ -1,12 +1,12 @@
 #!/bin/bash
 
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
+RED='\033[0;91m'
+GREEN='\033[0;92m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
+CYAN='\033[0;96m'
 WHITE='\033[0;37m'
 RESET='\033[0m'
 yellow(){
@@ -1233,28 +1233,15 @@ EOF
 setCnTimeZone(){
   read -p "确定设置中国上海时区? [y/n] [y]:" input
   input=${input:-y}
+  
+  cd ${installpath}
+  config_file="$HOME/.profile"
 
   if [ "$input" = "y" ]; then
     devil binexec on
     if [ -e ~/.profile ]; then
-       if ! grep "TZ=Asia/Shanghai" ~/.profile ; then
-          echo "插入配置中..."
-          echo "export TZ=Asia/Shanghai" >> ~/.profile
-          echo "export EDITOR=vim" >>  ~/.profile
-          echo "export VISUAL=vim" >> ~/.profile
-          echo "alias l='ls -ltr'" >> ~/.profile
-          echo "alias pp='ps aux'" >> ~/.profile
-       else
-          green "已经配置，无需重复配置!"
-          return
-       fi
-    else
-        echo "生成配置中..."
-        echo "export TZ=Asia/Shanghai" > ~/.profile
-        echo "export EDITOR=vim" >>  ~/.profile
-        echo "export VISUAL=vim" >> ~/.profile
-        echo "alias l='ls -ltr'" >> ~/.profile
-        echo "alias pp='ps aux'" >> ~/.profile
+        cat .profile | perl ./serv00-play/mkprofile.pl > tmp_profile
+        mv -f tmp_profile .profile
     fi
     read -p "$(yellow "设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:" )" input
     input=${input:-y}
@@ -1264,6 +1251,69 @@ setCnTimeZone(){
     fi
   fi
   
+}
+
+setColorWord(){
+  cd ${installpath}
+  # 定义颜色编码
+  bright_black="\033[1;90m"
+  bright_red="\033[1;91m"
+  bright_green="\033[1;92m"
+  bright_yellow="\033[1;93m"
+  bright_blue="\033[1;94m"
+  bright_magenta="\033[1;95m"
+  bright_cyan="\033[1;96m"
+  bright_white="\033[1;97m"
+  reset="\033[0m"
+
+  # 显示颜色选项列表，并使用颜色着色
+  echo -e "请选择一个颜色来输出你的签名:"
+  echo -e "1) ${bright_black}明亮黑色${reset}"
+  echo -e "2) ${bright_red}明亮红色${reset}"
+  echo -e "3) ${bright_green}明亮绿色${reset}"
+  echo -e "4) ${bright_yellow}明亮黄色${reset}"
+  echo -e "5) ${bright_blue}明亮蓝色${reset}"
+  echo -e "6) ${bright_magenta}明亮紫色${reset}"
+  echo -e "7) ${bright_cyan}明亮青色${reset}"
+  echo -e "8) ${bright_white}明亮白色${reset}"
+
+  # 读取用户输入的选择
+  read -p "请输入你的选择(1-8): " color_choice
+
+  read -p "请输入你的大名(仅支持ascii字符):" name
+
+  # 根据用户的选择设置颜色
+  case $color_choice in
+      1) color_code="90" ;; # 明亮黑色
+      2) color_code="91" ;; # 明亮红色
+      3) color_code="92" ;; # 明亮绿色
+      4) color_code="93" ;; # 明亮黄色
+      5) color_code="94" ;; # 明亮蓝色
+      6) color_code="95" ;; # 明亮紫色
+      7) color_code="96" ;; # 明亮青色
+      8) color_code="97" ;; # 明亮白色
+      *) echo "无效选择，使用默认颜色 (明亮白色)"; color_code="97" ;;
+  esac
+  
+  if grep "chAngEYourName" .profile > /dev/null ; then
+     cat .profile | grep -v "chAngEYourName" > tmp_profile
+     echo "echo -e \"\033[1;${color_code}m\$(figlet \"${name}\")\033[0m\"  #chAngEYourName" >> tmp_profile
+     mv -f tmp_profile .profile
+  else
+    echo "echo -e \"\033[1;${color_code}m\$(figlet \"${name}\")\033[0m\" #chAngEYourName" >> .profile
+  fi
+
+  read -p  "设置完毕! 重新登录看效果? [y/n] [y]:" input
+  input=${input:-y}
+  if [[ "$input" == "y" ]]; then
+    kill -9 $PPID
+  fi
+
+}
+
+showIP(){
+  myip="$(curl -s ifconfig.me)"
+  green "本机IP: $myip"
 }
 
 showMenu(){
@@ -1276,7 +1326,7 @@ showMenu(){
   echo "请选择一个选项:"
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
-          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "安装/启动/重启哪吒探针" "停止探针" "卸载" )
+          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "安装/启动/重启哪吒探针" "停止探针" "设置彩色开机字样" "显示本机IP" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -1334,6 +1384,12 @@ showMenu(){
            stopNeZhaAgent
            ;;
         16)
+           setColorWord
+           ;;
+        17)
+           showIP
+           ;;
+        18)
             uninstall
             ;;
           0)
