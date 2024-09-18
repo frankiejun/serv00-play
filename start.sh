@@ -723,11 +723,11 @@ loadPort(){
   index=0
   while read -r port typ opis; do
       # 跳过标题行
-      if [[ "$port" == "Port" ]]; then
+      if [[ "$typ" == "Type" ]]; then
           continue
       fi
       #echo "port:$port,typ:$typ, opis:$opis"
-      if [[ "$port" == "Brak" ]]; then
+      if [[ "$port" == "Brak" || "$port" == "No" ]]; then
           echo "未分配端口"
           return 0
       fi
@@ -742,6 +742,23 @@ loadPort(){
       fi
   done <<< "$output"
 
+  return 0
+}
+
+cleanPort(){
+  output=$(devil port list)
+  while read -r port typ opis; do
+      # 跳过标题行
+      if [[ "$typ" == "Type" ]]; then
+          continue
+      fi
+      if [[ "$port" == "Brak" || "$port" == "No"  ]]; then
+          return 0
+      fi
+      if [[ -n "$typ" ]]; then
+         devil port del $typ $port  > /dev/null 2>&1
+      fi
+  done <<< "$output"
   return 0
 }
 
@@ -1153,7 +1170,9 @@ InitServer(){
     else
       rm -rf ~/* ~/.* 2>/dev/null
     fi
+    cleanPort
     yellow "初始化完毕"
+    
    exit 0
   fi
 }
