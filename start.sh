@@ -1235,14 +1235,12 @@ setCnTimeZone(){
   input=${input:-y}
   
   cd ${installpath}
-  config_file="$HOME/.profile"
-
   if [ "$input" = "y" ]; then
     devil binexec on
-    if [ -e ~/.profile ]; then
-        cat .profile | perl ./serv00-play/mkprofile.pl > tmp_profile
-        mv -f tmp_profile .profile
-    fi
+    touch .profile
+    cat .profile | perl ./serv00-play/mkprofile.pl > tmp_profile
+    mv -f tmp_profile .profile
+    
     read -p "$(yellow "设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:" )" input
     input=${input:-y}
 
