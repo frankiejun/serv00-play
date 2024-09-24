@@ -51,6 +51,14 @@ checkHy2Alive() {
 
 }
 
+checkMtgAlive() {
+  if ps aux | grep mtg | grep -v "grep" >/dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 addCron() {
   local tm=$1
   crontab -l | grep -v "keepalive" >mycron
@@ -140,6 +148,36 @@ startNeZhaAgent() {
 
 }
 
+startMtg() {
+  cd ${installpath}/serv00-play/dmtg
+
+  config="config.json"
+
+  secret=$(jq -r ".secret" $config)
+  port=$(jq -r ".port" $config)
+  cmd="nohup ./mtg simple-run -n 1.1.1.1 -t 30s -a 1MB 0.0.0.0:$port $secret -c 8192 --prefer-ip=\"prefer-ipv6\" >/dev/null 2>&1 &"
+  eval "$cmd"
+  sleep 3
+  if checkMtgAlive; then
+    green "启动成功"
+  else
+    echo "启动失败，请检查进程"
+  fi
+
+}
+
+stopMtg() {
+  r=$(ps aux | grep mtg | grep -v "grep" | awk '{print $2}')
+  if [ -z "$r" ]; then
+    echo "没有运行!"
+    return
+  else
+    kill -9 $r
+  fi
+  echo "已停掉mtproto!"
+
+}
+
 #main
 if [ -n "$autoUp" ]; then
   autoUpdate
@@ -217,6 +255,17 @@ for obj in "${monitor[@]}"; do
         msg="nezha-agent restarted failure."
       else
         msg="nezha-agent restarted successfully."
+      fi
+    fi
+  elif [ "$obj" == "mtg" ]; then
+    if ! checkMtgAlive; then
+      cd ${installpath}/serv00-play/dmtg
+      startMtg
+      sleep 5
+      if ! checkMtgAlive; then
+        msg="mtproto restarted failure."
+      else
+        msg="mtproto restarted successfully."
       fi
     fi
   else
