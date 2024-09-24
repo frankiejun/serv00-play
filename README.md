@@ -1,4 +1,4 @@
-# serv00 上的一些应用，包括 vless/argo+vmess/vmess+ws/hy2/哪吒探针 等, 自动化部署、批量保号、进程防杀、消息推送
+# serv00 上的一些应用，包括 vless/argo+vmess/vmess+ws/hy2/socks5/mtproto/哪吒探针 等, 自动化部署、批量保号、进程防杀、消息推送
 
 💖 如果你在用这个项目，请给我打个 star，好让我知道有多少人从这个项目中受益。
 

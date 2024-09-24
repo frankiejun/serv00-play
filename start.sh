@@ -99,6 +99,14 @@ checkSingboxAlive(){
 
 }
 
+checkMtgAlive(){
+   if ps aux | grep mtg | grep -v "grep" >/dev/null ; then
+      return 0
+   else
+      return 1
+   fi
+}
+
 stopNeZhaAgent(){
   r=$(ps aux | grep nezha-agent | grep -v "grep" | awk '{print $2}' )
   if [ -z "$r" ]; then
@@ -189,7 +197,7 @@ configVless(){
   if [ -f "vless.json" ]; then
     echo "配置文件内容:"
      cat vless.json
-    read -p "配置文件已存在，是否还要重新配置 (y/n) [y]?" input
+    read -p "配置文件已存在，是否还要重新配置? (y/n) [y]:" input
     input=${input:-y}
     if [ "$input" != "y" ]; then
       return
@@ -231,7 +239,7 @@ configVmess(){
   if [ -f ./vmess.json ]; then
     echo "配置文件内容:"
     cat ./vmess.json
-    read -p "配置文件已存在，是否还要重新配置 (y/n) [y]?" input
+    read -p "配置文件已存在，是否还要重新配置? (y/n) [y]:" input
     input=${input:-y}
     if [ "$input" != "y" ]; then
       return
@@ -291,7 +299,7 @@ writeWX(){
   has_fd=$(echo "$config_content" | jq 'has("wxsendkey")')
   if [ "$has_fd" == "true" ]; then
      wx_sendkey=$(echo "$config_content" | jq -r ".wxsendkey")
-     read -p "已有 WXSENDKEY ($wx_sendkey), 是否修改? [y/n] [n]" input
+     read -p "已有 WXSENDKEY ($wx_sendkey), 是否修改? [y/n] [n]:" input
      input=${input:-n}
     if [ "$input" == "y" ]; then
       read -p "请输入 WXSENDKEY:" wx_sendkey
@@ -308,7 +316,7 @@ writeTG(){
   has_fd=$(echo "$config_content" | jq 'has("telegram_token")')
   if [ "$has_fd" == "true" ]; then
     tg_token=$(echo "$config_content" | jq -r ".telegram_token")
-    read -p "已有 TELEGRAM_TOKEN ($tg_token), 是否修改? [y/n] [n]" input
+    read -p "已有 TELEGRAM_TOKEN ($tg_token), 是否修改? [y/n] [n]:" input
     input=${input:-n}
     if [ "$input" == "y" ]; then
        read -p "请输入 TELEGRAM_TOKEN:" tg_token
@@ -322,7 +330,7 @@ writeTG(){
   has_fd=$(echo "$config_content" | jq 'has("telegram_userid")')
   if [ "$has_fd" == "true" ]; then
      tg_userid=$(echo "$config_content" | jq -r ".telegram_userid")
-     read -p "已有 TELEGRAM_USERID ($tg_userid), 是否修改? [y/n] [n]" input
+     read -p "已有 TELEGRAM_USERID ($tg_userid), 是否修改? [y/n] [n]:" input
      input=${input:-n}
      if [ "$input" == "y" ]; then
        read -p "请输入 TELEGRAM_USERID:" tg_userid
@@ -336,8 +344,8 @@ writeTG(){
 
 chooseSingbox(){
    echo "保活sing-box中哪个项目: "
-   echo " 1.hy2/vmess+ws "
-   echo " 2.vmess "
+   echo " 1.hy2/vmess+ws/socks5 "
+   echo " 2.argo+vmess "
    echo " 3.all "
    read -p "请选择:" input
   
@@ -355,6 +363,21 @@ chooseSingbox(){
 
 }
 
+setConfig(){
+  cd ${installpath}/serv00-play/
+
+  if [ -f config.json ]; then
+    echo "目前已有配置:"
+    config_content=$(cat config.json)
+    echo $config_content
+    read -p "是否修改? [y/n] [y]:" input
+    input=${input:-y}
+    if [ "$input" != "y" ]; then
+      return
+    fi
+  fi
+  createConfigFile
+}
 
 createConfigFile(){
   
@@ -362,7 +385,7 @@ createConfigFile(){
   echo "1. vless "
   echo "2. sing-box "
   echo "3. 哪吒探针 "
-  echo "4. 以上皆是"
+  echo "4. mtproto代理"
   echo "5. 暂停所有保活功能"
   echo "6. 复通所有保活功能(之前有配置的情况下)"
   item=()
@@ -373,9 +396,6 @@ createConfigFile(){
   if [[ "${choices[@]}" =~ "5" && ${#choices[@]} -gt 1 ]]; then
      red "选择出现了矛盾项，请重新选择!"
      return 1
-  fi
-  if [[ "${choices[@]}" =~ "4" ]]; then
-    choices=("4")
   fi
 
   #过滤重复
@@ -396,11 +416,7 @@ createConfigFile(){
       item+=("nezha-agent")
        ;;
     4)
-      item+=("vless")
-      item+=("nezha-agent")
-      if ! chooseSingbox; then
-        return 
-      fi
+      item+=("mtg")
       ;;
     5)
        delCron
@@ -508,21 +524,7 @@ addCron(){
 
 }
 
-setConfig(){
-  cd ${installpath}/serv00-play/
 
-  if [ -f config.json ]; then
-    echo "目前已有配置:"
-    config_content=$(cat config.json)
-    echo $config_content
-    read -p "是否修改? [y/n] [y]:" input
-    input=${input:-y}
-    if [ "$input" != "y" ]; then
-      return
-    fi
-  fi
-  createConfigFile
-}
 
 make_vmess_config() {
   cat >tempvmess.json <<EOF
@@ -570,8 +572,28 @@ make_hy2_config() {
 EOF
 }
 
+make_socks5_config(){
+  cat > tmpsocks5.json <<EOF
+  {
+      "type": "socks",
+      "tag": "socks-in",
+
+       "listen": "::",
+       "listen_port": $socks5_port,
+
+        "users": [
+        {
+          "username": "$username",
+          "password": "$password"
+        }
+        ]
+    }
+EOF
+}
+
 generate_config() {
    comma=""
+   comma0=""
   if [[ ! -e "private.key" || ! -e "cert.pem" ]]; then
     openssl ecparam -genkey -name prime256v1 -out "private.key"
     openssl req -new -x509 -days 3650 -key "private.key" -out "cert.pem" -subj "/CN=www.bing.com"
@@ -580,10 +602,26 @@ generate_config() {
     make_vmess_config
   elif [ "$type" = "2" ]; then
     make_hy2_config
+  elif [ "$type" = "1.3" ]; then
+    make_socks5_config
+  elif [[ "$type" =~ ^(2.4|2.5)$ ]]; then
+    make_vmess_config
+    comma0=","
+    make_socks5_config
+  elif [[ "$type" =~ ^(3.1|3.2)$ ]]; then
+    make_vmess_config
+    comma=","
+    make_hy2_config
+  elif [[ "$type" == "3.3" ]]; then
+    make_hy2_config
+    make_socks5_config
+    comma0=","
   else
+    make_socks5_config
     make_vmess_config
     make_hy2_config
     comma=","
+    comma0=","
   fi
 
   cat >config.json <<EOF
@@ -616,9 +654,11 @@ generate_config() {
     "disable_expire": false
   },
     "inbounds": [
-    $([[ "$type" == "1.1" || "$type" == "1.2" || "$type" =~ ^3\.[0-9]+$ ]] && cat tempvmess.json)
+    $([[ "$type" =~ ^(1.3|3.3|2.4|2.5|3.3|4.4|4.5)$ ]] && cat tmpsocks5.json)
+    $comma0
+    $([[ "$type" == "1.1" || "$type" == "1.2" || "$type" =~ ^(2.4|2.5|3.1|3.2|4.4|4.5)$  ]] && cat tempvmess.json)
     $comma
-    $([[ "$type" == "2" || "$type" =~ ^3\.[0-9]+$ ]] && cat temphy2.json)
+    $([[ "$type" == "2" || "$type" =~ ^(3|4)\.[0-9]+$ ]] && cat temphy2.json)
    ],
     "outbounds": [
     {
@@ -664,7 +704,7 @@ generate_config() {
    }
 }
 EOF
-rm -rf tempvmess.json temphy2.json
+rm -rf tempvmess.json temphy2.json tmpsocks5.json
 }
 
 #获取端口
@@ -778,18 +818,19 @@ configSingBox(){
   echo "选择你要配置的项目（可多选，用空格分隔）:"
   echo "1. vmess"
   echo "2. hy2"
-  echo "3. all"
+  echo "3. socks5"
+  echo "4. all"
 
   read -p "请选择: " choices
   choices=($choices)  
 
-  if [[ "${choices[@]}" =~ "3" ]]; then
-    choices=("3")
+  if [[ "${choices[@]}" =~ "4" ]]; then
+    choices=("4")
   fi
 
   #过滤重复
   choices=($(echo "${choices[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
-
+  type="0"
   # 根据选择来询问对应的配置
   for choice in "${choices[@]}"; do
     case "$choice" in
@@ -805,7 +846,7 @@ configSingBox(){
         fi
         
         if [[ "$co" == "1" ]]; then
-          type="1.1"
+          type=$(echo "$type + 1.1" | bc)
            randomPort tcp vmess
            if [[ -n "$port" ]]; then
               vmport="$port"
@@ -814,7 +855,7 @@ configSingBox(){
           read -p "请输入ARGO隧道token: " token
           read -p "请输入ARGO隧道的域名: " domain
         else
-          type="1.2"
+          type=$(echo "$type + 1.2" | bc)
            randomPort tcp vmess
            if [[ -n "$port" ]]; then
               vmport="$port"
@@ -827,7 +868,7 @@ configSingBox(){
         fi
         ;;
       2)
-        type="2"
+        type=$(echo "$type + 2" | bc)
         randomPort udp hy2
         if [[ -n "$port" ]]; then
           hy2_port="$port"
@@ -837,6 +878,18 @@ configSingBox(){
         fi
         ;;
       3)
+         type=$(echo "$type + 1.3" | bc)
+         randomPort tcp socks5
+          if [[ -n "$port" ]]; then
+          socks5_port="$port"
+        else
+          red "未输入端口号"
+          return 1
+        fi
+        read -p "请输入socks5用户名:" username
+        read -p "请输入socks5密码:" password
+        ;;
+      4)
         echo "请选择协议(2选1):"
         echo "1. argo+vmess"
         echo "2. vmess+ws "
@@ -878,7 +931,18 @@ configSingBox(){
         else
            red "未输入端口号"
            return 1
-          fi
+        fi
+        #配置socks5
+        type=$(echo "$type + 1.3" | bc)
+        randomPort tcp socks5
+        if [[ -n "$port" ]]; then
+          socks5_port="$port"
+        else
+          red "未输入端口号"
+          return 1
+        fi
+        read -p "请输入socks5用户名:" username
+        read -p "请输入socks5密码:" password
         ;;
       *)
         echo "无效的选择: $choice"
@@ -904,7 +968,10 @@ configSingBox(){
      "WSPATH": "${wspath}",
      "ARGO_AUTH": "${token:-null}",
      "ARGO_DOMAIN": "${domain:-null}",
-     "GOOD_DOMAIN": "${goodDomain:-null}"
+     "GOOD_DOMAIN": "${goodDomain:-null}",
+     "SOCKS5_PORT": "${socks5_port:-null}",
+     "SOCKS5_USER": "${username:-null}",
+     "SOCKS5_PASS": "${password:-null}"
   }
 
 EOF
@@ -1140,7 +1207,7 @@ ImageRecovery(){
 }
 
 uninstall(){
-  read -p "确定卸载吗? [y/n] [n]" input
+  read -p "确定卸载吗? [y/n] [n]:" input
   input=${input:-n}
 
   if [ "$input" == "y" ]; then
@@ -1333,6 +1400,131 @@ showIP(){
   green "本机IP: $myip"
 }
 
+
+installMtg(){
+   if [ ! -e "mtg" ]; then 
+    read -p "请输入使用密码:" password
+    if ! checkDownload "mtg"; then
+      return 1
+    fi
+   fi
+
+   chmod +x ./mtg 
+   if [ -e "config.json" ]; then 
+      echo "已存在配置如下:"
+      cat config.json
+      read -p "是否重新生成配置? [y/n] [n]:" input
+      input=${input:-n}
+      if [ "$input" == "n" ]; then
+         return 0
+      fi
+   fi
+    
+   #自动生成密钥
+   host=$(hostname)
+   secret=$(./mtg generate-secret --hex $host )
+   
+   randomPort tcp mtg
+  if [[ -n "$port" ]]; then
+      mtpport="$port"
+  fi
+
+   cat > config.json <<EOF
+   {
+      "secret": "$secret",
+      "port": "$mtpport"
+   }
+EOF
+   yellow "安装完成!"
+}
+
+startMtg(){
+  cd ${installpath}/serv00-play
+
+  if [ ! -e "dmtg" ]; then
+     ehco "未安装mtproto，请先行安装配置!"
+     return 1
+  fi
+  cd dmtg
+  config="config.json"
+   if [ ! -e $config ]; then
+      red "未安装mtproto，请先行安装配置!"
+      return 1
+   fi
+
+   if checkMtgAlive; then
+     echo "已在运行,请勿重复启动"
+     return 0
+   fi
+
+   read -p "是否需要日志？: [y/n] [n]:" input
+   input=${input:-n}
+
+   if [ "$input" == "y" ]; then
+      green "日志文件名称为:mtg.log"
+      logfile="-d >mtg.log"
+   else
+       logfile=" >/dev/null "
+   fi
+
+   host="$(hostname | cut -d '.' -f 1)"
+
+   secret=$(jq -r ".secret" $config)
+   port=$(jq -r ".port" $config)
+
+   cmd="nohup ./mtg simple-run -n 1.1.1.1 -t 30s -a 1MB 0.0.0.0:${port} ${secret} -c 8192 --prefer-ip=\"prefer-ipv6\" ${logfile} 2>&1 &"
+   eval "$cmd"
+   sleep 3
+   if checkMtgAlive; then
+    mtproto="https://t.me/proxy?server=${host}.serv00.com&port=${port}&secret=${secret}"
+     echo "$mtproto"
+     green "启动成功"
+   else 
+     echo "启动失败，请检查进程"
+   fi
+
+}
+
+stopMtg(){
+  r=$(ps aux | grep  mtg | grep -v "grep" | awk '{print $2}' )
+  if [ -z "$r" ]; then
+    echo "没有运行!"
+    return
+  else  
+    kill -9 $r
+  fi
+  echo "已停掉mtproto!"
+
+}
+
+mtprotoServ(){
+   cd ${installpath}/serv00-play
+
+   if [ ! -e "dmtg" ]; then
+      mkdir -p dmtg
+   fi
+   cd dmtg
+   
+   echo "1. 安装Mtproto代理"
+   echo "2. 启动Mtproto代理"
+   echo "3. 停止Mtproto代理"
+   read -p "请选择:" input
+
+   if [[ "$input" == "1" ]]; then
+      installMtg
+   elif [[ "$input" == "2" ]]; then
+      startMtg
+   elif [[ "$input" == "3" ]]; then
+      stopMtg
+   else
+      red "无效输入"
+      return 1
+   fi
+   
+}
+
+
+
 showMenu(){
   art_wrod=$(figlet "serv00-play")
   echo "<------------------------------------------------------------------>"
@@ -1343,7 +1535,8 @@ showMenu(){
   echo "请选择一个选项:"
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
-          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "安装/启动/重启哪吒探针" "停止探针" "设置彩色开机字样" "显示本机IP" "卸载" )
+          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "安装/启动/重启哪吒探针" "停止探针" "设置彩色开机字样" "显示本机IP" \
+          "Mtproto代理" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -1407,6 +1600,9 @@ showMenu(){
            showIP
            ;;
         18)
+           mtprotoServ
+           ;; 
+        19)
             uninstall
             ;;
           0)
