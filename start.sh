@@ -179,7 +179,6 @@ stopVmess(){
 }
 
 createVlesConfig(){
-      #read -p "请输入UUID:" uuid
       read -p "请输入PORT:" port
 
       cat > vless.json <<EOF
@@ -383,17 +382,18 @@ createConfigFile(){
   
   echo "选择你要保活的项目（可多选，用空格分隔）:"
   echo "1. vless "
-  echo "2. sing-box "
+  echo "2. sing-box(包含hy2，vmess，socks5) "
   echo "3. 哪吒探针 "
   echo "4. mtproto代理"
-  echo "5. 暂停所有保活功能"
-  echo "6. 复通所有保活功能(之前有配置的情况下)"
+  echo "5. alist"
+  echo "6. 暂停所有保活功能"
+  echo "7. 复通所有保活功能(之前有配置的情况下)"
   item=()
 
   read -p "请选择: " choices
   choices=($choices)  
 
-  if [[ "${choices[@]}" =~ "5" && ${#choices[@]} -gt 1 ]]; then
+  if [[ "${choices[@]}" =~ "6" && ${#choices[@]} -gt 1 ]]; then
      red "选择出现了矛盾项，请重新选择!"
      return 1
   fi
@@ -419,11 +419,14 @@ createConfigFile(){
       item+=("mtg")
       ;;
     5)
+      item+=("alist")
+      ;;
+    6)
        delCron
        green "设置完毕!"
        return 0
        ;;
-    6)
+    7)
        if [[ ! -e config.json ]]; then
           red "之前未有配置，未能复通!"
           return 1
@@ -950,15 +953,18 @@ configSingBox(){
     esac
  done
 
-  wspath=${wspath:-serv00}
-  read -p "是否自动分配UUID? [y/n] [y]:" input
-  input=${input:-y}
-  if [[ "$input" == "y" ]]; then
-     uuid=$(uuidgen -r)
-  else
-     read -p "请输入UUID:" uuid
+  
+  if [[ "$type" != "1.3" ]]; then
+    wspath=${wspath:-serv00}
+    read -p "是否自动分配UUID? [y/n] [y]:" input
+    input=${input:-y}
+    if [[ "$input" == "y" ]]; then
+      uuid=$(uuidgen -r)
+    else
+      read -p "请输入UUID:" uuid
+    fi
   fi
-   
+
    cat > singbox.json <<EOF
   {
      "TYPE": "$type",
@@ -988,7 +994,7 @@ checkDownload(){
   if [[ ! -e $file ]] || [[ $(file $file) == *"text"* ]]; then
     echo "正在下载 $file..."
     url="https://gfg.fkj.pp.ua/app/serv00/$filegz?pwd=$password"
-    curl -L -sS --max-time 10 -o $filegz "$url"
+    curl -L -sS --max-time 20 -o $filegz "$url"
 
     if file $filegz | grep "text" ; then
         echo "使用密码不正确!!!"
@@ -1505,9 +1511,9 @@ mtprotoServ(){
    fi
    cd dmtg
    
-   echo "1. 安装Mtproto代理"
-   echo "2. 启动Mtproto代理"
-   echo "3. 停止Mtproto代理"
+   echo "1. 安装mtproto代理"
+   echo "2. 启动mtproto代理"
+   echo "3. 停止mtproto代理"
    read -p "请选择:" input
 
    if [[ "$input" == "1" ]]; then
@@ -1523,7 +1529,290 @@ mtprotoServ(){
    
 }
 
+extract_user_and_password() {
+    output=$1
 
+    username=$(echo "$output" | grep "username:" | sed 's/.*username: //')
+    password=$(echo "$output" | grep "password:" | sed 's/.*password: //')
+    echo "生成用户密码如下，请谨记! 只会出现一次:"
+    green "Username: $username"
+    green "Password: $password"
+}
+
+update_http_port() {
+   cd data || return 1
+    local port=$1
+    local config_file="config.json"
+
+    if [ -z "$port" ]; then
+        echo "Error: No port number provided."
+        return 1
+    fi
+    # 使用 jq 来更新配置文件中的 http_port
+    jq --argjson new_port "$port" '.scheme.http_port = $new_port' "$config_file" > tmp.$$.json && mv tmp.$$.json "$config_file"
+
+    echo "配置文件处理完毕."
+
+}
+
+installAlist(){
+  cd ${installpath}/serv00-play/ || return 1
+  user="$(whoami)"
+  domain="alist.$user.serv00.net"
+  webpath="${installpath}/domains/$domain/public_html/"
+
+   if [[ -d "$webpath/data" && -e "$webpath/alist" ]]; then 
+      echo "已安装，请勿重复安装。"
+      return 
+   else 
+      if [ ! -e "alist" ]; then
+        mkdir -p  alist
+      fi
+      cd "alist" || return 1
+      if [ ! -e "alist" ]; then
+        read -p "请输入使用密码:" password
+        if ! checkDownload "alist"; then
+          return 1
+        fi
+      fi
+   fi
+   
+  randomPort tcp alist
+  if [[ -n "$port" ]]; then
+      alist_port="$port"
+  fi
+  echo "正在安装alist，请等待..."
+  resp=$(devil www add $domain proxy localhost $alist_port)
+
+  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
+     red "申请域名$domain 失败！"
+     return 1
+  fi
+  webIp=$(devil vhost list public | grep web2 | awk '{print $1}')
+  resp=$(devil ssl www add $webIp le le $domain)
+  
+  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
+     red "申请ssl证书失败！"
+     return 1
+  fi     
+  cp ./alist ${installpath}/domains/$domain/public_html/ || return 1
+  cd  ${installpath}/domains/$domain/public_html/ || return 1
+  rt=$(chmod +x ./alist && ./alist admin random 2>&1 )
+  extract_user_and_password "$rt"
+  update_http_port "$alist_port"
+
+  green "安装完毕"
+  
+}
+
+checkAlistAlive(){
+   if ps aux | grep alist | grep -v "grep" >/dev/null ; then
+      return 0
+   else
+      return 1
+   fi
+}
+
+startAlist(){
+  user="$(whoami)"
+  domain="alist.$user.serv00.net"
+  webpath="${installpath}/domains/$domain/public_html/"
+
+  if [[ -d "$webpath/data" && -e "$webpath/alist" ]]; then 
+    cd $webpath
+    echo "正在启动alist..."
+    if  checkAlistAlive; then
+      echo "alist已启动，请勿重复启动!"
+    else
+      nohup ./alist server > /dev/null 2>&1 &
+      sleep 3
+      if ! checkAlistAlive; then
+        red "启动失败，请检查!"
+        return 1
+      else
+        green "启动成功!"
+        green "alist管理地址: https://$domain"
+      fi
+    fi
+  else
+    red "请先行安装再启动!"
+    return     
+  fi
+
+}
+
+stopAlist(){
+  r=$(ps aux | grep alist| grep -v "grep" | awk '{print $2}' )
+  if [ -z "$r" ]; then
+    return 0
+  else  
+    kill -9 $r
+  fi
+  echo "已停掉alist!"
+}
+
+uninstallAlist(){
+  read -p "确定卸载alist吗? [y/n] [n]:" input
+  input=${input:-n}
+  if [[ "$input" == "y" ]]; then
+    stopAlist
+    user="$(whoami)"
+    domain="alist.$user.serv00.net"
+    webIp=$(devil vhost list public | grep web2 | awk '{print $1}')
+    resp=$(devil ssl www del $webIp $domain)
+    resp=$(devil www del $domain --remove)
+    green "卸载完毕!"
+  fi
+  
+}
+
+resetAdminPass(){
+  user="$(whoami)"
+  domain="alist.$user.serv00.net"
+  webpath="${installpath}/domains/$domain/public_html/"
+
+  cd $webpath
+  output=$(./alist admin random)
+  extract_user_and_password "$output"
+}
+
+alistServ(){
+   echo "1. 安装部署alist "
+   echo "2. 启动alist"
+   echo "3. 停掉alist"
+   echo "4. 重置admin密码"
+   echo "5. 卸载alist"
+   read -p "请选择:" input
+
+   if [[ "$input" == "1" ]]; then
+     installAlist
+   elif [[ "$input" == "2" ]]; then
+      startAlist
+   elif [[ "$input" == "3" ]]; then
+      stopAlist
+   elif [[ "$input" == "4" ]]; then
+      resetAdminPass
+   elif [[ "$input" == "5" ]]; then
+      uninstallAlist
+   else
+      ehco "无效输入!"
+      return 
+   fi
+}
+
+declare -a indexPorts
+loadIndexPorts(){
+  output=$(devil port list)
+
+  indexPorts=()
+  # 解析输出内容
+  index=0
+  while read -r port typ opis; do
+      # 跳过标题行
+      if [[ "$typ" == "Type" ]]; then
+          continue
+      fi
+      #echo "port:$port,typ:$typ, opis:$opis"
+      if [[ "$port" == "Brak" || "$port" == "No" ]]; then
+          echo "未分配端口"
+          return 0
+      fi
+
+      if [[ -n "$port" ]]; then
+        opis=${opis:-""} 
+        indexPorts[$index]="$port|$typ|$opis"
+        ((index++)) 
+      fi
+  done <<< "$output"
+
+
+}
+
+printIndexPorts() {
+  local i=1
+  echo "  Port   | Type  |  Description"
+  for entry in "${indexPorts[@]}"; do
+    # 使用 | 作为分隔符拆分 port、typ 和 opis
+
+    IFS='|' read -r port typ opis <<< "$entry"
+    echo "${i}. $port |  $typ | $opis"
+    ((i++))
+  done
+}
+
+
+delPortMenu(){
+  loadIndexPorts
+
+  if [[ ${#indexPorts[@]} -gt 0 ]]; then
+     printIndexPorts
+     read -p "请选择要删除的端口记录编号(输入0删除所有端口记录, 回车返回):" number
+     number=${number:-99}
+     
+     if [[ $number -eq 99 ]]; then
+        return
+     elif [[ $number -gt 3 || $number -lt 0 ]]; then
+       echo "非法输入!"
+       return 
+     elif [[ $number -eq 0 ]]; then
+       cleanPort
+     else 
+         IFS='|' read -r port typ opis <<< $indexPorts[$number]
+         devil port del $typ $port  > /dev/null 2>&1
+     fi
+      echo "删除完毕!"
+  else
+     red "未有分配任何端口!"
+  fi
+        
+}
+
+addPortMenu(){
+  echo "选择端口类型:"
+  echo "1. tcp"
+  echo "2. udp"
+  read -p "请选择:" co
+
+  if [[ "$co" != "1" && "$co" != "2" ]]; then
+    red "非法输入"
+    return 
+  fi
+  local type=""
+  if [[ "$co" == "1" ]]; then
+     type="tcp"
+  else
+     type="udp"
+  fi
+  read -p "请输入端口备注(如hy2，vmess，用于脚本自动获取端口):" opts
+  local port=$(getPort $type $opts )
+  if [[ "$port" == "failed" ]]; then
+    red "分配端口失败,请重新操作!"
+  else
+    green "分配出来的端口是:$port"
+  fi
+}
+
+portServ(){
+  echo "1. 删除某条端口记录"
+  echo "2. 增加一条端口记录"
+  echo "3. 返回主菜单"
+
+  read -p "请选择:" input
+  input=${input:-3}
+
+  if [[ "$input" == "3" ]]; then
+     return 
+  elif [[ "$input" == "1" ]]; then
+     delPortMenu 
+  elif [[ "$input" == "2" ]]; then
+     addPortMenu
+  else
+     echo "无效输入"
+     return 
+  fi
+  
+
+}
 
 showMenu(){
   art_wrod=$(figlet "serv00-play")
@@ -1536,7 +1825,7 @@ showMenu(){
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
           "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "安装/启动/重启哪吒探针" "停止探针" "设置彩色开机字样" "显示本机IP" \
-          "Mtproto代理" "卸载" )
+          "mtproto代理" "alist管理" "端口管理" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -1572,7 +1861,7 @@ showMenu(){
           8)
             startSingBox
             ;;
-        9)
+         9)
             stopSingBox
             ;;
         10)
@@ -1603,9 +1892,18 @@ showMenu(){
            mtprotoServ
            ;; 
         19)
+<<<<<<< HEAD
+=======
+           alistServ
+           ;;
+        20)
+           portServ
+           ;;
+        21)
+>>>>>>> dev
             uninstall
             ;;
-          0)
+        0)
               echo "退出"
               exit 0
               ;;

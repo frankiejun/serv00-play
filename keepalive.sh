@@ -159,22 +159,45 @@ startMtg() {
   eval "$cmd"
   sleep 3
   if checkMtgAlive; then
-    green "启动成功"
+    echo "启动成功"
   else
     echo "启动失败，请检查进程"
   fi
 
 }
 
-stopMtg() {
-  r=$(ps aux | grep mtg | grep -v "grep" | awk '{print $2}')
-  if [ -z "$r" ]; then
-    echo "没有运行!"
-    return
+checkAlistAlive() {
+  if ps aux | grep alist | grep -v "grep" >/dev/null; then
+    return 0
   else
-    kill -9 $r
+    return 1
   fi
-  echo "已停掉mtproto!"
+}
+
+startAlist() {
+  user="$(whoami)"
+  domain="alist.$user.serv00.net"
+  webpath="${installpath}/domains/$domain/public_html/"
+
+  if [[ -d "$webpath/data" && -e "$webpath/alist" ]]; then
+    cd $webpath
+    echo "正在启动alist..."
+    if checkAlistAlive; then
+      echo "alist已启动，请勿重复启动!"
+    else
+      nohup ./alist server >/dev/null 2>&1 &
+      sleep 3
+      if ! checkAlistAlive; then
+        red "启动失败，请检查!"
+        return 1
+      else
+        echo "启动成功!"
+      fi
+    fi
+  else
+    red "请先行安装再启动!"
+    return
+  fi
 
 }
 
@@ -266,6 +289,17 @@ for obj in "${monitor[@]}"; do
         msg="mtproto restarted failure."
       else
         msg="mtproto restarted successfully."
+      fi
+    fi
+  elif [ "$obj" == "alist" ]; then
+    if ! checkAlistAlive; then
+      cd ${installpath}/serv00-play/dmtg
+      startAlist
+      sleep 5
+      if ! checkAlistAlive; then
+        msg="alist restarted failure."
+      else
+        msg="alist restarted successfully."
       fi
     fi
   else
