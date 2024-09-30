@@ -1679,7 +1679,7 @@ resetAdminPass(){
   webpath="${installpath}/domains/$domain/public_html/"
 
   cd $webpath
-  output=$(./alist admin random)
+  output=$(./alist admin random 2>&1)
   extract_user_and_password "$output"
 }
 
