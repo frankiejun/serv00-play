@@ -1662,8 +1662,10 @@ uninstallAlist(){
   if [[ "$input" == "y" ]]; then
     stopAlist
     user="$(whoami)"
+    host="$(hostname | cut -d '.' -f 1)"
+    sno=${host/s/web}
     domain="alist.$user.serv00.net"
-    webIp=$(devil vhost list public | grep web2 | awk '{print $1}')
+    webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
     resp=$(devil ssl www del $webIp $domain)
     resp=$(devil www del $domain --remove)
     green "卸载完毕!"
