@@ -1429,7 +1429,7 @@ installMtg(){
    #自动生成密钥
    host=$(hostname)
    secret=$(./mtg generate-secret --hex $host )
-   
+   loadPort
    randomPort tcp mtg
   if [[ -n "$port" ]]; then
       mtpport="$port"
@@ -1559,6 +1559,8 @@ installAlist(){
   cd ${installpath}/serv00-play/ || return 1
   user="$(whoami)"
   domain="alist.$user.serv00.net"
+  host="$(hostname | cut -d '.' -f 1)"
+  sno=${host/s/web}
   webpath="${installpath}/domains/$domain/public_html/"
 
    if [[ -d "$webpath/data" && -e "$webpath/alist" ]]; then 
@@ -1576,7 +1578,7 @@ installAlist(){
         fi
       fi
    fi
-   
+  loadPort 
   randomPort tcp alist
   if [[ -n "$port" ]]; then
       alist_port="$port"
@@ -1585,14 +1587,17 @@ installAlist(){
   resp=$(devil www add $domain proxy localhost $alist_port)
 
   if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
-     red "申请域名$domain 失败！"
-     return 1
+     if [[ ! "$resp" =~ "This domain already exists" ]]; then 
+        red "申请域名$domain 失败！"
+        return 1
+     fi
   fi
-  webIp=$(devil vhost list public | grep web2 | awk '{print $1}')
+  webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
   resp=$(devil ssl www add $webIp le le $domain)
   
   if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
      red "申请ssl证书失败！"
+     resp=$(devil www del $domain --remove)
      return 1
   fi     
   cp ./alist ${installpath}/domains/$domain/public_html/ || return 1
@@ -1709,7 +1714,7 @@ loadIndexPorts(){
   index=0
   while read -r port typ opis; do
       # 跳过标题行
-      if [[ "$typ" == "Type" ]]; then
+      if [[ "$typ" == "Typ" ]]; then
           continue
       fi
       #echo "port:$port,typ:$typ, opis:$opis"
@@ -1757,7 +1762,8 @@ delPortMenu(){
      elif [[ $number -eq 0 ]]; then
        cleanPort
      else 
-         IFS='|' read -r port typ opis <<< $indexPorts[$number]
+         idx=$((number-1))
+         IFS='|' read -r port typ opis <<< ${indexPorts[$idx]}
          devil port del $typ $port  > /dev/null 2>&1
      fi
       echo "删除完毕!"
@@ -1783,6 +1789,7 @@ addPortMenu(){
   else
      type="udp"
   fi
+  loadPort
   read -p "请输入端口备注(如hy2，vmess，用于脚本自动获取端口):" opts
   local port=$(getPort $type $opts )
   if [[ "$port" == "failed" ]]; then
@@ -1892,15 +1899,12 @@ showMenu(){
            mtprotoServ
            ;; 
         19)
-<<<<<<< HEAD
-=======
            alistServ
            ;;
         20)
            portServ
            ;;
         21)
->>>>>>> dev
             uninstall
             ;;
         0)
