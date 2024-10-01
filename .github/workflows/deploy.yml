@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          node-version: '20'
 
       - name: 安装依赖
         run: |
