@@ -766,11 +766,11 @@ loadPort(){
   index=0
   while read -r port typ opis; do
       # 跳过标题行
-      if [[ "$typ" == "Type" ]]; then
+      if [[ "$port" =~ "Port" ]]; then
           continue
       fi
       #echo "port:$port,typ:$typ, opis:$opis"
-      if [[ "$port" == "Brak" || "$port" == "No" ]]; then
+      if [[ "$port" =~ "Brak" || "$port" == "No" ]]; then
           echo "未分配端口"
           return 0
       fi
@@ -1597,6 +1597,7 @@ installAlist(){
   
   if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
      red "申请ssl证书失败！"
+     echo "resp:$resp"
      resp=$(devil www del $domain --remove)
      return 1
   fi     
@@ -1716,11 +1717,11 @@ loadIndexPorts(){
   index=0
   while read -r port typ opis; do
       # 跳过标题行
-      if [[ "$typ" == "Typ" ]]; then
+      if [[ "$port" =~ "Port" ]]; then
           continue
       fi
       #echo "port:$port,typ:$typ, opis:$opis"
-      if [[ "$port" == "Brak" || "$port" == "No" ]]; then
+      if [[ "$port" =~ "Brak" || "$port" =~ "No" ]]; then
           echo "未分配端口"
           return 0
       fi
