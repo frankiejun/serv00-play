@@ -1596,10 +1596,13 @@ installAlist(){
   resp=$(devil ssl www add $webIp le le $domain)
   
   if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
-     red "申请ssl证书失败！"
-     echo "resp:$resp"
-     resp=$(devil www del $domain --remove)
-     return 1
+     red "申请ssl证书失败！$resp"
+     read -p "是否可以不要证书使用,后面自己再申请证书？ [y/n] [y]:" input
+     input=${input:-y}
+     if [[ "$input" != "y" ]]; then
+        resp=$(devil www del $domain --remove)
+        return 1
+     fi
   fi     
   cp ./alist ${installpath}/domains/$domain/public_html/ || return 1
   cd  ${installpath}/domains/$domain/public_html/ || return 1
