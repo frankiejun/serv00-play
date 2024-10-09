@@ -1824,6 +1824,142 @@ portServ(){
      return 
   fi
   
+}
+
+cronLE(){
+  echo "请输入定时运行的时间间隔(分钟):" tm
+  tm=${tm:-""}
+  if [[ -z "$tm" ]]; then
+     red "时间不能为空"
+     return 1
+  fi   
+  crontab -l > le.cron
+  echo "*/$tm * * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >> le.cron
+  crontab le.cron
+  rm -rf le.cron
+  echo "设置完毕!"
+}
+
+applyLE(){
+  workpath="${installpath}/serv00-play/ssl"
+  cd "$workpath"
+
+  read -p "请输入待申请证书的域名:" domain
+  domain=${domain:-""}
+  if [[ -z "$domain" ]]; then
+     red "域名不能为空"
+     return 1
+  fi
+
+  inCron="0"
+  if crontab -l | grep -F "$domain" > /dev/null 2>&1 ; then
+     inCron="1"
+     echo "该域名已配置定时申请证书，是否删除定时配置记录，改为手动申请？[y/n] [n]:" input
+     input=${input:-n}
+
+     if [[ "$input" == "y" ]]; then
+        crontab -l | grep -v "$domain" | crontab -
+     fi
+  fi
+  host="$(hostname | cut -d '.' -f 1)"
+  sno=${host/s/web}
+  webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
+  resp=$(devil ssl www add $webIp le le $domain)
+
+  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
+     red "申请ssl证书失败！$resp"
+     if [[ "$inCron" == "0" ]]; then
+        read -p "是否配置定时任务自动申请SSL证书？ [y/n] [y]:" input
+        input=${input:-y}
+        if [[ "$input" == "y" ]]; then
+            cronLE
+        fi
+     fi
+  else
+     green "证书申请成功!"
+  fi    
+}
+
+selfSSL(){
+  workpath="${installpath}/serv00-play/ssl"
+  cd "$workpath"
+
+  read -p "请输入待申请证书的域名:" self_domain
+  self_domain=${self_domain:-""}
+  if [[ -z "$self_domain" ]]; then
+     red "域名不能为空"
+     return 1
+  fi
+  
+  echo "正在生成证书..."
+
+  cat > openssl.cnf <<EOF
+    [req]
+    distinguished_name = req_distinguished_name
+    req_extensions = req_ext
+    x509_extensions = v3_ca # For self-signed certs
+    prompt = no
+
+    [req_distinguished_name]
+    C = US
+    ST = ca
+    L = ca
+    O = ca
+    OU = ca
+    CN = $self_domain
+
+    [req_ext]
+    subjectAltName = @alt_names
+
+    [v3_ca]
+    subjectAltName = @alt_names
+
+    [alt_names]
+    DNS.1 = $self_domain
+
+EOF
+  openssl req -new -newkey rsa:2048 -nodes -keyout _private.key -x509 -days 3650 -out _cert.crt -config openssl.cnf -extensions v3_ca > /dev/null 2>&1 
+  if [ $? -ne 0 ]; then
+    echo "生成证书失败!"
+    return 1
+  fi
+
+  echo "已生成证书:"
+  green "_private.key"
+  green "_cert.crt"
+
+  echo "正在导入证书.."
+  host="$(hostname | cut -d '.' -f 1)"
+  sno=${host/s/web}
+  webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
+  resp=$(devil ssl www add "$webIp" ./_cert.crt ./_private.key "$self_domain" )
+
+  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
+     echo "导入证书失败:$resp"
+     return 1
+  fi
+
+  echo "导入成功！"
+  
+}
+
+domainSSLServ(){
+   echo "1. 抢域名证书"
+   echo "2. 配置自签证书"
+   echo "3. 返回主菜单"
+  read -p "请选择:" input
+  input=${input:-3}
+
+   if [[ "$input" == "3" ]]; then
+     return 
+  elif [[ "$input" == "1" ]]; then
+     applyLE 
+  elif [[ "$input" == "2" ]]; then
+     selfSSL
+  else
+     echo "无效输入"
+     return 
+  fi
 
 }
 
@@ -1838,7 +1974,7 @@ showMenu(){
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
           "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "安装/启动/重启哪吒探针" "停止探针" "设置彩色开机字样" "显示本机IP" \
-          "mtproto代理" "alist管理" "端口管理" "卸载" )
+          "mtproto代理" "alist管理" "端口管理" "域名证书管理" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -1911,6 +2047,9 @@ showMenu(){
            portServ
            ;;
         21)
+           domainSSLServ
+           ;;
+        22)
             uninstall
             ;;
         0)
