@@ -1827,14 +1827,18 @@ portServ(){
 }
 
 cronLE(){
-  echo "请输入定时运行的时间间隔(分钟):" tm
+  read -p "请输入定时运行的时间间隔(小时[1-23]):" tm
   tm=${tm:-""}
   if [[ -z "$tm" ]]; then
      red "时间不能为空"
      return 1
   fi   
+  if [[ $tm -lt 1 || $tm -gt 23 ]]; then
+    red "输入非法!"
+    return 1  
+  fi
   crontab -l > le.cron
-  echo "*/$tm * * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >> le.cron
+  echo "0 */$tm * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >> le.cron
   crontab le.cron
   rm -rf le.cron
   echo "设置完毕!"
