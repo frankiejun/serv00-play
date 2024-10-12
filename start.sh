@@ -1706,7 +1706,7 @@ alistServ(){
    elif [[ "$input" == "5" ]]; then
       uninstallAlist
    else
-      ehco "无效输入!"
+      echo "无效输入!"
       return 
    fi
 }
