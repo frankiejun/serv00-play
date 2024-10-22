@@ -710,6 +710,10 @@ EOF
 rm -rf tempvmess.json temphy2.json tmpsocks5.json
 }
 
+isServ00(){
+  return $(hostname | grep 'serv00' )
+}
+
 #获取端口
 getPort(){
   local type=$1
@@ -724,7 +728,7 @@ getPort(){
   else
    # echo "devil port add $type random $opts"
      rt=$(devil port add $type random $opts)
-     if [[ "$rt" =~ .*succesfully.*$ ]]; then
+     if [[ "$rt" =~ .*succesfully.*$ || "$rt" =~ .*Ok.*$ ]]; then
         loadPort
          if [[ -n "$port_array["$key"]" ]]; then
            echo "${port_array["$key"]}"
@@ -1558,7 +1562,11 @@ update_http_port() {
 installAlist(){
   cd ${installpath}/serv00-play/ || return 1
   user="$(whoami)"
-  domain="alist.$user.serv00.net"
+  if isServ00 ; then
+    domain="alist.$user.serv00.net"
+  else
+    domain="alist.$user.ct8.pl"
+  fi
   host="$(hostname | cut -d '.' -f 1)"
   sno=${host/s/web}
   webpath="${installpath}/domains/$domain/public_html/"
@@ -1585,8 +1593,8 @@ installAlist(){
   fi
   echo "正在安装alist，请等待..."
   resp=$(devil www add $domain proxy localhost $alist_port)
-
-  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
+  echo "resp:$resp"
+  if [[ ! "$resp" =~ .*succesfully.*$  && ! "$resp" =~ .*Ok.*$ ]]; then 
      if [[ ! "$resp" =~ "This domain already exists" ]]; then 
         red "申请域名$domain 失败！"
         return 1
@@ -1595,7 +1603,7 @@ installAlist(){
   webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
   resp=$(devil ssl www add $webIp le le $domain)
   
-  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
+  if [[ ! "$resp" =~ .*succesfully.*$ && ! "$resp" =~ .*Ok.*$ ]]; then 
      red "申请ssl证书失败！$resp"
      read -p "是否可以不要证书使用,后面自己再申请证书？ [y/n] [y]:" input
      input=${input:-y}
@@ -1624,7 +1632,11 @@ checkAlistAlive(){
 
 startAlist(){
   user="$(whoami)"
-  domain="alist.$user.serv00.net"
+  if isServ00 ; then
+    domain="alist.$user.serv00.net"
+  else
+    domain="alist.$user.ct8.pl"
+  fi
   webpath="${installpath}/domains/$domain/public_html/"
 
   if [[ -d "$webpath/data" && -e "$webpath/alist" ]]; then 
@@ -1668,7 +1680,11 @@ uninstallAlist(){
     user="$(whoami)"
     host="$(hostname | cut -d '.' -f 1)"
     sno=${host/s/web}
+  if isServ00 ; then
     domain="alist.$user.serv00.net"
+  else
+    domain="alist.$user.ct8.pl"
+  fi
     webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
     resp=$(devil ssl www del $webIp $domain)
     resp=$(devil www del $domain --remove)
@@ -1679,7 +1695,11 @@ uninstallAlist(){
 
 resetAdminPass(){
   user="$(whoami)"
-  domain="alist.$user.serv00.net"
+  if isServ00 ; then
+    domain="alist.$user.serv00.net"
+  else
+    domain="alist.$user.ct8.pl"
+  fi
   webpath="${installpath}/domains/$domain/public_html/"
 
   cd $webpath
