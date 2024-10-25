@@ -173,10 +173,17 @@ checkAlistAlive() {
     return 1
   fi
 }
+isServ00() {
+  return $(hostname | grep 'serv00')
+}
 
 startAlist() {
   user="$(whoami)"
-  domain="alist.$user.serv00.net"
+  if isServ00; then
+    domain="alist.$user.serv00.net"
+  else
+    domain="alist.$user.ct8.pl"
+  fi
   webpath="${installpath}/domains/$domain/public_html/"
 
   if [[ -d "$webpath/data" && -e "$webpath/alist" ]]; then
@@ -293,7 +300,6 @@ for obj in "${monitor[@]}"; do
     fi
   elif [ "$obj" == "alist" ]; then
     if ! checkAlistAlive; then
-      cd ${installpath}/serv00-play/dmtg
       startAlist
       sleep 5
       if ! checkAlistAlive; then
