@@ -711,7 +711,7 @@ rm -rf tempvmess.json temphy2.json tmpsocks5.json
 }
 
 isServ00(){
-  return $(hostname | grep 'serv00' )
+    [[ $(hostname) == *"serv00"* ]]
 }
 
 #获取端口
