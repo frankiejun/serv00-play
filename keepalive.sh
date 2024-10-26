@@ -174,7 +174,7 @@ checkAlistAlive() {
   fi
 }
 isServ00() {
-  return $(hostname | grep 'serv00')
+  [[ $(hostname) == *"serv00"* ]]
 }
 
 startAlist() {
