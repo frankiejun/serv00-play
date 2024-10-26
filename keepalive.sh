@@ -316,4 +316,6 @@ for obj in "${monitor[@]}"; do
 
 done
 
-checkResetCron
+if [ ${#monitor[@]} -gt 0 ]; then
+  checkResetCron
+fi
