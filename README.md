@@ -73,7 +73,7 @@ _捐赠将是对我最大的支持，它将激励我持续的创新和创作。_
 
 ## 项目鸣谢
 
-[qwer-search](https://github.com/qwer-search) 、[k0baya](https://github.com/k0baya) 、[eooce](https://github.com/eooce)
+[qwer-search](https://github.com/qwer-search) 、[k0baya](https://github.com/k0baya) 、[eooce](https://github.com/eooce)、[nrootconauto](https://github.com/nrootconauto/MrChrootBSD)
 
 ## 免责声明
 

@@ -69,6 +69,7 @@ export_list() {
   ARGOVMESS="{ \"v\": \"2\", \"ps\": \"$vmessname\", \"add\": \"www.visa.com.hk\", \"port\": \"443\", \"id\": \"${UUID}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${ARGO_DOMAIN}\", \"path\": \"/${WSPATH}?ed=2048\", \"tls\": \"tls\", \"sni\": \"${ARGO_DOMAIN}\", \"alpn\": \"\" }"
   hysteria2="hysteria2://$UUID@$myip:$HY2PORT/?sni=www.bing.com&alpn=h3&insecure=1#$hy2name"
   socks5="https://t.me/socks?server=${host}.serv00.com&port=${SOCKS5_PORT}&user=${SOCKS5_USER}&pass=${SOCKS5_PASS}"
+  proxyip="proxyip://${SOCKS5_USER}:${SOCKS5_PASS}@${host}.serv00.com:${SOCKS5_PORT}"
  
 
   cat >list <<EOF
@@ -80,6 +81,7 @@ $([[ "$type" =~ ^(1.1|3.1|4.4|2.4)$ ]] && echo "vmess://$(echo -n ${ARGOVMESS} |
 $([[ "$type" =~ ^(1.2|3.2|4.5|2.5)$  ]] && echo "vmess://$(echo -n ${VMESSWS} | base64 | tr -d '\n')")
 $([[ "$type" =~ ^(2|3.3|3.1|3.2|4.4|4.5)$ ]] && echo $hysteria2)
 $([[ "$type" =~ ^(1.3|2.4|2.5|3.3|4.4|4.5)$ ]] && echo $socks5)
+$([[ "$type" =~ ^(1.3|2.4|2.5|3.3|4.4|4.5)$ ]] && echo $proxyip)
 
 EOF
   cat list
