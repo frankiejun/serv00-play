@@ -1987,6 +1987,109 @@ domainSSLServ(){
 
 }
 
+installRoot(){
+   workpath="${installpath}/serv00-play/root"
+   if [[ ! -e $workpath ]]; then
+      mkdir -p "$workpath"
+   fi
+
+    if [[ -e "$workpath/MrChrootBSD/mrchroot" ]]; then
+      echo "检测到已经安装mrchroot，请勿重复安装!"
+      return 
+    fi
+   echo "正在安装..."
+   cd $workpath
+   git clone https://github.com/nrootconauto/MrChrootBSD.git  
+   cd MrChrootBSD
+   wget https://download.freebsd.org/releases/amd64/14.1-RELEASE/base.txz
+   wget https://download.freebsd.org/releases/amd64/14.1-RELEASE/lib32.txz #Needed for gdb for some reason
+   mkdir chroot
+   cd chroot 
+   tar xvf ../base.txz
+   tar xvf ../lib32.txz
+   cd ..
+   cmake .
+   make
+   cp /etc/resolv.conf chroot/etc
+   if screen -S rootsession -dm ./mrchroot chroot /bin/sh; then
+       echo "安装成功!"
+   else
+       echo "安装失败!"
+   fi
+
+}
+
+enterRoot(){
+    workpath="${installpath}/serv00-play/root/MrChrootBSD"
+    if [[ ! -e "$workpath/mrchroot" ]]; then
+      red "未安装mrchroot，请先行安装!"
+      return 
+    fi
+      
+    SESSION_NAME="rootsession"
+    if screen -list | grep -q "\.$SESSION_NAME"; then
+        echo "进入root..."
+        screen -r "$SESSION_NAME"
+    else
+        echo "未发现root进程，尝试创建井进入root..."
+        cd $workpath
+        if screen -S $SESSION_NAME -dm ./mrchroot chroot /bin/sh; then
+          echo "创建成功!"
+          screen -r "$SESSION_NAME"
+        else
+          echo "创建失败!"
+        fi
+
+    fi
+}
+
+uninstallRoot(){
+  SESSION_NAME="rootsession"
+
+  if [[ ! -e "${installpath}/serv00-play/root" ]]; then
+     echo "未安装root，无需卸载!"
+     return
+  fi
+
+  read -p "确定卸载root吗？[y/n] [n]:" input
+  input=${input:-n}
+
+  if [[ "$input" == "y" ]]; then
+
+    if screen -list | grep -q "\.${SESSION_NAME}"; then
+      screen -S "$SESSION_NAME" -X quit
+    fi
+
+    workpath="${installpath}/serv00-play/"
+    cd $workpath
+    rm -rf ./root
+  fi
+  
+  green "卸载完毕!"
+}
+
+rootServ(){
+  echo "1. 安装root"
+  echo "2. 进入root"
+  echo "3. 卸载root"
+  echo "4. 返回主菜单"
+  read -p "请选择:" input
+  input=${input:-3}
+
+    if [[ "$input" == "4" ]]; then
+     return 
+  elif [[ "$input" == "1" ]]; then
+     installRoot
+  elif [[ "$input" == "2" ]]; then
+     enterRoot
+  elif [[ "$input" == "3" ]]; then
+     uninstallRoot
+  else
+     echo "无效输入"
+     return 
+  fi
+}
+
 showMenu(){
   art_wrod=$(figlet "serv00-play")
   echo "<------------------------------------------------------------------>"
@@ -1998,7 +2101,7 @@ showMenu(){
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
           "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "安装/启动/重启哪吒探针" "停止探针" "设置彩色开机字样" "显示本机IP" \
-          "mtproto代理" "alist管理" "端口管理" "域名证书管理" "卸载" )
+          "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -2074,6 +2177,9 @@ showMenu(){
            domainSSLServ
            ;;
         22)
+           rootServ
+           ;;
+        23)
             uninstall
             ;;
         0)
@@ -2084,6 +2190,7 @@ showMenu(){
               echo "无效的选项 "
               ;;
       esac
+      
   done
 
 }
