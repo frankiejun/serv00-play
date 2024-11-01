@@ -1,6 +1,7 @@
 启动服务的默认第一次密码是:  fkjyyds666
 
 输入 ss 回撤  可以进行快捷命令
+伪 root 安装 bash  pkg install bash
 
 
 
