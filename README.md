@@ -1,5 +1,7 @@
 启动服务的默认第一次密码是:  fkjyyds666
 
+输入 ss 回撤  可以进行快捷命令
+
 
 
 # serv00 上的一些应用，包括 vless/argo+vmess/vmess+ws/hy2/socks5/mtproto/alist/哪吒探针 等, 自动化部署、批量保号、进程防杀、消息推送
