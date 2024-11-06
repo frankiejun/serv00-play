@@ -514,7 +514,7 @@ cleanCron(){
 
 delCron(){
     crontab -l | grep -v "keepalive" > mycron
-    crontab mycron
+    crontab mycron > /dev/null 2>&1 
     rm mycron
 }
 
@@ -522,11 +522,48 @@ addCron(){
   local tm=$1
   crontab -l | grep -v "keepalive" > mycron
   echo "*/$tm * * * * bash ${installpath}/serv00-play/keepalive.sh > /dev/null 2>&1 " >> mycron
-  crontab mycron
+  crontab mycron > /dev/null 2>&1 
   rm mycron
 
 }
 
+get_ip() {
+  # 获取主机名称，例如：s2.serv00.com
+  local hostname=$(hostname)
+
+  # 提取主机名称中的数字，例如：2
+  local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
+
+  # 构造主机名称的数组
+  local hosts=("cache${host_number}.serv00.com" "web${host_number}.serv00.com" "$hostname")
+
+  # 初始化最终 IP 变量
+  local final_ip=""
+
+  # 遍历主机名称数组
+  for host in "${hosts[@]}"; do
+    # 获取 API 返回的数据
+    local response=$(curl -s "https://ss.botai.us.kg/api/getip?host=$host")
+
+    # 检查返回的结果是否包含 "not found"
+    if [[ "$response" =~ "not found" ]]; then
+      continue
+    fi
+
+    # 提取第一个字段作为 IP，并检查第二个字段是否为 "Accessible"
+    local ip=$(echo "$response" | awk -F "|" '{ if ($2 == "Accessible") print $1 }')
+
+    # 如果找到了 "Accessible"，返回 IP
+    if [[ -n "$ip" ]]; then
+      echo "$ip"
+      return
+    fi
+
+    final_ip=$ip
+  done
+
+  echo "$final_ip"
+}
 
 
 make_vmess_config() {
@@ -555,7 +592,7 @@ make_hy2_config() {
    {
        "tag": "hysteria-in",
        "type": "hysteria2",
-       "listen": "::",
+       "listen": "$hy2_ip",
        "listen_port": $hy2_port,
        "users": [
          {
@@ -883,6 +920,13 @@ configSingBox(){
           red "未输入端口号"
           return 1
         fi
+        echo "自动选择未封ip..."
+        hy2_ip=$(get_ip)
+        if [[ -n "$hy2_ip" ]]; then
+           green "选中未封ip为 $hy2_ip"
+        else
+           red "未能找到未封IP,保持默认值！"
+        fi
         ;;
       3)
          type=$(echo "$type + 1.3" | bc)
@@ -939,6 +983,13 @@ configSingBox(){
            red "未输入端口号"
            return 1
         fi
+        echo "自动选择未封ip..."
+        hy2_ip=$(get_ip)
+        if [[ -n "$hy2_ip" ]]; then
+           green "选中未封ip为 $hy2_ip"
+        else
+           red "未能找到未封IP,保持默认值！"
+        fi
         #配置socks5
         type=$(echo "$type + 1.3" | bc)
         randomPort tcp socks5
@@ -973,6 +1024,7 @@ configSingBox(){
   {
      "TYPE": "$type",
      "VMPORT": ${vmport:-null},
+     "HY2IP": "${hy2_ip:-'::'}",
      "HY2PORT": ${hy2_port:-null},
      "UUID": "$uuid",
      "WSPATH": "${wspath}",
@@ -997,11 +1049,11 @@ checkDownload(){
     #检查并下载核心程序
   if [[ ! -e $file ]] || [[ $(file $file) == *"text"* ]]; then
     echo "正在下载 $file..."
-    url="https://gfg.fkj.pp.ua/app/serv00/$filegz?pwd=$password"
+    url="https://gfg.fkj.pp.ua/app/serv00/$filegz?pwd=fkjyyds666"
     curl -L -sS --max-time 20 -o $filegz "$url"
 
     if file $filegz | grep "text" ; then
-        echo "使用密码不正确!!!"
+        echo "无法正确下载!!!"
         rm -f $filegz
         return 1
     fi
@@ -1013,7 +1065,7 @@ checkDownload(){
     fi
     #下载失败
     if [ ! -e $file ]; then
-       echo "无法下载核心程序，可能使用密码不对或者网络问题，请检查！"
+       echo "无法下载核心程序，可能网络问题，请检查！"
        return  1
     fi
     chmod +x $file
@@ -1027,9 +1079,9 @@ startSingBox(){
   cd ${installpath}/serv00-play/singbox
 
   
-  if [[ ! -e ${installpath}/serv00-play/singbox/serv00sb ]] || [[ ! -e ${installpath}/serv00-play/singbox/cloudflared ]]; then
-    read -p "请输入使用密码:" password
-  fi
+  # if [[ ! -e ${installpath}/serv00-play/singbox/serv00sb ]] || [[ ! -e ${installpath}/serv00-play/singbox/cloudflared ]]; then
+  #   read -p "请输入使用密码:" password
+  # fi
   
   if ! checkDownload "serv00sb"; then
      return 
@@ -1413,7 +1465,7 @@ showIP(){
 
 installMtg(){
    if [ ! -e "mtg" ]; then 
-    read -p "请输入使用密码:" password
+    # read -p "请输入使用密码:" password
     if ! checkDownload "mtg"; then
       return 1
     fi
@@ -1580,7 +1632,7 @@ installAlist(){
       fi
       cd "alist" || return 1
       if [ ! -e "alist" ]; then
-        read -p "请输入使用密码:" password
+        # read -p "请输入使用密码:" password
         if ! checkDownload "alist"; then
           return 1
         fi
@@ -1859,7 +1911,7 @@ cronLE(){
   fi
   crontab -l > le.cron
   echo "0 */$tm * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >> le.cron
-  crontab le.cron
+  crontab le.cron > /dev/null 2>&1 
   rm -rf le.cron
   echo "设置完毕!"
 }
@@ -2090,6 +2142,31 @@ rootServ(){
   fi
 }
 
+getUnblockIP(){
+  local hostname=$(hostname)
+  local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
+  local hosts=("cache${host_number}.serv00.com" "web${host_number}.serv00.com" "$hostname")
+
+  yellow "----------------------------------------------"
+  green "  主机名称          |      IP        |  状态"
+  yellow "----------------------------------------------"
+  # 遍历主机名称数组
+  for host in "${hosts[@]}"; do
+    # 获取 API 返回的数据
+    local response=$(curl -s "https://ss.botai.us.kg/api/getip?host=$host")
+
+    # 检查返回的结果是否包含 "not found"
+    if [[ "$response" =~ "not found" ]]; then
+      echo "未识别主机${host}, 请联系作者饭奇骏!"
+      return
+    fi
+    local ip=$(echo "$response" | awk -F "|" '{print $1 }')
+    local status=$(echo "$response" | awk -F "|" '{print $2 }')
+    printf "%-20s | %-15s | %-10s\n" "$host" "$ip" "$status"   
+  done
+    
+}
+
 showMenu(){
   art_wrod=$(figlet "serv00-play")
   echo "<------------------------------------------------------------------>"
@@ -2101,7 +2178,7 @@ showMenu(){
 
   options=("安装/更新serv00-play项目" "运行vless"  "停止vless"  "配置vless"  "显示vless的节点信息"  "设置保活的项目" "配置sing-box" \
           "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "安装/启动/重启哪吒探针" "停止探针" "设置彩色开机字样" "显示本机IP" \
-          "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "卸载" )
+          "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -2180,6 +2257,9 @@ showMenu(){
            rootServ
            ;;
         23)
+           getUnblockIP
+           ;;
+        24)
             uninstall
             ;;
         0)
