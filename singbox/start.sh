@@ -107,7 +107,7 @@ fi
 if [[ "$type" =~ ^(1.2|1.3|2|2.5|3.2|3.3|4.5)$ ]]; then
   r=$(ps aux | grep cloudflare | grep -v grep | awk '{print $2}')
   if [ -n "$r" ]; then
-        echo $r
+        #echo $r
         kill -9 $r
   fi
   chmod +x ./serv00sb
