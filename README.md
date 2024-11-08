@@ -33,7 +33,8 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 2.执行兜底保活策略  
 3.检查主机上保活用的 cronjob 是否被删，若被删重建保活 cronjob  
 4.自动更新 serv00-play 代码  
-5.同步更新 telegram、微信等参数
+5.同步更新 telegram、微信等参数  
+6.登录失败有 TG 消息通知，提醒可能封号。
 
 ## 消息推送
 
