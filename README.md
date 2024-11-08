@@ -15,15 +15,25 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 ## 变量说明
 
-| 变量名              | 示例   | 备注                                     |
-| ------------------- | ------ | ---------------------------------------- |
-| HOSTS_JSON          | 见示例 | 可存放 n 个服务器信息                    |
-| ~~TELEGRAM_TOKEN~~  | 略     | telegram 机器人的 token ~~               |
-| ~~TELEGRAM_USERID~~ | 略     | 待通知的 teltegram 用户 ID               |
-| ~~WXSENDKEY~~       | 略     | server 酱的 sendkey，用于接收微信消息    |
-| ~~SENDTYPE~~        | 3      | 选择推送方式，1.Telegram, 2.微信, 3.都有 |
+| 变量名          | 示例   | 备注                                     |
+| --------------- | ------ | ---------------------------------------- |
+| HOSTS_JSON      | 见示例 | 可存放 n 个服务器信息                    |
+| TELEGRAM_TOKEN  | 略     | telegram 机器人的 token                  |
+| TELEGRAM_USERID | 略     | 待通知的 teltegram 用户 ID               |
+| WXSENDKEY       | 略     | server 酱的 sendkey，用于接收微信消息    |
+| SENDTYPE        | 3      | 选择推送方式，1.Telegram, 2.微信, 3.都有 |
 
-PS. 保进程逻辑已挪到 serv00 上做，actions 只做保号，降低访问频率. github 上只需配置 HOSTS_JSON
+各主机保活时可不必输入消息通知参数，由 github 同一配置参数。
+
+如果主机上配置了消息推送参数，则优先级大于 github 上的配置。
+
+## action 保活内容
+
+1.定时自动登录各个主机，起到保号作用(因 serv00 需要每 3 个月登录一次)  
+2.执行兜底保活策略  
+3.检查主机上保活用的 cronjob 是否被删，若被删重建保活 cronjob  
+4.自动更新 serv00-play 代码  
+5.同步更新 telegram、微信等参数
 
 ## 消息推送
 

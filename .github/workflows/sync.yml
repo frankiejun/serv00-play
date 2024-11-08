@@ -2,7 +2,7 @@ name: Sync Fork with Upstream
 
 on:
   schedule:
-    - cron: '0 19 * * *'
+    - cron: '0 19 * * *' #北京时间凌晨3点
   workflow_dispatch:
 
 jobs:
