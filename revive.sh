@@ -24,5 +24,10 @@ for info in "${hosts_info[@]}"; do
 
   output=$(./toserv.sh $user $host $port $pass "$script")
 
-  echo "output:$output"
+  if echo "$output" | grep -q "更新完毕"; then
+    echo "登录成功"
+  else
+    echo "登录失败"
+    ./tgsend.sh "主机:$host,用户名:$user,登录失败请检查!"
+  fi
 done
