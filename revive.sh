@@ -24,6 +24,7 @@ for info in "${hosts_info[@]}"; do
 
   output=$(./toserv.sh $user $host $port $pass "$script")
 
+  echo "output:$output"
   if echo "$output" | grep -q "更新完毕"; then
     echo "登录成功"
   else
