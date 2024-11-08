@@ -22,8 +22,9 @@ for info in "${hosts_info[@]}"; do
 
   script="/home/$user/serv00-play/keepalive.sh autoupdate ${SENDTYPE} ${TELEGRAM_TOKEN} ${TELEGRAM_USERID} ${WXSENDKEY}"
 
-  output=$(./toserv.sh $user $host $port $pass "$script")
+  output=$(sshpass -p "$pass" ssh -o StrictHostKeyChecking=no -p "$port" "$user@$host" "bash -s" <<< "$script")
 
+  echo "output:$output"
   if echo "$output" | grep -q "更新完毕"; then
     echo "登录成功"
   else

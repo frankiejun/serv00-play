@@ -17,7 +17,7 @@ jobs:
 
       - name: 安装依赖
         run: |
-          sudo apt-get install expect
+          sudo apt-get install sshpass
           sudo apt-get install jq
 
       - name: 登录各个serv00并执行保活脚本
