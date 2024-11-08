@@ -3,7 +3,8 @@ name: 批量保活进程
 on:
   schedule:
     # 使用cron表达式定义任务运行的时间
-    - cron: '3 10 * * *' #凌晨3点3分
+    # github使用utc时间
+    - cron: '3 2 * * *' #波兰凌晨3点3分
   workflow_dispatch:
 
 jobs:
