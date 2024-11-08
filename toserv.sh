@@ -1,6 +1,6 @@
 #!/usr/bin/expect -f
 
-set timeout 5
+set timeout 10
 
 # 获取参数
 set REMOTE_USER [lindex $argv 0]
