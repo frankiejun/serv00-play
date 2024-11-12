@@ -2,8 +2,11 @@ name: Sync Fork with Upstream
 
 on:
   schedule:
-    - cron: '0 19 * * *' #北京时间凌晨3点
+    - cron: '0 19 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   sync:
@@ -16,6 +19,14 @@ jobs:
           ref: main
           persist-credentials: false
 
+      - name: Set up Git credentials
+        env:
+          TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://github.com/fkj-src/serv00-play.git
+
       - name: Sync with upstream
         id: sync_step
         uses: repo-sync/github-sync@v2
@@ -23,7 +34,9 @@ jobs:
           source_repo: 'frankiejun/serv00-play'
           source_branch: 'main'
           destination_branch: 'main'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.PERSONAL_TOKEN }}
+          exclude: |
+            .github/workflows/**
 
       - name: Check for errors
         if: failure()
