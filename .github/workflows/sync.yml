@@ -9,34 +9,27 @@ permissions:
   contents: write
 
 jobs:
-  sync:
+ sync_latest_from_upstream:
+    name: Sync latest commits from upstream repo
     runs-on: ubuntu-latest
+    if: ${{ github.event.repository.fork }}
 
     steps:
-      - name: Checkout forked repository
+      # Step 1: run a standard checkout action
+      - name: Checkout target repo
         uses: actions/checkout@v3
-        with:
-          ref: main
-          persist-credentials: false
 
-      - name: Set up Git credentials
-        env:
-          TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://github.com/fkj-src/serv00-play.git
-
-      - name: Sync with upstream
-        id: sync_step
-        uses: repo-sync/github-sync@v2
+      # Step 2: run the sync action
+      - name: Sync upstream changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
         with:
-          source_repo: 'frankiejun/serv00-play'
-          source_branch: 'main'
-          destination_branch: 'main'
-          github_token: ${{ secrets.PERSONAL_TOKEN }}
+          upstream_sync_repo: frankiejun/serv00-play
+          upstream_sync_branch: main
+          target_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }} # automatically generated, no need to set
           exclude: |
-            .github/workflows/**
+            .github/workflows/sync.yml
 
       - name: Check for errors
         if: failure()
