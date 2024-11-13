@@ -1345,6 +1345,7 @@ installNeZhaAgent(){
     nezha_domain=$(jq -r ".nezha_domain" $config)
     nezha_port=$(jq -r ".nezha_port" $config)
     nezha_pwd=$(jq -r ".nezha_pwd" $config)
+    tls=$(jq -r ".tls" $config)
   fi
 
   if [[ -z "$nezha_domain" || -z "$nezha_port" || -z "$nezha_pwd" ]]; then
