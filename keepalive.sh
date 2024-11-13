@@ -124,6 +124,7 @@ autoUpdate() {
     chmod +x ${installpath}/serv00-play/vless/start.sh
     chmod +x ${installpath}/serv00-play/singbox/start.sh
     chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
+    chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
   fi
   makeMsgConfig
 }
