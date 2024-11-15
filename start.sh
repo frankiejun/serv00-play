@@ -1309,6 +1309,7 @@ InitServer(){
 manageNeZhaAgent(){
   while true; do
   yellow "-------------------------"
+  echo "探针管理："
   echo "1.安装探针"
   echo "2.升级探针"
   echo "3.启动/重启探针"
@@ -1333,14 +1334,14 @@ manageNeZhaAgent(){
       ;;
     5)
       break
-      showMenu
+      
       ;;
      *)
       echo "无效选项，请重试"
       ;;
   esac
  done
-
+ showMenu
 }
 
 updateAgent(){
@@ -2009,24 +2010,28 @@ addPortMenu(){
 }
 
 portServ(){
-  echo "1. 删除某条端口记录"
-  echo "2. 增加一条端口记录"
-  echo "3. 返回主菜单"
-
-  read -p "请选择:" input
-  input=${input:-3}
-
-  if [[ "$input" == "3" ]]; then
-     return 
-  elif [[ "$input" == "1" ]]; then
-     delPortMenu 
-  elif [[ "$input" == "2" ]]; then
-     addPortMenu
-  else
-     echo "无效输入"
-     return 
-  fi
-  
+  while true; do
+  yellow "----------------------"
+    echo "端口管理:"
+    echo "1. 删除某条端口记录"
+    echo "2. 增加一条端口记录"
+    echo "3. 返回主菜单"
+  yellow "----------------------"
+    read -p "请选择:" input
+    case $input in
+      1) delPortMenu
+        ;;
+      2) addPortMenu
+        ;;
+      3)
+        break
+        ;;
+      *)
+        echo "无效选项，请重试"
+        ;;
+    esac
+  done
+  showMenu
 }
 
 cronLE(){
