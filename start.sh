@@ -1315,6 +1315,7 @@ manageNeZhaAgent(){
   echo "3.启动/重启探针"
   echo "4.停止探针"
   echo "5.返回主菜单"
+  echo "6.退出脚本"
   yellow "-------------------------"
 
   read -p "请选择:" choice
@@ -1334,7 +1335,8 @@ manageNeZhaAgent(){
       ;;
     5)
       break
-      
+      ;;
+    6) exit 0
       ;;
      *)
       echo "无效选项，请重试"
@@ -1708,6 +1710,7 @@ mtprotoServ(){
     echo "2. 启动mtproto代理"
     echo "3. 停止mtproto代理"
     echo "4. 返回主菜单"
+    echo "5. 退出脚本"
     yellow "---------------------"
     read -p "请选择:" input
     
@@ -1719,6 +1722,8 @@ mtprotoServ(){
       3) stopMtg
          ;;
       4)  break
+         ;;
+      5) exit 0
          ;;
       *)
          echo "无效选项，请重试"
@@ -1912,6 +1917,7 @@ alistServ(){
    echo "4. 重置admin密码"
    echo "5. 卸载alist"
    echo "6. 返回主菜单"
+   echo "7. 退出脚本"
    yellow "----------------------"
    read -p "请选择:" input
 
@@ -1927,6 +1933,8 @@ alistServ(){
      5) uninstallAlist
         ;;
      6)  break
+        ;;
+     7) exit 0
         ;;
      *)
        echo "无效选项，请重试"
@@ -2037,6 +2045,7 @@ portServ(){
     echo "1. 删除某条端口记录"
     echo "2. 增加一条端口记录"
     echo "3. 返回主菜单"
+    echo "4. 退出脚本"
   yellow "----------------------"
     read -p "请选择:" input
     case $input in
@@ -2046,6 +2055,9 @@ portServ(){
         ;;
       3)
         break
+        ;;
+      4)
+        exit 0
         ;;
       *)
         echo "无效选项，请重试"
@@ -2183,6 +2195,7 @@ domainSSLServ(){
     echo "1. 抢域名证书"
     echo "2. 配置自签证书"
     echo "3. 返回主菜单"
+    echo "4. 退出脚本"
     yellow "---------------------"
     read -p "请选择:" input
   
@@ -2193,6 +2206,9 @@ domainSSLServ(){
         ;;
       3) break
         ;;
+      4)
+         exit 0
+         ;;
       *) 
         echo "无效选项，请重试"
         ;;
@@ -2290,6 +2306,7 @@ rootServ(){
     echo "2. 进入root"
     echo "3. 卸载root"
     echo "4. 返回主菜单"
+    echo "5. 退出脚本"
     yellow "---------------------"
     read -p "请选择:" input
     
@@ -2302,6 +2319,8 @@ rootServ(){
         ;;
       4) break
         ;;
+      5) exit 0
+         ;;
       *)  echo "无效选项，请重试"
         ;;
     esac 
