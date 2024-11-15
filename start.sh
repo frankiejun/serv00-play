@@ -1327,7 +1327,7 @@ manageNeZhaAgent(){
       ;;
     3)
       startAgent
-      break
+      exit 0;
       ;;
     4)
       stopNeZhaAgent
@@ -1382,6 +1382,9 @@ updateAgent(){
   else
     echo "已经是最新版本: $local_version"
   fi
+  if [[ $agent_runing -eq 1 ]]; then
+     exit 0;
+  fi
 }
 
 startAgent(){
@@ -1413,16 +1416,15 @@ startAgent(){
   fi
 
   #echo "./nezha-agent ${args} -s ${nezha_domain}:${nezha_port} -p ${nezha_pwd}"
-  $(nohup ./nezha-agent ${args} -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &)
-   
+  nohup ./nezha-agent ${args} -s ${nezha_domain}:${nezha_port} -p ${nezha_pwd} >/dev/null 2>&1 &
+  
   if checknezhaAgentAlive; then
       green "启动成功!"
   else
       red "启动失败!"
   fi
   #即便使用nohup放后台，此处如果使用ctrl+c退出脚本，nezha-agent进程也会退出。非常奇葩，因此startAgent后只能exit退出脚本，避免用户使用ctrl+c退出。
-
-  exit 0;
+ 
 }
 
 installNeZhaAgent(){
@@ -1698,22 +1700,32 @@ mtprotoServ(){
       mkdir -p dmtg
    fi
    cd dmtg
-   
-   echo "1. 安装mtproto代理"
-   echo "2. 启动mtproto代理"
-   echo "3. 停止mtproto代理"
-   read -p "请选择:" input
 
-   if [[ "$input" == "1" ]]; then
-      installMtg
-   elif [[ "$input" == "2" ]]; then
-      startMtg
-   elif [[ "$input" == "3" ]]; then
-      stopMtg
-   else
-      red "无效输入"
-      return 1
-   fi
+   while true; do
+    yellow "---------------------"
+    echo "mtproto管理:"
+    echo "1. 安装mtproto代理"
+    echo "2. 启动mtproto代理"
+    echo "3. 停止mtproto代理"
+    echo "4. 返回主菜单"
+    yellow "---------------------"
+    read -p "请选择:" input
+    
+    case $input in
+      1) installMtg
+         ;;
+      2) startMtg
+         ;;
+      3) stopMtg
+         ;;
+      4)  break
+         ;;
+      *)
+         echo "无效选项，请重试"
+         ;;
+    esac
+  done
+  showMenu
    
 }
 
@@ -1892,27 +1904,36 @@ resetAdminPass(){
 }
 
 alistServ(){
+  while true; do
+   yellow "----------------------"
    echo "1. 安装部署alist "
    echo "2. 启动alist"
    echo "3. 停掉alist"
    echo "4. 重置admin密码"
    echo "5. 卸载alist"
+   echo "6. 返回主菜单"
+   yellow "----------------------"
    read -p "请选择:" input
 
-   if [[ "$input" == "1" ]]; then
-     installAlist
-   elif [[ "$input" == "2" ]]; then
-      startAlist
-   elif [[ "$input" == "3" ]]; then
-      stopAlist
-   elif [[ "$input" == "4" ]]; then
-      resetAdminPass
-   elif [[ "$input" == "5" ]]; then
-      uninstallAlist
-   else
-      echo "无效输入!"
-      return 
-   fi
+   case $input in
+     1) installAlist
+        ;;
+     2) startAlist
+        ;;
+     3) stopAlist
+        ;;
+     4) resetAdminPass
+        ;;
+     5) uninstallAlist
+        ;;
+     6)  break
+        ;;
+     *)
+       echo "无效选项，请重试"
+      ;;
+    esac
+  done
+  showMenu
 }
 
 declare -a indexPorts
@@ -2156,23 +2177,28 @@ EOF
 }
 
 domainSSLServ(){
-   echo "1. 抢域名证书"
-   echo "2. 配置自签证书"
-   echo "3. 返回主菜单"
-  read -p "请选择:" input
-  input=${input:-3}
-
-   if [[ "$input" == "3" ]]; then
-     return 
-  elif [[ "$input" == "1" ]]; then
-     applyLE 
-  elif [[ "$input" == "2" ]]; then
-     selfSSL
-  else
-     echo "无效输入"
-     return 
-  fi
-
+  while true; do
+    yellow "---------------------"
+    echo "域名证书管理:"
+    echo "1. 抢域名证书"
+    echo "2. 配置自签证书"
+    echo "3. 返回主菜单"
+    yellow "---------------------"
+    read -p "请选择:" input
+  
+    case $input in 
+      1) applyLE
+        ;;
+      2) selfSSL
+        ;;
+      3) break
+        ;;
+      *) 
+        echo "无效选项，请重试"
+        ;;
+    esac 
+ done
+ showMenu
 }
 
 installRoot(){
@@ -2257,25 +2283,30 @@ uninstallRoot(){
 }
 
 rootServ(){
-  echo "1. 安装root"
-  echo "2. 进入root"
-  echo "3. 卸载root"
-  echo "4. 返回主菜单"
-  read -p "请选择:" input
-  input=${input:-3}
-
-    if [[ "$input" == "4" ]]; then
-     return 
-  elif [[ "$input" == "1" ]]; then
-     installRoot
-  elif [[ "$input" == "2" ]]; then
-     enterRoot
-  elif [[ "$input" == "3" ]]; then
-     uninstallRoot
-  else
-     echo "无效输入"
-     return 
-  fi
+  while true; do
+    yellow "---------------------"
+    echo "一键root:"
+    echo "1. 安装root"
+    echo "2. 进入root"
+    echo "3. 卸载root"
+    echo "4. 返回主菜单"
+    yellow "---------------------"
+    read -p "请选择:" input
+    
+    case $input in 
+      1) installRoot
+        ;;
+      2) enterRoot
+        ;;
+      3) uninstallRoot
+        ;;
+      4) break
+        ;;
+      *)  echo "无效选项，请重试"
+        ;;
+    esac 
+ done
+   showMenu
 }
 
 getUnblockIP(){
