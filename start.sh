@@ -2192,7 +2192,15 @@ EOF
     echo "正在安装webssh..."
     pip install webssh
   fi
-
+  
+  user="$(whoami)"
+  target_path="/home/$user/.local/bin"
+  profile="${installpath}/.profile"
+  
+  if ! grep -q "export PATH=.*$target_path" "$profile"; then
+     echo "export PATH=$target_path:\$PATH" >> "$profile"
+     source "$profile"
+  fi
   domain=""
   webIp=""
   if ! makeWWW ssh $sunPanelPort ; then
