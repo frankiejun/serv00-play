@@ -2229,7 +2229,12 @@ startWebSSH(){
 }
 
 nonServ(){
-  echo "占坑位，未开发功能，敬请期待！"
+  cat <<EOF
+   占坑位，未开发功能，敬请期待！
+   如果你知道有好的项目，可以到我的频道进行留言投稿，
+   我会分析可行性，择优取录，所以你喜欢的项目有可能会集成到serv00-play的项目中。
+   留言板：https://t.me/fanyou_channel/40
+EOF
 }
 
 showMenu(){
