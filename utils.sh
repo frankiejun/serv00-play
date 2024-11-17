@@ -30,11 +30,11 @@ checknezhaAgentAlive() {
 checkvmessAlive() {
   local c=0
   if ps aux | grep web.js | grep -v "grep" >/dev/null; then
-    ((c + 1))
+    ((c++))
   fi
 
   if ps aux | grep cloud | grep -v "grep" >/dev/null; then
-    ((c + 1))
+    ((c++))
   fi
 
   if [ $c -eq 2 ]; then
@@ -70,11 +70,11 @@ stopProc() {
 checkSingboxAlive() {
   local c=0
   if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
-    ((c + 1))
+    ((c++))
   fi
 
   if ps aux | grep cloudflare | grep -v "grep" >/dev/null; then
-    ((c + 1))
+    ((c++))
   fi
 
   if [ $c -eq 2 ]; then
