@@ -29,11 +29,11 @@ checknezhaAgentAlive() {
 
 checkvmessAlive() {
   local c=0
-  if ps aux | grep web.js | grep -v "grep" >/dev/null; then
+  if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
     ((c++))
   fi
 
-  if ps aux | grep cloud | grep -v "grep" >/dev/null; then
+  if ps aux | grep cloudflared | grep -v "grep" >/dev/null; then
     ((c++))
   fi
 
