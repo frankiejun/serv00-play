@@ -2104,11 +2104,13 @@ startSunPanel(){
   if checkProcAlive "sun-panel"; then
      stopProc "sun-panel"
   fi
-  read -p "是否需要日志($workdir/runing.log)? [y/n] [n]:" input
+  read -p "是否需要日志($workdir/running.log)? [y/n] [n]:" input
   input=${input:-n}
   local args=""
   if [[ "$input" == "y" ]]; then
-    args=" > runing.log 2>&1 "
+    args=" > running.log 2>&1 "
+  else
+    args=" > /dev/null 2>&1 "
   fi
   cmd="nohup ./sun-panel $args &"
   eval "$cmd"
@@ -2239,13 +2241,13 @@ startWebSSH(){
      return 
   fi
   cd $workdir
-  read -p "是否需要日志？[y/n] [n]:" input
+  read -p "是否需要日志($workdir/running.log)? [y/n] [n]:" input
   input=${input:-n}
   args=""
   if [[ "$input" == "y" ]]; then
-     read -p "输入日志名称:" logname
-     logname=${logname:-"running.log"}
-     args=" > $logname 2>&1 "
+     args=" > running.log 2>&1 "
+  else
+     args=" > /dev/null 2>&1 "
   fi
   port=$(jq -r ".port" $configfile)
   if checkProcAlive "wssh"; then
