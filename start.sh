@@ -1042,7 +1042,7 @@ setCnTimeZone(){
     cat .profile | perl ./serv00-play/mkprofile.pl > tmp_profile
     mv -f tmp_profile .profile
     
-    read -p "$(yellow "设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:" )" input
+    read -p "$(echo "设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:" )" input
     input=${input:-y}
 
     if [ "$input" = "y" ]; then
