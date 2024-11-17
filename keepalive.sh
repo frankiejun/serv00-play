@@ -1,46 +1,15 @@
 #!/bin/bash
 
+
 installpath="$HOME"
+source ${installpath}/serv00-play/utils.sh
+
 autoUp=$1
 sendtype=$2
 TELEGRAM_TOKEN="$3"
 TELEGRAM_USERID="$4"
 WXSENDKEY="$5"
 
-#返回0表示成功， 1表示失败
-#在if条件中，0会执行，1不会执行
-checkvlessAlive() {
-  if ps aux | grep app.js | grep -v "grep"; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-checkvmessAlive() {
-  local c=0
-  if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
-    c=$((c + 1))
-  fi
-
-  if ps aux | grep cloudflare | grep -v "grep" >/dev/null; then
-    c=$((c + 1))
-  fi
-
-  if [ $c -eq 2 ]; then
-    return 0
-  fi
-  return 1 # 有一个或多个进程不在运行
-
-}
-
-checknezhaAgentAlive() {
-  if ps aux | grep nezha-agent | grep -v "grep" >/dev/null; then
-    return 0
-  else
-    return 1
-  fi
-}
 
 checkHy2Alive() {
   if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
@@ -51,22 +20,6 @@ checkHy2Alive() {
 
 }
 
-checkMtgAlive() {
-  if ps aux | grep mtg | grep -v "grep" >/dev/null; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-addCron() {
-  local tm=$1
-  crontab -l | grep -v "keepalive" >mycron
-  echo "*/$tm * * * * bash ${installpath}/serv00-play/keepalive.sh > /dev/null 2>&1 " >>mycron
-  crontab mycron
-  rm mycron
-
-}
 
 sendMsg() {
   local msg=$1
@@ -129,15 +82,6 @@ autoUpdate() {
   makeMsgConfig
 }
 
-stopNeZhaAgent() {
-  r=$(ps aux | grep nezha-agent | grep -v "grep" | awk '{print $2}')
-  if [ -z "$r" ]; then
-    return 0
-  else
-    kill -9 $r
-  fi
-  echo "已停掉nezha-agent!"
-}
 
 startNeZhaAgent() {
   local workedir="${installpath}/serv00-play/nezha"
@@ -190,9 +134,7 @@ checkAlistAlive() {
     return 1
   fi
 }
-isServ00() {
-  [[ $(hostname) == *"serv00"* ]]
-}
+
 
 startAlist() {
   user="$(whoami)"
@@ -223,6 +165,18 @@ startAlist() {
     return
   fi
 
+}
+startSunPanel(){
+  cd ${installpath}/serv00-play/sunpanel
+  cmd="nohup ./sun-panel  &"
+  eval "$cmd"
+}
+
+startWebSSH(){
+  cd ${installpath}/serv00-play/webssh
+  ssh_port=$(jq -r ".port" config.json)
+  cmd="nohup wssh --port=$port  --fbidhttp=False  &"
+  eval "$cmd"
 }
 
 #main
@@ -283,15 +237,24 @@ user=$(whoami)
 for obj in "${monitor[@]}"; do
   msg=""
   #   echo "obj= $obj"
-  if [ "$obj" == "vless" ]; then
-    if ! checkvlessAlive; then
-      cd ${installpath}/serv00-play/vless
-      chmod +x ./start.sh && ./start.sh
-      sleep 3
-      if ! checkvlessAlive; then
-        msg="vless restarted failure."
+  if [ "$obj" == "sun-panel" ]; then
+    if ! checkProcAlive "sun-panel"; then
+      startSunPanel
+      sleep 1
+      if ! checkProcAlive "sun-panel"; then
+        msg="sun-panel restarted failure."
       else
-        msg="vless restarted failure."
+        msg="sun-panel restarted failure."
+      fi
+    fi
+  elif [ "$obj" == "webssh" ]; then
+    if ! checkProcAlive "wssh"; then
+      startWebSSH
+      sleep 1
+      if ! checkProcAlive "wssh"; then
+        msg="webssh restarted failure."
+      else
+        msg="webssh restarted failure."
       fi
     fi
   elif [ "$obj" == "vmess" ]; then
@@ -342,6 +305,16 @@ for obj in "${monitor[@]}"; do
     fi
   elif [ "$obj" == "alist" ]; then
     if ! checkAlistAlive; then
+      startAlist
+      sleep 5
+      if ! checkAlistAlive; then
+        msg="alist restarted failure."
+      else
+        msg="alist restarted successfully."
+      fi
+    fi
+  elif [ "$obj" == "wssh" ]; then
+    if ! checkProcAlive wssh; then
       startAlist
       sleep 5
       if ! checkAlistAlive; then
