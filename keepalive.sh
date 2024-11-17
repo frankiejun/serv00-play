@@ -168,14 +168,14 @@ startAlist() {
 }
 startSunPanel(){
   cd ${installpath}/serv00-play/sunpanel
-  cmd="nohup ./sun-panel  &"
+  cmd="nohup ./sun-panel >/dev/null 2>&1 &"
   eval "$cmd"
 }
 
 startWebSSH(){
   cd ${installpath}/serv00-play/webssh
   ssh_port=$(jq -r ".port" config.json)
-  cmd="nohup wssh --port=$port  --fbidhttp=False  &"
+  cmd="nohup wssh --port=$ssh_port  --fbidhttp=False >/dev/null 2>&1 &"
   eval "$cmd"
 }
 
@@ -240,21 +240,21 @@ for obj in "${monitor[@]}"; do
   if [ "$obj" == "sun-panel" ]; then
     if ! checkProcAlive "sun-panel"; then
       startSunPanel
-      sleep 1
+      sleep 3
       if ! checkProcAlive "sun-panel"; then
         msg="sun-panel restarted failure."
       else
-        msg="sun-panel restarted failure."
+        msg="sun-panel restarted successfully."
       fi
     fi
   elif [ "$obj" == "webssh" ]; then
     if ! checkProcAlive "wssh"; then
       startWebSSH
-      sleep 1
+      sleep 3
       if ! checkProcAlive "wssh"; then
         msg="webssh restarted failure."
       else
-        msg="webssh restarted failure."
+        msg="webssh restarted successfully."
       fi
     fi
   elif [ "$obj" == "vmess" ]; then

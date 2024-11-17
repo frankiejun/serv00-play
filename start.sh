@@ -99,7 +99,7 @@ createConfigFile(){
   read -p "请选择: " choices
   choices=($choices)  
 
-  if [[ "${choices[@]}" =~ "6" && ${#choices[@]} -gt 1 ]]; then
+  if [[ "${choices[@]}" =~ "88" && ${#choices[@]} -gt 1 ]]; then
      red "选择出现了矛盾项，请重新选择!"
      return 1
   fi
