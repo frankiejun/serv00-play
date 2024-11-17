@@ -1665,7 +1665,7 @@ applyLE(){
       webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
     fi
   fi
-  echo "申请证书时，webip是: $webIp"
+  #echo "申请证书时，webip是: $webIp"
   resp=$(devil ssl www add $webIp le le $domain)
   if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
      red "申请ssl证书失败！$resp"
