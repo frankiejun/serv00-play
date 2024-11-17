@@ -2195,15 +2195,21 @@ EOF
   
   user="$(whoami)"
   target_path="/home/$user/.local/bin"
+  wsshpath="$target_path/wssh"
+  if [[ ! -e "$wsshpath" ]]; then
+    red "安装webssh失败 !"
+    return 1
+  fi
+  cp $wsshpath $workdir
   profile="${installpath}/.profile"
   
   if ! grep -q "export PATH=.*$target_path" "$profile"; then
      echo "export PATH=$target_path:\$PATH" >> "$profile"
-     source "$profile"
+     source $profile
   fi
   domain=""
   webIp=""
-  if ! makeWWW ssh $sunPanelPort ; then
+  if ! makeWWW ssh $websshPort ; then
     echo "绑定域名失败!"
     return 1
   fi
@@ -2217,6 +2223,7 @@ EOF
 
 stopWebSSH(){
   stopProc "wssh"
+  sleep 2
   if ! checkProcAlive "wssh"; then
      echo "wssh已停止！"
   else
@@ -2244,7 +2251,7 @@ startWebSSH(){
   if checkProcAlive "wssh"; then
     stopProc "wssh"
   fi
-  cmd="nohup wssh --port=$port  --fbidhttp=False $args &"
+  cmd="nohup ./wssh --port=$port  --fbidhttp=False $args &"
   eval "$cmd"
   if checkProcAlive wssh; then
     green "启动成功！"
