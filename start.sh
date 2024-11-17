@@ -1,5 +1,22 @@
 #!/bin/bash
 
+RED='\033[0;91m'
+GREEN='\033[0;92m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;96m'
+WHITE='\033[0;37m'
+RESET='\033[0m'
+yellow() {
+  echo -e "${YELLOW}$1${RESET}"
+}
+green() {
+  echo -e "${GREEN}$1${RESET}"
+}
+red() {
+  echo -e "${RED}$1${RESET}"
+}
 installpath="$HOME"
 source ${installpath}/serv00-play/utils.sh
 
@@ -1042,7 +1059,7 @@ setCnTimeZone(){
     cat .profile | perl ./serv00-play/mkprofile.pl > tmp_profile
     mv -f tmp_profile .profile
     
-    read -p "设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:"  input
+    read -p "$(yellow 设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:)"  input
     input=${input:-y}
 
     if [ "$input" = "y" ]; then
