@@ -250,7 +250,7 @@ for obj in "${monitor[@]}"; do
   elif [ "$obj" == "webssh" ]; then
     if ! checkProcAlive "wssh"; then
       startWebSSH
-      sleep 3
+      sleep 5
       if ! checkProcAlive "wssh"; then
         msg="webssh restarted failure."
       else
