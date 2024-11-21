@@ -1295,6 +1295,9 @@ update_http_port() {
 }
 
 installAlist(){
+  if ! checkInstalled "serv00-play"; then
+     return 1
+  fi
   cd ${installpath}/serv00-play/ || return 1
   user="$(whoami)"
   if isServ00 ; then
@@ -1302,17 +1305,16 @@ installAlist(){
   else
     domain="alist.$user.ct8.pl"
   fi
-  host="$(hostname | cut -d '.' -f 1)"
-  sno=${host/s/web}
-  webpath="${installpath}/domains/$domain/public_html/"
 
-   if [[ -d "$webpath/data" && -e "$webpath/alist" ]]; then 
+  alistpath="${installpath}/serv00-play/alist"
+
+  if [[ ! -e "$alistpath" ]]; then
+    mkdir -p $alistpath
+  fi
+  if [[ -d "$alistpath/data" && -e "$alistpath/alist" ]]; then 
       echo "已安装，请勿重复安装。"
       return 
-   else 
-      if [ ! -e "alist" ]; then
-        mkdir -p  alist
-      fi
+  else 
       cd "alist" || return 1
       if [ ! -e "alist" ]; then
         # read -p "请输入使用密码:" password
@@ -1320,35 +1322,25 @@ installAlist(){
           return 1
         fi
       fi
-   fi
+  fi
+
   loadPort 
   randomPort tcp alist
   if [[ -n "$port" ]]; then
       alist_port="$port"
   fi
   echo "正在安装alist，请等待..."
-  resp=$(devil www add $domain proxy localhost $alist_port)
-  echo "resp:$resp"
-  if [[ ! "$resp" =~ .*succesfully.*$  && ! "$resp" =~ .*Ok.*$ ]]; then 
-     if [[ ! "$resp" =~ "This domain already exists" ]]; then 
-        red "申请域名$domain 失败！"
-        return 1
-     fi
+  domain=""
+  webIp=""
+  if ! makeWWW alist $alist_port ; then
+    echo "绑定域名失败!"
+    return 1
   fi
-  webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
-  resp=$(devil ssl www add $webIp le le $domain)
-  
-  if [[ ! "$resp" =~ .*succesfully.*$ && ! "$resp" =~ .*Ok.*$ ]]; then 
-     red "申请ssl证书失败！$resp"
-     read -p "是否可以不要证书使用,后面自己再申请证书？ [y/n] [y]:" input
-     input=${input:-y}
-     if [[ "$input" != "y" ]]; then
-        resp=$(devil www del $domain --remove)
-        return 1
-     fi
-  fi     
-  cp ./alist ${installpath}/domains/$domain/public_html/ || return 1
-  cd  ${installpath}/domains/$domain/public_html/ || return 1
+  if ! applyLE $domain $webIp; then
+    echo "申请证书失败!"
+    return 1
+  fi
+  cd $alistpath
   rt=$(chmod +x ./alist && ./alist admin random 2>&1 )
   extract_user_and_password "$rt"
   update_http_port "$alist_port"
@@ -1357,32 +1349,22 @@ installAlist(){
   
 }
 
-checkAlistAlive(){
-   if ps aux | grep alist | grep -v "grep" >/dev/null ; then
-      return 0
-   else
-      return 1
-   fi
-}
-
 startAlist(){
+  alistpath="${installpath}/serv00-play/alist"
+  cd $alistpath
   user="$(whoami)"
-  if isServ00 ; then
-    domain="alist.$user.serv00.net"
-  else
-    domain="alist.$user.ct8.pl"
-  fi
-  webpath="${installpath}/domains/$domain/public_html/"
+  domain=$(jq -r ".domain" config.json)
+  alistpath="${installpath}/serv00-play/alist"
 
-  if [[ -d "$webpath/data" && -e "$webpath/alist" ]]; then 
-    cd $webpath
+  if [[ -d "$alistpath/data" && -e "$alistpath/alist" ]]; then 
+    cd $alistpath
     echo "正在启动alist..."
-    if  checkAlistAlive; then
+    if  checkProcAlive alist; then
       echo "alist已启动，请勿重复启动!"
     else
       nohup ./alist server > /dev/null 2>&1 &
       sleep 3
-      if ! checkAlistAlive; then
+      if ! checkProcAlive alist; then
         red "启动失败，请检查!"
         return 1
       else
@@ -1394,62 +1376,67 @@ startAlist(){
     red "请先行安装再启动!"
     return     
   fi
-
 }
 
 stopAlist(){
-  r=$(ps aux | grep alist| grep -v "grep" | awk '{print $2}' )
-  if [ -z "$r" ]; then
-    return 0
-  else  
-    kill -9 $r
+  if checkProcAlive "alist"; then
+     stopProc "alist"
+     sleep 3
   fi
-  echo "已停掉alist!"
+     
+}
+
+uninstallProc(){
+  local path=$1
+  local procname=$2
+
+  if [ ! -e "$path" ]; then   
+      red "未安装$procname!!!"
+      return 1
+  fi
+  cd $path
+  read -p "确定卸载${procname}吗? [y/n] [n]:" input
+  input=${input:-n}
+  if [[ "$input" == "y" ]]; then
+    stopProc "$procname"
+    domain=$(jq -r ".domain" config.json)
+    webip=$(jq -r ".webip" config.json)
+    resp=$(devil ssl www del $webIp $domain)
+    resp=$(devil www del $domain --remove)
+    cd ..
+    rm -rf $path
+    green "卸载完毕!"
+  fi
+
 }
 
 uninstallAlist(){
-  read -p "确定卸载alist吗? [y/n] [n]:" input
-  input=${input:-n}
-  if [[ "$input" == "y" ]]; then
-    stopAlist
-    user="$(whoami)"
-    host="$(hostname | cut -d '.' -f 1)"
-    sno=${host/s/web}
-  if isServ00 ; then
-    domain="alist.$user.serv00.net"
-  else
-    domain="alist.$user.ct8.pl"
-  fi
-    webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
-    resp=$(devil ssl www del $webIp $domain)
-    resp=$(devil www del $domain --remove)
-    green "卸载完毕!"
-  fi
+  alistpath="${installpath}/serv00-play/alist"
+  uninstallProc "$alistpath" alist
   
 }
 
 resetAdminPass(){
-  user="$(whoami)"
-  if isServ00 ; then
-    domain="alist.$user.serv00.net"
-  else
-    domain="alist.$user.ct8.pl"
-  fi
-  webpath="${installpath}/domains/$domain/public_html/"
+  alistpath="${installpath}/serv00-play/alist"
+  cd $alistpath
 
-  cd $webpath
   output=$(./alist admin random 2>&1)
   extract_user_and_password "$output"
 }
 
 alistServ(){
+  if ! checkInstalled "serv00-play"; then
+     return 1
+  fi
   while true; do
    yellow "----------------------"
+   echo "alist:"
+   echo "服务状态: $(checkProcStatus alist)"
    echo "1. 安装部署alist "
    echo "2. 启动alist"
    echo "3. 停掉alist"
    echo "4. 重置admin密码"
-   echo "5. 卸载alist"
+   echo "8. 卸载alist"
    echo "9. 返回主菜单"
    echo "0. 退出脚本"
    yellow "----------------------"
@@ -1464,7 +1451,7 @@ alistServ(){
         ;;
      4) resetAdminPass
         ;;
-     5) uninstallAlist
+     8) uninstallAlist
         ;;
      9)  break
         ;;
@@ -1920,6 +1907,9 @@ checkProcStatus(){
 }
 
 sunPanelServ(){
+  if ! checkInstalled "serv00-play"; then
+     return 1
+  fi
   while true; do
     yellow "---------------------"
     echo "sun-panel:"
@@ -1928,6 +1918,7 @@ sunPanelServ(){
     echo "2. 启动"
     echo "3. 停止"
     echo "4. 初始化密码"
+    echo "8. 卸载"
     echo "9. 返回主菜单"
     echo "0. 退出脚本"
     yellow "---------------------"
@@ -1942,6 +1933,8 @@ sunPanelServ(){
         ;;
       4) resetSunPanelPwd
         ;;
+      8) uninstallSunPanel
+        ;;
       9) break
         ;;
       0) exit 0
@@ -1951,6 +1944,11 @@ sunPanelServ(){
     esac 
  done
    showMenu
+}
+
+uninstallSunPanel(){
+  local workdir="${installpath}/serv00-play/sunpanel"
+  uninstallProc "$workdir" "sun-panel"
 }
 
 resetSunPanelPwd(){
@@ -2088,7 +2086,13 @@ makeWWW(){
   else 
     webIp=$(get_default_webip)
   fi
-  
+  # 保存信息
+  cat > config.json <<EOF
+  {
+     "webip": "$webIp",
+     "domain": "$domain"
+  }
+EOF
   green "域名绑定成功,你的域名是:$domain"
   green "你的webip是:$webIp"
 }
@@ -2124,6 +2128,9 @@ startSunPanel(){
 }
 
 websshServ(){
+    if ! checkInstalled "serv00-play"; then
+      return 1
+    fi
     while true; do
     yellow "---------------------"
     echo "webssh:"
@@ -2131,6 +2138,7 @@ websshServ(){
     echo "1. 安装/修改配置"
     echo "2. 启动"
     echo "3. 停止"
+    echo "8. 卸载"
     echo "9. 返回主菜单"
     echo "0. 退出脚本"
     yellow "---------------------"
@@ -2143,6 +2151,8 @@ websshServ(){
       ;;
     3) stopWebSSH
       ;;
+    8) uninstallWebSSH
+      ;;
     9) break
       ;;
     0) exit 0
@@ -2152,6 +2162,11 @@ websshServ(){
     esac 
  done
    showMenu
+}
+
+uninstallWebSSH(){
+  local workdir="${installpath}/serv00-play/webssh"
+  uninstallProc "$workdir" "wssh"
 }
 
 installWebSSH(){
@@ -2253,7 +2268,7 @@ startWebSSH(){
   if checkProcAlive "wssh"; then
     stopProc "wssh"
   fi
-  cmd="nohup ./wssh --port=$port  --fbidhttp=False $args &"
+  cmd="nohup ./wssh --port=$port --fbidhttp=False --xheaders=False --encoding='utf-8' --delay=10  $args &"
   eval "$cmd"
   if checkProcAlive wssh; then
     green "启动成功！"
@@ -2269,6 +2284,19 @@ nonServ(){
    我会分析可行性，择优取录，所以你喜欢的项目有可能会集成到serv00-play的项目中。
    留言板：https://t.me/fanyou_channel/40
 EOF
+}
+
+checkInstalled(){
+  local model=$1
+  if [[ "$model" == "serv00-play" ]]; then
+     if [[ ! -d "${installpath}/$model" ]]; then 
+        red "请先安装$model !!!"
+        return 1
+     else 
+        return 0
+     fi
+  fi
+  return 1
 }
 
 showMenu(){
