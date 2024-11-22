@@ -2085,7 +2085,8 @@ makeWWW(){
   cat > config.json <<EOF
   {
      "webip": "$webIp",
-     "domain": "$domain"
+     "domain": "$domain",
+     "port": "$port"
   }
 EOF
   green "域名绑定成功,你的域名是:$domain"
@@ -2194,11 +2195,11 @@ installWebSSH(){
     return 1
   fi
 
-  cat > $configfile <<EOF
-  {
-    "port": $websshPort
-  }
-EOF
+#   cat > $configfile <<EOF
+#   {
+#     "port": $websshPort
+#   }
+# EOF
 
   if [[ $is_installed -eq 0 ]]; then
     echo "正在安装webssh..."
