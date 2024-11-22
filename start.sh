@@ -1398,7 +1398,7 @@ uninstallProc(){
     webip=$(jq -r ".webip" config.json)
     resp=$(devil ssl www del $webIp $domain)
     resp=$(devil www del $domain --remove)
-    cd ..
+    cd ${installpath}/serv00-play
     rm -rf $path
     green "卸载完毕!"
   fi
