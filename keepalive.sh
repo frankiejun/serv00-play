@@ -127,33 +127,21 @@ startMtg() {
 
 }
 
-checkAlistAlive() {
-  if ps aux | grep alist | grep -v "grep" >/dev/null; then
-    return 0
-  else
-    return 1
-  fi
-}
-
 
 startAlist() {
-  user="$(whoami)"
-  if isServ00; then
-    domain="alist.$user.serv00.net"
-  else
-    domain="alist.$user.ct8.pl"
-  fi
-  webpath="${installpath}/domains/$domain/public_html/"
+  alistpath="${installpath}/serv00-play/alist"
 
-  if [[ -d "$webpath/data" && -e "$webpath/alist" ]]; then
-    cd $webpath
-    echo "正在启动alist..."
-    if checkAlistAlive; then
+  if [[ -d "$alistpath/data" && -e "$alistpath/alist" ]]; then
+   echo "正在启动alist..."
+    cd $alistpath
+    domain=$(jq -r ".domain" config.json)
+   
+    if checkProcAlive "alist"; then
       echo "alist已启动，请勿重复启动!"
     else
       nohup ./alist server >/dev/null 2>&1 &
       sleep 3
-      if ! checkAlistAlive; then
+      if ! checkProcAlive "alist"; then
         red "启动失败，请检查!"
         return 1
       else
@@ -166,6 +154,7 @@ startAlist() {
   fi
 
 }
+
 startSunPanel(){
   cd ${installpath}/serv00-play/sunpanel
   cmd="nohup ./sun-panel >/dev/null 2>&1 &"
@@ -304,10 +293,10 @@ for obj in "${monitor[@]}"; do
       fi
     fi
   elif [ "$obj" == "alist" ]; then
-    if ! checkAlistAlive; then
+    if ! checkProcAlive "alist"; then
       startAlist
       sleep 5
-      if ! checkAlistAlive; then
+      if ! checkProcAlive "alist"; then
         msg="alist restarted failure."
       else
         msg="alist restarted successfully."

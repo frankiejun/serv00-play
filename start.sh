@@ -18,11 +18,13 @@ red() {
   echo -e "${RED}$1${RESET}"
 }
 installpath="$HOME"
-source ${installpath}/serv00-play/utils.sh
+if [[ -e "$installpath/serv00-play" ]]; then 
+  source ${installpath}/serv00-play/utils.sh
+fi
 
 PS3="请选择(输入0退出): "
 install(){
-  cd
+  cd ${installpath}
   if [ -d serv00-play ]; then
     cd "serv00-play"
     git stash
@@ -34,10 +36,12 @@ install(){
       chmod +x ${installpath}/serv00-play/singbox/start.sh
       chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
       chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
-      return
+      red "请重新启动脚本!"
+      exit 0
     fi
   fi
-
+  
+  cd ${installpath}
   echo "正在安装..."
   if ! git clone https://github.com/frankiejun/serv00-play.git; then
     echo -e "${RED}安装失败!${RESET}"
@@ -1299,13 +1303,6 @@ installAlist(){
      return 1
   fi
   cd ${installpath}/serv00-play/ || return 1
-  user="$(whoami)"
-  if isServ00 ; then
-    domain="alist.$user.serv00.net"
-  else
-    domain="alist.$user.ct8.pl"
-  fi
-
   alistpath="${installpath}/serv00-play/alist"
 
   if [[ ! -e "$alistpath" ]]; then
@@ -1352,9 +1349,7 @@ installAlist(){
 startAlist(){
   alistpath="${installpath}/serv00-play/alist"
   cd $alistpath
-  user="$(whoami)"
   domain=$(jq -r ".domain" config.json)
-  alistpath="${installpath}/serv00-play/alist"
 
   if [[ -d "$alistpath/data" && -e "$alistpath/alist" ]]; then 
     cd $alistpath
