@@ -153,14 +153,16 @@ createConfigFile(){
       ;;
     88)
        delCron
+       backupConfig "config.json"
        green "设置完毕!"
        return 0
        ;;
     99)
-       if [[ ! -e config.json ]]; then
+       if [[ ! -e config.bak ]]; then
           red "之前未有配置，未能复通!"
           return 1
        fi
+       restoreConfig "config.bak"
        tm=$(jq -r ".chktime" config.json)
        addCron $tm
        green "设置完毕!"
@@ -234,6 +236,26 @@ done
   chmod +x ${installpath}/serv00-play/keepalive.sh
   echo -e "${YELLOW} 设置完成! ${RESET} "
 
+}
+
+backupConfig(){
+  local filename=$1
+  if [[ -e "$filename" ]]; then
+    if [[ "$filename" =~ ".json" ]]; then
+      local basename=${filename%.json}
+      mv $filename $basename.bak
+    fi
+  fi
+}
+
+restoreConfig(){
+  local filename=$1
+  if [[ -e "$filename" ]]; then
+    if [[ "$filename" =~ ".bak" ]]; then
+      local basename=${filename%.bak}
+      mv $filename $basename.json
+    fi
+  fi
 }
 
 make_vmess_config() {
