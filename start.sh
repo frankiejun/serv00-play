@@ -2317,6 +2317,39 @@ checkInstalled(){
   return 1
 }
 
+changeHy2IP(){
+   read -p "是否让程序为HY2选择可用的IP？[y/n] [y]:" input
+   input=${input:-y}
+
+   if [[ "$input" == "y" ]]; then
+     cd ${installpath}/serv00-play/singbox
+     if [[ ! -e "singbox.json"  || ! -e "config.json" ]]; then
+        red "未安装节点，请先安装!"
+        return 1
+     fi
+     hy2_ip=$(get_ip)
+     if [[ -z "hy2_ip" ]]; then
+        red "很遗憾，已无可用IP!"
+        return 1
+     fi
+     if ! upInsertFd singbox.json HY2IP "$hy2_ip"; then
+        red "更新singbox.json配置文件失败!"
+        return 1
+     fi
+
+     if ! upSingboxFd config.json "inbounds" "tag" "hysteria-in" "listen" "$hy2_ip"; then 
+        red "更新config.json配置文件失败!"
+        return 1
+     fi
+     green "HY2 更换IP成功，当前IP为 $hy2_ip"
+
+     echo "正在重启sing-box..."
+     stopSingBox
+     startSingBox
+   fi
+
+}
+
 showMenu(){
   art_wrod=$(figlet "serv00-play")
   echo "<------------------------------------------------------------------>"
@@ -2328,7 +2361,7 @@ showMenu(){
 
   options=("安装/更新serv00-play项目" "sun-panel"  "webssh"  "待开发"  "待开发"  "设置保活的项目" "配置sing-box" \
           "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "管理哪吒探针" "卸载探针" "设置彩色开机字样" "显示本机IP" \
-          "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "卸载" )
+          "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "卸载" )
 
   select opt in "${options[@]}"
   do
@@ -2403,6 +2436,9 @@ showMenu(){
            getUnblockIP
            ;;
         24)
+           changeHy2IP
+           ;;
+        25)
             uninstall
             ;;
         0)

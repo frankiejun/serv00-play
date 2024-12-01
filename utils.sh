@@ -391,3 +391,40 @@ checkDownload() {
   fi
   return 0
 }
+
+# 对json文件字段进行插入或修改
+# usage: upInsertFd jsonfile fieldname value
+upInsertFd() {
+  local jsonfile=$1
+  local field=$2
+  local value=$3
+
+  jq --arg field "$field" --arg value "$value" '
+        if has($field) then 
+                .[$field] = $value
+        else 
+                . + {($field): $value}
+        end
+        ' "$jsonfile" >tmp.json && mv tmp.json "$jsonfile"
+
+  return $?
+}
+
+# 针对singbox.json, 对指定字段进行修改
+upSingboxFd() {
+  local jsonfile=$1
+  local array_name=$2
+  local selector_key=$3
+  local selector_value=$4
+  local field_path=$5
+  local value=$6
+
+  jq --arg selector_key "$selector_key" \
+    --arg selector_value "$selector_value" \
+    --arg field_path "$field_path" \
+    --arg value "$value" "
+         (.$array_name[] | select(.$selector_key == \$selector_value) | .[\$field_path]) = \$value
+     " "$jsonfile" >tmp.json && mv tmp.json "$jsonfile"
+
+  return $?
+}
