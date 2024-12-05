@@ -2313,6 +2313,13 @@ checkInstalled(){
      else 
         return 0
      fi
+  else
+     if [[ ! -d "${installpath}/serv00-play/$model" ]]; then 
+        red "请先安装$model !!!"
+        return 1
+     else 
+        return 0
+     fi
   fi
   return 1
 }
