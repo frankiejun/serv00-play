@@ -867,6 +867,9 @@ InitServer(){
 }
 
 manageNeZhaAgent(){
+  if ! checkInstalled "serv00-play"; then
+     return 1
+  fi
   while true; do
   yellow "-------------------------"
   echo "探针管理："
@@ -1258,6 +1261,9 @@ stopMtg(){
 }
 
 mtprotoServ(){
+  if ! checkInstalled "serv00-play"; then
+     return 1
+  fi
    cd ${installpath}/serv00-play
 
    if [ ! -e "dmtg" ]; then
