@@ -4,7 +4,7 @@ config="singbox.json"
 
 VMPORT=$(jq -r ".VMPORT" $config)
 HY2PORT=$(jq -r ".HY2PORT" $config)
-
+HY2IP=$(jq -r ".HY2IP" $config)
 UUID=$(jq -r ".UUID" $config)
 WSPATH=$(jq -r ".WSPATH" $config)
 
@@ -15,6 +15,7 @@ GOOD_DOMAIN=$(jq -r ".GOOD_DOMAIN" $config)
 SOCKS5_PORT=$(jq -r ".SOCKS5_PORT" $config)
 SOCKS5_USER=$(jq -r ".SOCKS5_USER" $config)
 SOCKS5_PASS=$(jq -r ".SOCKS5_PASS" $config)
+
 
 if [ -z $1 ]; then
   type=$(jq -r ".TYPE" $config)
@@ -62,7 +63,11 @@ EOF
 export_list() {
   user="$(whoami)"
   host="$(hostname | cut -d '.' -f 1)"
-  myip="$(curl -s ifconfig.me)"
+  if [[ "$HY2IP" != "::" ]]; then
+     myip=${HY2IP}
+  else
+    myip="$(curl -s ifconfig.me)"
+  fi
   vmessname="Argo-vmess-$host-$user"
   hy2name="Hy2-$host-$user"
   VMESSWS="{\"v\":\"2\",\"ps\": \"Vmessws-${host}-${user}\", \"add\":\"www.visa.com.hk\", \"port\":\"443\", \"id\": \"${UUID}\", \"aid\": \"0\",  \"scy\": \"none\",  \"net\": \"ws\",  \"type\": \"none\",  \"host\": \"${GOOD_DOMAIN}\",  \"path\": \"/${WSPATH}?ed=2048\",  \"tls\": \"tls\",  \"sni\": \"${GOOD_DOMAIN}\",  \"alpn\": \"\",  \"fp\": \"\"}"
@@ -102,7 +107,7 @@ fi
 if [[ "$type" =~ ^(1.2|1.3|2|2.5|3.2|3.3|4.5)$ ]]; then
   r=$(ps aux | grep cloudflare | grep -v grep | awk '{print $2}')
   if [ -n "$r" ]; then
-        echo $r
+        #echo $r
         kill -9 $r
   fi
   chmod +x ./serv00sb

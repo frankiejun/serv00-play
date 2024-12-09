@@ -1,3 +1,4 @@
+
 启动服务的默认第一次密码是:  fkjyyds666
 
 输入 ss 回撤  可以进行快捷命令
@@ -5,7 +6,9 @@
 
 
 
-# serv00 上的一些应用，包括 vless/argo+vmess/vmess+ws/hy2/socks5/mtproto/alist/哪吒探针 等, 自动化部署、批量保号、进程防杀、消息推送
+
+# serv00 上的一些应用，包括 argo+vmess/vmess+ws/hy2/socks5/mtproto/alist/哪吒探针/sun-panel/webssh 等, 自动化部署、批量保号、进程防杀、消息推送
+
 
 💖 如果你在用这个项目，请给我打个 star，好让我知道有多少人从这个项目中受益。
 
@@ -22,15 +25,26 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 ## 变量说明
 
-| 变量名              | 示例   | 备注                                     |
-| ------------------- | ------ | ---------------------------------------- |
-| HOSTS_JSON          | 见示例 | 可存放 n 个服务器信息                    |
-| ~~TELEGRAM_TOKEN~~  | 略     | telegram 机器人的 token ~~               |
-| ~~TELEGRAM_USERID~~ | 略     | 待通知的 teltegram 用户 ID               |
-| ~~WXSENDKEY~~       | 略     | server 酱的 sendkey，用于接收微信消息    |
-| ~~SENDTYPE~~        | 3      | 选择推送方式，1.Telegram, 2.微信, 3.都有 |
+| 变量名          | 示例   | 备注                                     |
+| --------------- | ------ | ---------------------------------------- |
+| HOSTS_JSON      | 见示例 | 可存放 n 个服务器信息                    |
+| TELEGRAM_TOKEN  | 略     | telegram 机器人的 token                  |
+| TELEGRAM_USERID | 略     | 待通知的 teltegram 用户 ID               |
+| WXSENDKEY       | 略     | server 酱的 sendkey，用于接收微信消息    |
+| SENDTYPE        | 3      | 选择推送方式，1.Telegram, 2.微信, 3.都有 |
 
-PS. 保进程逻辑已挪到 serv00 上做，actions 只做保号，降低访问频率. github 上只需配置 HOSTS_JSON
+各主机保活时可不必输入消息通知参数，由 github 同一配置参数。
+
+如果主机上配置了消息推送参数，则优先级大于 github 上的配置。
+
+## action 保活内容
+
+1.定时自动登录各个主机，起到保号作用(因 serv00 需要每 3 个月登录一次)  
+2.执行兜底保活策略  
+3.检查主机上保活用的 cronjob 是否被删，若被删重建保活 cronjob  
+4.自动更新 serv00-play 代码  
+5.同步更新 telegram、微信等参数  
+6.登录失败有 TG 消息通知，提醒可能封号。
 
 ## 消息推送
 
@@ -63,7 +77,7 @@ PS. 保进程逻辑已挪到 serv00 上做，actions 只做保号，降低访问
 
 ## 安装说明视频
 
-安装使用说明及使用密码可以看[这里](https://youtu.be/bpYV8r85F-8)
+安装使用说明可以看[这里](https://youtu.be/bpYV8r85F-8)
 
 临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)
 
@@ -80,9 +94,9 @@ _捐赠将是对我最大的支持，它将激励我持续的创新和创作。_
 
 ## 项目鸣谢
 
-[qwer-search](https://github.com/qwer-search) 、[k0baya](https://github.com/k0baya) 、[eooce](https://github.com/eooce)、[nrootconauto](https://github.com/nrootconauto/MrChrootBSD)
+[nekohasekai](https://github.com/SagerNet/sing-box)、[AlistGo](https://github.com/AlistGo/alist)、[9seconds](https://github.com/9seconds/mtg)、[eooce](https://github.com/eooce)、[nrootconauto](https://github.com/nrootconauto/MrChrootBSD)、[nezhahq](https://github.com/nezhahq/agent)、[huashengdun](https://github.com/huashengdun/webssh)、[hslr-s](https://github.com/hslr-s/sun-panel)
 
 ## 免责声明
 
-本程序仅供学习了解, 非盈利目的，请于下载后 24 小时内删除, 不得用作任何商业用途, 文字、数据及图片均有所属版权, 如转载须注明来源。
+本程序仅供学习了解, 非盈利目的，请于下载后 24 小时内删除, 不得用作任何商业用途, 代码、数据及图片均有所属版权, 如转载须注明来源。
 使用本程序必循遵守部署免责声明。使用本程序必循遵守部署服务器所在地、所在国家和用户所在国家的法律法规, 程序作者不对使用者任何不当行为负责。
