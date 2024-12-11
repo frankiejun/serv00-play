@@ -441,6 +441,9 @@ rm -rf tempvmess.json temphy2.json tmpsocks5.json
 
 
 configSingBox(){
+   if ! checkInstalled "serv00-play"; then
+      return 1
+  fi
   cd ${installpath}/serv00-play/singbox
 
   loadPort
@@ -1413,6 +1416,13 @@ stopAlist(){
      
 }
 
+# uninstallPHP(){
+#   local domain=$1
+#   initialize_phpjson
+#   delete_domain $domain
+#   yellow "已删除域名 $domain 的相关服务!"
+# }
+
 uninstallProc(){
   local path=$1
   local procname=$2
@@ -2070,6 +2080,9 @@ installSunPanel(){
 makeWWW(){
   local proc=$1
   local port=$2
+  local www_type=${3:-"proxy"}
+  
+  echo "正在处理服务IP,请等待..."
   is_self_domain=0
   webIp=$(get_webip)
   default_webip=$(get_default_webip)
@@ -2092,8 +2105,13 @@ makeWWW(){
     red "输入无效域名!"
     return 1
   fi
-
-  resp=$(devil www add $domain proxy localhost $port)
+  
+  echo "正在绑定域名,请等待..."
+  if [[ "$www_type" == "proxy" ]]; then
+    resp=$(devil www add $domain proxy localhost $port)
+  else
+    resp=$(devil www add $domain php)
+  fi
   #echo "resp:$resp"
   if [[ ! "$resp" =~ .*succesfully.*$  && ! "$resp" =~ .*Ok.*$ ]]; then 
      if [[ ! "$resp" =~ "This domain already exists" ]]; then 
@@ -2114,6 +2132,7 @@ makeWWW(){
     webIp=$(get_default_webip)
   fi
   # 保存信息
+  if [[ "$www_type" == "proxy" ]]; then
   cat > config.json <<EOF
   {
      "webip": "$webIp",
@@ -2121,6 +2140,8 @@ makeWWW(){
      "port": "$port"
   }
 EOF
+  fi
+
   green "域名绑定成功,你的域名是:$domain"
   green "你的webip是:$webIp"
 }
@@ -2153,6 +2174,109 @@ startSunPanel(){
      red "启动失败"
   fi
 
+}
+
+
+burnAfterReadingServ(){
+   if ! checkInstalled "serv00-play"; then
+      return 1
+    fi
+    while true; do
+    yellow "---------------------"
+    echo "1. 安装"
+    echo "2. 卸载"
+    echo "9. 返回主菜单"
+    echo "0. 退出脚本"
+    yellow "---------------------"
+    read -p "请选择:" input
+
+    case $input in
+    1) installBurnReading
+       ;;
+    2) uninstallBurnReading
+       ;;
+    9) break
+      ;;
+    0) exit 0
+       ;;
+    *)  echo "无效选项，请重试"
+      ;;
+    esac 
+  done
+  showMenu
+}
+
+installBurnReading(){
+   local workdir="${installpath}/serv00-play/burnreading"
+
+   if [[ ! -e "$workdir" ]]; then
+      mkdir -p $workdir
+   fi
+  cd $workdir 
+
+  if  ! check_domains_empty; then
+    red "已有安装如下服务，是否继续安装?"
+    print_domains
+    read -p "继续安装? [y/n] [n]:" input
+    input=${input:-n}
+    if [[ "$input" == "n" ]]; then
+       return 0
+    fi
+  fi
+  
+  domain=""
+  webIp=""
+  if ! makeWWW burnreading "null" php ; then
+    echo "绑定域名失败!"
+    return 1
+  fi
+  
+  domainPath="$installpath/domains/$domain/public_html"
+  cd $domainPath
+  echo "正在下载并安装 OneTimeMessagePHP ..."
+  if ! download_from_github_release frankiejun OneTimeMessagePHP OneTimeMessagePHP; then
+      red "下载失败!"
+      return 1
+  fi
+  passwd=$(uuidgen -r )
+  sed -i '' -e "s/^ENCRYPTION_KEY=.*/ENCRYPTION_KEY=\"$passwd\"/" \
+              -e "s|^SITE_DOMAIN=.*|SITE_DOMAIN=\"$domain\"|" "env"
+  mv env .env
+  echo "已更新配置文件!"
+
+  read -p "是否申请证书? [y/n] [n]:" input
+  input=${input:-'n'}
+  if [[ "$input" == "y" ]]; then
+    echo "正在申请证书，请等待..."
+    if ! applyLE $domain $webIp; then
+      echo "申请证书失败!"
+      return 1
+    fi
+  fi
+  cd $workdir 
+  add_domain $domain $webIp
+
+  echo "安装完成!"
+}
+
+uninstallBurnReading(){
+  local workdir="${installpath}/serv00-play/burnreading"
+  cd $workdir
+
+  if ! check_domains_empty; then
+     echo "目前已安装服务的域名有:"
+     print_domains
+  fi
+  read -p "是否删除所有域名服务? [y/n] [n]:" input
+  input=${input:-n}
+  if [[ "$input" == "y" ]]; then
+    delete_all_domains
+    rm -rf "${installpath}/serv00-play/burnreading"
+  else
+    read -p "请输入要删除的服务的域名:" domain
+    delete_domain "$domain"
+  fi
+  echo "已卸载相关服务!"
 }
 
 websshServ(){
@@ -2376,8 +2500,8 @@ showMenu(){
   echo "<------------------------------------------------------------------>"
   echo "请选择一个选项:"
 
-  options=("安装/更新serv00-play项目" "sun-panel"  "webssh"  "待开发"  "待开发"  "设置保活的项目" "配置sing-box" \
-          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "设置中国时区及前置工作" "管理哪吒探针" "卸载探针" "设置彩色开机字样" "显示本机IP" \
+  options=("安装/更新serv00-play项目" "sun-panel"  "webssh"  "阅后即焚"  "待开发"  "设置保活的项目" "配置sing-box" \
+          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "管理哪吒探针" "卸载探针" "设置彩色开机字样" "显示本机IP" \
           "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "卸载" )
 
   select opt in "${options[@]}"
@@ -2393,7 +2517,7 @@ showMenu(){
               websshServ
               ;;
           4)
-              nonServ
+              burnAfterReadingServ
               ;;
           5)
               nonServ

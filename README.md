@@ -5,7 +5,7 @@
 ## 前置工作
 
 1. 你需要有一个 serv00 帐号
-2. 无需使用面板，选 1 安装 serv00-play 后，选 13 即可
+2. 首次运行，无需使用面板，选 1 安装 serv00-play 后，选 13 按回车，它会自动重新登录，输入 ss 回车进入界面。(以后都是输入 ss 回车进入界面)
 
 ## 安装说明
 
@@ -34,7 +34,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 3.检查主机上保活用的 cronjob 是否被删，若被删重建保活 cronjob  
 4.自动更新 serv00-play 代码  
 5.同步更新 telegram、微信等参数  
-6.登录失败有 TG 消息通知，提醒可能封号。
+6.登录失败有 TG 消息通知，提醒可能封号(平时正常不会给你发消息，发消息之时便是你封号之日)
 
 ## 消息推送
 
@@ -84,7 +84,8 @@ _捐赠将是对我最大的支持，它将激励我持续的创新和创作。_
 
 ## 项目鸣谢
 
-[nekohasekai](https://github.com/SagerNet/sing-box)、[AlistGo](https://github.com/AlistGo/alist)、[9seconds](https://github.com/9seconds/mtg)、[eooce](https://github.com/eooce)、[nrootconauto](https://github.com/nrootconauto/MrChrootBSD)、[nezhahq](https://github.com/nezhahq/agent)、[huashengdun](https://github.com/huashengdun/webssh)、[hslr-s](https://github.com/hslr-s/sun-panel)
+[nekohasekai](https://github.com/SagerNet/sing-box)、[AlistGo](https://github.com/AlistGo/alist)、[9seconds](https://github.com/9seconds/mtg)、[eooce](https://github.com/eooce)、[nrootconauto](https://github.com/nrootconauto/MrChrootBSD)、[nezhahq](https://github.com/nezhahq/agent)、[huashengdun](https://github.com/huashengdun/webssh)、[hslr-s](https://github.com/hslr-s/sun-panel)  
+[yangtb2024](https://github.com/yangtb2024/OneTimeMessagePHP)
 
 ## 免责声明
 

@@ -428,3 +428,115 @@ upSingboxFd() {
 
   return $?
 }
+
+# php默认配置文件操作
+PHPCONFIG_FILE="phpconfig.json"
+# 判断JSON文件是否存在，若不存在则创建并初始化
+initialize_json() {
+  if [ ! -f "$PHPCONFIG_FILE" ]; then
+    echo '{"domains": []}' >"$PHPCONFIG_FILE"
+  fi
+}
+
+# 添加新域名
+add_domain() {
+  local new_domain="$1"
+  local webip="$2"
+
+  # 初始化JSON文件（如果不存在的话）
+  initialize_json
+
+  # 读取当前的JSON配置文件并检查域名是否已存在
+  if grep -q "\"$new_domain\"" "$PHPCONFIG_FILE"; then
+    echo "域名 '$new_domain' 已存在！"
+    return 1
+  fi
+
+  # 使用jq来处理JSON，添加新的域名到domains数组
+  #jq --arg domain "$new_domain" '.domains += [$domain]' "$PHPCONFIG_FILE" >temp.json && mv temp.json "$PHPCONFIG_FILE"
+  jq ".domains += [{\"domain\": \"$domain\", \"webip\": \"$webip\"}]" "$PHPCONFIG_FILE" >"$PHPCONFIG_FILE.tmp" && mv "$PHPCONFIG_FILE.tmp" "$PHPCONFIG_FILE"
+  #echo "域名 '$new_domain' 添加成功！"
+  return 0
+}
+
+# 删除域名
+delete_domain() {
+  local domain_to_delete="$1"
+
+  # 初始化JSON文件（如果不存在的话）
+  initialize_json
+
+  # 读取当前的JSON配置文件并检查域名是否存在
+  if ! grep -q "\"$domain_to_delete\"" "$PHPCONFIG_FILE"; then
+    echo "域名 '$domain_to_delete' 不存在！"
+    return 1
+  fi
+
+  local webip=$(jq -r ".domains[] | select(.domain == \"$domain\") | .webip" "$PHPCONFIG_FILE")
+  # 使用jq来处理JSON，删除指定的域名
+  jq "del(.domains[] | select(.domain == \"$domain\"))" "$PHPCONFIG_FILE" >"$PHPCONFIG_FILE.tmp" && mv "$PHPCONFIG_FILE.tmp" "$PHPCONFIG_FILE"
+  local domainPath="$installpath/domains/$domain"
+  echo "正在删除域名相关服务,请等待..."
+  rm -rf "$domainPath"
+  resp=$(devil ssl www del $webip $domain)
+  resp=$(devil www del $domain --remove)
+  return 0
+}
+
+# 判断domains数组是否为空
+check_domains_empty() {
+  initialize_json
+
+  local domains_count=$(jq '.domains | length' "$PHPCONFIG_FILE")
+
+  if [ "$domains_count" -eq 0 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+print_domains() {
+  yellow "----------------------------"
+  green "域名\t\t|\t服务IP"
+  yellow "----------------------------"
+
+  # 使用jq格式化输出
+  jq -r '.domains[] | "\(.domain)\t|\(.webip)"' "$PHPCONFIG_FILE"
+}
+
+delete_all_domains() {
+  initialize_json
+
+  jq -r '.domains[] | "\(.domain)\t\(.webip)"' "$PHPCONFIG_FILE" | while read -r domain webip; do
+    echo "域名: $domain, 服务IP: $webip"
+    delete_domain "$domain"
+  done
+}
+
+download_from_github_release() {
+  local user=$1
+  local repository=$2
+  local package=$3
+  local zippackage="$package.zip"
+
+  local url="https://github.com/${user}/${repository}"
+  local latestUrl="$url/releases/latest"
+
+  local latest_version=$(curl -sL $latestUrl | sed -n 's/.*tag\/\(v[0-9.]*\).*/\1/p' | head -1)
+
+  local download_url="${url}/releases/download/$latest_version/$zippackage"
+  curl -sL -o "$zippackage" "$download_url"
+  if [[ ! -e "$zippackage" || -n $(file "$zippackage" | grep "text") ]]; then
+    echo "下载 $zippackage 文件失败!"
+    return 1
+  fi
+  # 原地解压缩
+  unzip -o "$zippackage" -d .
+  if [[ $? -ne 0 ]]; then
+    echo "解压 $zippackage 文件失败!"
+    return 1
+  fi
+  rm -rf "$zippackage"
+  echo "下载并解压 $zippackage 成功!"
+  return 0
+}
