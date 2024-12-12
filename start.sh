@@ -2106,6 +2106,7 @@ makeWWW(){
     return 1
   fi
   
+  domain=${domain,,}
   echo "正在绑定域名,请等待..."
   if [[ "$www_type" == "proxy" ]]; then
     resp=$(devil www add $domain proxy localhost $port)
@@ -2261,6 +2262,12 @@ installBurnReading(){
 
 uninstallBurnReading(){
   local workdir="${installpath}/serv00-play/burnreading"
+
+  if [[ ! -e "$workdir" ]]; then
+     echo "已没有可以卸载的服务!"
+     return 1
+  fi 
+
   cd $workdir
 
   if ! check_domains_empty; then
