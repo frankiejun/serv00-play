@@ -69,11 +69,9 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 安装使用说明可以看[这里](https://youtu.be/bpYV8r85F-8)  
 临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)  
-argo+vmess的搭建教学看[这里](https://youtu.be/nmb2F6uBKsg?si=v8twWIkIjsN8UYb-)  
+argo+vmess 的搭建教学看[这里](https://youtu.be/nmb2F6uBKsg?si=v8twWIkIjsN8UYb-)
 
-由于本项目一直在迭代开发，界面会有些变化，想详细了解，可以看这一些列视频[serv00-play系列](https://www.youtube.com/playlist?list=PLaMnUIjE3d5zArqlLzTU2oMZ0h-5VP6C0)  
-
-
+由于本项目一直在迭代开发，界面会有些变化，想详细了解，可以看这一系列视频[serv00-play 系列](https://www.youtube.com/playlist?list=PLaMnUIjE3d5zArqlLzTU2oMZ0h-5VP6C0)
 
 ## 赞助
 
