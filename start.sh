@@ -1168,6 +1168,23 @@ showIP(){
   green "本机IP: $myip"
 }
 
+uninstallMtg(){
+  read -p "确定卸载? [y/n] [n]:" input
+  input=${input:-n}
+
+  if [[ "$input" == "n" ]]; then
+     return 1
+  fi
+
+  if [[ -e "mtg" ]]; then
+    if checkProcAlive mtg; then
+      stopMtg
+    fi
+    cd ${installpath}/serv00-play
+    rm -rf dmtg
+    green "卸载完毕！"
+  fi
+}
 
 installMtg(){
    if [ ! -e "mtg" ]; then 
@@ -1189,7 +1206,9 @@ installMtg(){
    fi
     
    #自动生成密钥
-   host=$(hostname)
+   head=$(hostname | cut -d '.' -f 1)
+   no=${head#s}
+   host="panel${no}.serv00.com"
    secret=$(./mtg generate-secret --hex $host )
    loadPort
    randomPort tcp mtg
@@ -1278,10 +1297,12 @@ mtprotoServ(){
 
    while true; do
     yellow "---------------------"
+    echo "服务状态: $(checkProcStatus mtg)"
     echo "mtproto管理:"
-    echo "1. 安装mtproto代理"
-    echo "2. 启动mtproto代理"
-    echo "3. 停止mtproto代理"
+    echo "1. 安装"
+    echo "2. 启动"
+    echo "3. 停止"
+    echo "4. 卸载"
     echo "9. 返回主菜单"
     echo "0. 退出脚本"
     yellow "---------------------"
@@ -1293,6 +1314,8 @@ mtprotoServ(){
       2) startMtg
          ;;
       3) stopMtg
+         ;;
+      4) uninstallMtg
          ;;
       9)  break
          ;;
@@ -1332,6 +1355,7 @@ update_http_port() {
     echo "配置文件处理完毕."
 
 }
+
 
 installAlist(){
   if ! checkInstalled "serv00-play"; then
@@ -2283,7 +2307,7 @@ uninstallBurnReading(){
     read -p "请输入要删除的服务的域名:" domain
     delete_domain "$domain"
   fi
-  echo "已卸载相关服务!"
+
 }
 
 websshServ(){

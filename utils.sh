@@ -480,6 +480,7 @@ delete_domain() {
   rm -rf "$domainPath"
   resp=$(devil ssl www del $webip $domain)
   resp=$(devil www del $domain --remove)
+  echo "已卸载域名[$domain_to_delete]相关服务!"
   return 0
 }
 
