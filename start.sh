@@ -1164,7 +1164,7 @@ setColorWord(){
 }
 
 showIP(){
-  myip="$(curl -s ifconfig.me)"
+  myip="$(curl -s icanhazip.com)"
   green "本机IP: $myip"
 }
 
