@@ -66,7 +66,7 @@ export_list() {
   if [[ "$HY2IP" != "::" ]]; then
      myip=${HY2IP}
   else
-    myip="$(curl -s ifconfig.me)"
+    myip="$(curl -s icanhazip.com)"
   fi
   vmessname="Argo-vmess-$host-$user"
   hy2name="Hy2-$host-$user"
