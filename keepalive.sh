@@ -169,12 +169,6 @@ startWebSSH(){
 }
 
 #main
-#启动自检查避免重复运行
-if checkProcAlive "keepalive.sh"; then
-   echo "已在运行中"
-   exit 0
-fi
-
 if [ -n "$autoUp" ]; then
   echo "run autoUpdate"
   autoUpdate
