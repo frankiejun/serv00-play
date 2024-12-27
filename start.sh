@@ -278,6 +278,46 @@ make_vmess_config() {
     }
 EOF
 }
+make_outbound_wireguard(){
+   cat  <<EOF
+     {
+        "type": "wireguard",
+        "tag": "wireguard-out",
+        "server": "162.159.195.100",
+        "server_port": 4500,
+        "local_address": [
+                "172.16.0.2/32",
+                "2606:4700:110:83c7:b31f:5858:b3a8:c6b1/128"
+        ],
+        "private_key": "mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=",
+        "peer_public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+        "reserved": [
+                26,
+                21,
+                228
+        ]
+    },
+EOF
+}
+
+make_outbound_socks5(){
+  local server=$1
+  local serv_port=$2
+  local user=$3
+  local pass=$4
+
+  cat  > temp_outbound_socks5.json <<EOF
+  {
+     "type": "socks",
+     "tag": "socks5_outbound",
+     "server": "$server",
+     "server_port": $serv_port,   
+     "version": "5",              
+     "username": "$user",           
+     "password": "$pass"                  
+  },
+EOF
+}
 
 make_hy2_config() {
   cat > temphy2.json <<EOF
@@ -324,6 +364,7 @@ EOF
 }
 
 generate_config() {
+   local outbound=$1
    comma=""
    comma0=""
   if [[ ! -e "private.key" || ! -e "cert.pem" ]]; then
@@ -354,6 +395,14 @@ generate_config() {
     make_hy2_config
     comma=","
     comma0=","
+  fi
+
+  if [[ "$outbound" == "1" ]]; then
+    outboundType="wireguard-out"
+  elif [[ "$outbound" == "2" ]]; then
+    outboundType="socks5_outbound"
+  else
+    outboundType="direct"
   fi
 
   cat >config.json <<EOF
@@ -393,6 +442,8 @@ generate_config() {
     $([[ "$type" == "2" || "$type" =~ ^(3|4)\.[0-9]+$ ]] && cat temphy2.json)
    ],
     "outbounds": [
+    $([[ "$outbound" == "1" ]] && make_outbound_wireguard) 
+    $([[ "$outbound" == "2" ]] && cat temp_outbound_socks5.json && rm -rf temp_outbound_socks5.json )
     {
       "type": "direct",
       "tag": "direct"
@@ -408,6 +459,13 @@ generate_config() {
   ],
   "route": {
     "rules": [
+    {
+     "domain": [
+             "usher.ttvnw.net",
+             "jnn-pa.googleapis.com"
+            ],
+     "outbound": "$outboundType"
+    },
       {
         "protocol": "dns",
         "outbound": "dns-out"
@@ -617,6 +675,50 @@ configSingBox(){
     fi
   fi
 
+  read -p "是否配置出站? [y/n] [n]:" input
+  input=${input:-n}
+  outbound=""
+  if [[ "$input" == "y" ]]; then
+    echo "选择出站协议:"
+    echo "1.wireguard "
+    echo "2.socks5 "
+    read -p "请选择:" co
+
+    if [[ "$co" != "1" && "$co" != "2" ]]; then 
+      echo "无效输入!"
+      return 1
+    fi
+    outbound=$co
+
+    if [[ "$outbound" == "2" ]]; then
+       read -p "请输入socks5服务器域名或IP:" tmpinput
+       local out_server=$tmpinput
+       if [[ -z "$out_server" ]]; then
+          red "未输入内容!"
+          return 1
+       fi
+       read -p "请输入socks5的端口:" tmpinput
+       local out_port=$tmpinput
+       if [[ -z "$out_port" ]]; then
+          red "未输入内容!"
+          return 1
+       fi 
+       read -p "请输入socks5的用户名:" tmpinput
+       local out_user=$tmpinput
+       if [[ -z "$out_user" ]]; then
+          red "未输入内容!"
+          return 1
+       fi 
+       read -p "请输入socks5的密码:" tmpinput
+       local out_pass=$tmpinput
+       if [[ -z "$out_pass" ]]; then
+          red "未输入内容!"
+          return 1
+       fi 
+       
+       make_outbound_socks5 $out_server $out_port $out_user $out_pass
+    fi
+  fi
    cat > singbox.json <<EOF
   {
      "TYPE": "$type",
@@ -635,7 +737,7 @@ configSingBox(){
 
 EOF
 
-    generate_config
+    generate_config $outbound
     yellow "sing-box配置完毕!"  
 
 }
@@ -671,8 +773,12 @@ startSingBox(){
     red "sing-box启动失败！"
     exit 1
   fi
-
-  yellow "启动成功!"
+  sleep 1
+  if checkProcAlive "serv00sb"; then
+    yellow "启动成功!"
+  else
+    red "启动失败!"
+  fi
 
 }
 
