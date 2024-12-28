@@ -170,11 +170,15 @@ startWebSSH(){
 }
 
 #main
+host=$(hostname)
+user=$(whoami)
+
 if [ -n "$autoUp" ]; then
   echo "run autoUpdate"
   autoUpdate
 fi
 
+echo "Host:$host, user:$user"
 cd ${installpath}/serv00-play/
 if [ ! -f config.json ]; then
   echo "未配置保活项目，请先行配置!"
@@ -219,15 +223,14 @@ else
 fi
 
 if [ -z "$BUTTON_URL" ]; then
-  echo "从msg.json获取 BUTTON_URL"
+  echo "从msg.json获取 button_url"
   BUTTON_URL=$(jq -r ".button_url // empty" msg.json)
 fi
 
 export TELEGRAM_TOKEN TELEGRAM_USERID WXSENDKEY sendtype BUTTON_URL
 
 #echo "最终TELEGRAM_TOKEN=$TELEGRAM_TOKEN,TELEGRAM_USERID=$TELEGRAM_USERID"
-host=$(hostname)
-user=$(whoami)
+
 
 for obj in "${monitor[@]}"; do
   msg=""
