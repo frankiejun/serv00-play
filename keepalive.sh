@@ -60,7 +60,7 @@ makeMsgConfig(){
       "telegram_userid": "$TELEGRAM_USERID",
       "wxsendkey": "$WXSENDKEY",
       "sendtype": "$sendtype",
-      "button_url: "$BUTTON_URL"
+      "button_url": "$BUTTON_URL"
    }
 EOF
 }
