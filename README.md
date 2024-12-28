@@ -15,13 +15,14 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 ## 变量说明
 
-| 变量名          | 示例   | 备注                                     |
-| --------------- | ------ | ---------------------------------------- |
-| HOSTS_JSON      | 见示例 | 可存放 n 个服务器信息                    |
-| TELEGRAM_TOKEN  | 略     | telegram 机器人的 token                  |
-| TELEGRAM_USERID | 略     | 待通知的 teltegram 用户 ID               |
-| WXSENDKEY       | 略     | server 酱的 sendkey，用于接收微信消息    |
-| SENDTYPE        | 3      | 选择推送方式，1.Telegram, 2.微信, 3.都有 |
+| 变量名          | 示例   | 备注                                                     |
+| --------------- | ------ | -------------------------------------------------------- |
+| HOSTS_JSON      | 见示例 | 可存放 n 个服务器信息 (必选)                             |
+| TELEGRAM_TOKEN  | 略     | telegram 机器人的 token (发送 TG 消息必选)               |
+| TELEGRAM_USERID | 略     | 待通知的 teltegram 用户 ID (发送 TG 消息必选)            |
+| WXSENDKEY       | 略     | server 酱的 sendkey，用于接收微信消息 (发送微信消息必选) |
+| SENDTYPE        | 3      | 选择推送方式，1.Telegram, 2.微信, 3.都有 (发送消息必选)  |
+| BUTTON_URL      | 略     | 设置 TG 推送消息中的按钮链接 (发送 TG 消息可选)          |
 
 各主机保活时可不必输入消息通知参数，由 github 同一配置参数。
 

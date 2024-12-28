@@ -9,6 +9,7 @@ sendtype=$2
 TELEGRAM_TOKEN="$3"
 TELEGRAM_USERID="$4"
 WXSENDKEY="$5"
+BUTTON_URL="$6"
 
 
 checkHy2Alive() {
@@ -58,7 +59,8 @@ makeMsgConfig(){
       "telegram_token": "$TELEGRAM_TOKEN",
       "telegram_userid": "$TELEGRAM_USERID",
       "wxsendkey": "$WXSENDKEY",
-      "sendtype": "$sendtype"
+      "sendtype": "$sendtype",
+      "button_url": "$BUTTON_URL"
    }
 EOF
 }
@@ -74,7 +76,6 @@ autoUpdate() {
     #重新给各个脚本赋权限
     chmod +x ./start.sh
     chmod +x ./keepalive.sh
-    chmod +x ${installpath}/serv00-play/vless/start.sh
     chmod +x ${installpath}/serv00-play/singbox/start.sh
     chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
     chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
@@ -169,11 +170,15 @@ startWebSSH(){
 }
 
 #main
+host=$(hostname)
+user=$(whoami)
+
 if [ -n "$autoUp" ]; then
   echo "run autoUpdate"
   autoUpdate
 fi
 
+echo "Host:$host, user:$user"
 cd ${installpath}/serv00-play/
 if [ ! -f config.json ]; then
   echo "未配置保活项目，请先行配置!"
@@ -217,11 +222,15 @@ else
   sendtype=$send_type
 fi
 
-export TELEGRAM_TOKEN TELEGRAM_USERID WXSENDKEY sendtype
+if [ -z "$BUTTON_URL" ]; then
+  echo "从msg.json获取 button_url"
+  BUTTON_URL=$(jq -r ".button_url // empty" msg.json)
+fi
+
+export TELEGRAM_TOKEN TELEGRAM_USERID WXSENDKEY sendtype BUTTON_URL
 
 #echo "最终TELEGRAM_TOKEN=$TELEGRAM_TOKEN,TELEGRAM_USERID=$TELEGRAM_USERID"
-host=$(hostname)
-user=$(whoami)
+
 
 for obj in "${monitor[@]}"; do
   msg=""
