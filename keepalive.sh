@@ -9,6 +9,7 @@ sendtype=$2
 TELEGRAM_TOKEN="$3"
 TELEGRAM_USERID="$4"
 WXSENDKEY="$5"
+BUTTON_URL="$6"
 
 
 checkHy2Alive() {
@@ -58,7 +59,8 @@ makeMsgConfig(){
       "telegram_token": "$TELEGRAM_TOKEN",
       "telegram_userid": "$TELEGRAM_USERID",
       "wxsendkey": "$WXSENDKEY",
-      "sendtype": "$sendtype"
+      "sendtype": "$sendtype",
+      "button_url: "$BUTTON_URL"
    }
 EOF
 }
@@ -217,7 +219,12 @@ else
   sendtype=$send_type
 fi
 
-export TELEGRAM_TOKEN TELEGRAM_USERID WXSENDKEY sendtype
+if [ -z "$BUTTON_URL" ]; then
+  echo "从msg.json获取 BUTTON_URL"
+  BUTTON_URL=$(jq -r ".button_url // empty" msg.json)
+fi
+
+export TELEGRAM_TOKEN TELEGRAM_USERID WXSENDKEY sendtype BUTTON_URL
 
 #echo "最终TELEGRAM_TOKEN=$TELEGRAM_TOKEN,TELEGRAM_USERID=$TELEGRAM_USERID"
 host=$(hostname)
