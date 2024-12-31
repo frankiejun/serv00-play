@@ -10,7 +10,9 @@ TELEGRAM_TOKEN="$3"
 TELEGRAM_USERID="$4"
 WXSENDKEY="$5"
 BUTTON_URL="$6"
+PASS="$7"
 
+#echo "TELEGRAM_TOKEN=$TELEGRAM_TOKEN, TELEGRAM_USERID=$TELEGRAM_USERID,WXSENDKEY=$WXSENDKEY,BUTTON_URL=$BUTTON_URL,pass=$PASS"
 
 checkHy2Alive() {
   if ps aux | grep serv00sb | grep -v "grep" >/dev/null; then
@@ -60,13 +62,15 @@ makeMsgConfig(){
       "telegram_userid": "$TELEGRAM_USERID",
       "wxsendkey": "$WXSENDKEY",
       "sendtype": "$sendtype",
-      "button_url": "$BUTTON_URL"
+      "button_url": "$BUTTON_URL",
+      "password": "$PASS"
    }
 EOF
 }
  
 
 autoUpdate() {
+  echo "正在自动更新代码..."
   if [ -d ${installpath}/serv00-play ]; then
     cd ${installpath}/serv00-play/
     git stash
@@ -80,7 +84,7 @@ autoUpdate() {
     chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
     chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
   fi
-  makeMsgConfig
+ 
 }
 
 
@@ -173,13 +177,19 @@ startWebSSH(){
 host=$(hostname)
 user=$(whoami)
 
-if [ -n "$autoUp" ]; then
-  echo "run autoUpdate"
-  autoUpdate
+echo "正在调用keepalive.sh"
+if [[ "$autoUp" == "autoupdate" ]]; then
+    echo "run autoUpdate"
+    autoUpdate
 fi
+
 
 echo "Host:$host, user:$user"
 cd ${installpath}/serv00-play/
+
+if [[ -n "$autoUp" ]];then
+  makeMsgConfig
+fi
 if [ ! -f config.json ]; then
   echo "未配置保活项目，请先行配置!"
   exit 0
@@ -200,7 +210,9 @@ tg_userid=$(jq -r ".telegram_userid // empty" config.json)
 
 if [[ -z "$tg_userid" ]]; then
   echo "从msg.json获取telegram_userid"
-  TELEGRAM_USERID=$(jq -r ".telegram_userid // empty" msg.json)
+  if [[ -e "msg.json" ]]; then
+    TELEGRAM_USERID=$(jq -r ".telegram_userid // empty" msg.json)
+  fi
 else
   TELEGRAM_USERID=$tg_userid
 fi
@@ -209,7 +221,9 @@ wx_sendkey=$(jq -r ".wxsendkey // empty" config.json)
 
 if [[ -z "$wx_sendkey" ]]; then
   echo "从msg.json获取wxsendkey"
-  WXSENDKEY=$(jq -r ".wxsendkey // empty" msg.json)
+  if [[ -e "msg.json" ]]; then
+    WXSENDKEY=$(jq -r ".wxsendkey // empty" msg.json)
+  fi
 else
   WXSENDKEY=$wx_sendkey
 fi
@@ -217,7 +231,9 @@ fi
 send_type=$(jq -r ".sendtype // empty" config.json)
 if [ -z "$send_type" ]; then
   echo "从msg.json获取 sendtype"
-  sendtype=$(jq -r ".sendtype // empty" msg.json)
+  if [[ -e "msg.json" ]]; then
+    sendtype=$(jq -r ".sendtype // empty" msg.json)
+  fi
 else
   sendtype=$send_type
 fi
@@ -227,7 +243,12 @@ if [ -z "$BUTTON_URL" ]; then
   BUTTON_URL=$(jq -r ".button_url // empty" msg.json)
 fi
 
-export TELEGRAM_TOKEN TELEGRAM_USERID WXSENDKEY sendtype BUTTON_URL
+if [ -z "$PASS" ]; then
+  echo "从msg.json获取 password"
+  PASS=$(jq -r ".password // empty" msg.json)
+fi
+
+export TELEGRAM_TOKEN TELEGRAM_USERID WXSENDKEY sendtype BUTTON_URL PASS
 
 #echo "最终TELEGRAM_TOKEN=$TELEGRAM_TOKEN,TELEGRAM_USERID=$TELEGRAM_USERID"
 
