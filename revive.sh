@@ -6,7 +6,7 @@ TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-null}
 TELEGRAM_USERID=${TELEGRAM_USERID:-null}
 WXSENDKEY=${WXSENDKEY:-null}
 BUTTON_URL=${BUTTON_URL:-null}
-
+  
 # 使用 jq 提取 JSON 数组，并将其加载为 Bash 数组
 hosts_info=($(echo "${HOSTS_JSON}" | jq -c ".info[]"))
 
