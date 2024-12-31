@@ -2,6 +2,33 @@
 
 message_text=$1
 
+replaceValue() {
+  local url=$1
+  local target=$2
+  local value=$3
+  local result
+  result=$(printf '%s' "$url" | sed "s|#${target}|${value//&/\\&}|g")
+  echo "$result"
+}
+
+toBase64() {
+  echo -n "$1" | base64
+}
+
+urlencode() {
+  local input="$1"
+  local output=""
+  local length=${#input}
+  for ((i = 0; i < length; i++)); do
+    local char="${input:i:1}"
+    case "$char" in
+    [a-zA-Z0-9.~_-]) output+="$char" ;;
+    *) output+="$(printf '%%%02X' "'$char")" ;;
+    esac
+  done
+  echo "$output"
+}
+
 toTGMsg() {
   local msg=$1
   local title="*Serv00-play通知*"
@@ -40,14 +67,23 @@ telegramBotUserId=${TELEGRAM_USERID}
 formatted_msg=$(toTGMsg "$message_text")
 button_url=${BUTTON_URL:-"https://www.youtube.com/@frankiejun8965"}
 URL="https://api.telegram.org/bot${telegramBotToken}/sendMessage"
+host=$(hostname)
+user=$(whoami)
+pass=$(toBase64 $PASS)
+button_url=$(replaceValue $button_url HOST $host)
+button_url=$(replaceValue $button_url USER $user)
+button_url=$(replaceValue $button_url PASS $pass)
+encoded_url=$(urlencode "$button_url")
+#echo "encoded_url: $encoded_url"
 reply_markup='{
     "inline_keyboard": [
       [
-        {"text": "点击查看", "url": "'"${button_url}"'"}
+        {"text": "点击查看", "url": "'"${encoded_url}"'"}
       ]
     ]
   }'
-
+#echo "reply_markup: $reply_markup"
+#echo "telegramBotToken:$telegramBotToken,telegramBotUserId:$telegramBotUserId"
 if [[ -z ${telegramBotToken} ]]; then
   echo "未配置TG推送"
 else
@@ -60,6 +96,7 @@ else
     echo 'TG_api请求超时,请检查网络是否重启完成并是否能够访问TG'
     exit 1
   fi
+  #echo "res:$res"
   resSuccess=$(echo "$res" | jq -r ".ok")
   if [[ $resSuccess = "true" ]]; then
     echo "TG推送成功"
