@@ -28,6 +28,7 @@ jobs:
           WXSENDKEY: ${{secrets.WXSENDKEY}}
           SENDTYPE: ${{secrets.SENDTYPE}}
           BUTTON_URL: ${{secrets.BUTTON_URL}}
+          AUTOUPDATE: ${{vars.AUTOUPDATE}}
         run: |
           chmod +x ./revive.sh
           ./revive.sh
