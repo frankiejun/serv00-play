@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 installpath="$HOME"
 source ${installpath}/serv00-play/utils.sh
 
@@ -22,7 +21,6 @@ checkHy2Alive() {
   fi
 
 }
-
 
 sendMsg() {
   local msg=$1
@@ -54,9 +52,9 @@ checkResetCron() {
 }
 
 #构建消息配置文件
-makeMsgConfig(){
+makeMsgConfig() {
   echo "构造消息配置文件..."
- cat > msg.json <<EOF
+  cat >msg.json <<EOF
    {
       "telegram_token": "$TELEGRAM_TOKEN",
       "telegram_userid": "$TELEGRAM_USERID",
@@ -67,7 +65,6 @@ makeMsgConfig(){
    }
 EOF
 }
- 
 
 autoUpdate() {
   echo "正在自动更新代码..."
@@ -76,17 +73,18 @@ autoUpdate() {
     git stash
     timeout 15s git pull
     echo "更新完毕"
-    
+
     #重新给各个脚本赋权限
     chmod +x ./start.sh
     chmod +x ./keepalive.sh
+    chmod +x ./tgsend.sh
+    chmod +x ./wxsend.sh
     chmod +x ${installpath}/serv00-play/singbox/start.sh
     chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
     chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
   fi
- 
-}
 
+}
 
 startNeZhaAgent() {
   local workedir="${installpath}/serv00-play/nezha"
@@ -132,15 +130,14 @@ startMtg() {
 
 }
 
-
 startAlist() {
   alistpath="${installpath}/serv00-play/alist"
 
   if [[ -d "$alistpath/data" && -e "$alistpath/alist" ]]; then
-   echo "正在启动alist..."
+    echo "正在启动alist..."
     cd $alistpath
     domain=$(jq -r ".domain" config.json)
-   
+
     if checkProcAlive "alist"; then
       echo "alist已启动，请勿重复启动!"
     else
@@ -160,13 +157,13 @@ startAlist() {
 
 }
 
-startSunPanel(){
+startSunPanel() {
   cd ${installpath}/serv00-play/sunpanel
   cmd="nohup ./sun-panel >/dev/null 2>&1 &"
   eval "$cmd"
 }
 
-startWebSSH(){
+startWebSSH() {
   cd ${installpath}/serv00-play/webssh
   ssh_port=$(jq -r ".port" config.json)
   cmd="nohup ./wssh --port=$ssh_port  --fbidhttp=False --xheaders=False --encoding='utf-8' --delay=10  >/dev/null 2>&1 &"
@@ -179,15 +176,14 @@ user=$(whoami)
 
 echo "正在调用keepalive.sh"
 if [[ "$autoUp" == "autoupdate" ]]; then
-    echo "run autoUpdate"
-    autoUpdate
+  echo "run autoUpdate"
+  autoUpdate
 fi
-
 
 echo "Host:$host, user:$user"
 cd ${installpath}/serv00-play/
 
-if [[ -n "$autoUp" ]];then
+if [[ -n "$autoUp" ]]; then
   makeMsgConfig
 fi
 if [ ! -f config.json ]; then
@@ -200,10 +196,10 @@ monitor=($(jq -r ".item[]" config.json))
 tg_token=$(jq -r ".telegram_token // empty" config.json)
 
 if [[ -z "$tg_token" ]]; then
-   echo "从msg.json获取 telegram_token"
-   TELEGRAM_TOKEN=$(jq -r '.telegram_token // empty' msg.json)
+  echo "从msg.json获取 telegram_token"
+  TELEGRAM_TOKEN=$(jq -r '.telegram_token // empty' msg.json)
 else
-   TELEGRAM_TOKEN=$tg_token
+  TELEGRAM_TOKEN=$tg_token
 fi
 
 tg_userid=$(jq -r ".telegram_userid // empty" config.json)
@@ -251,7 +247,6 @@ fi
 export TELEGRAM_TOKEN TELEGRAM_USERID WXSENDKEY sendtype BUTTON_URL PASS
 
 #echo "最终TELEGRAM_TOKEN=$TELEGRAM_TOKEN,TELEGRAM_USERID=$TELEGRAM_USERID"
-
 
 for obj in "${monitor[@]}"; do
   msg=""
