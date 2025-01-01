@@ -67,12 +67,15 @@ telegramBotUserId=${TELEGRAM_USERID}
 formatted_msg=$(toTGMsg "$message_text")
 button_url=${BUTTON_URL:-"https://www.youtube.com/@frankiejun8965"}
 URL="https://api.telegram.org/bot${telegramBotToken}/sendMessage"
-host=$(hostname)
-user=$(whoami)
-pass=$(toBase64 $PASS)
-button_url=$(replaceValue $button_url HOST $host)
-button_url=$(replaceValue $button_url USER $user)
-button_url=$(replaceValue $button_url PASS $pass)
+
+if [[ -n "$PASS" ]]; then
+  host=$(hostname)
+  user=$(whoami)
+  pass=$(toBase64 $PASS)
+  button_url=$(replaceValue $button_url HOST $host)
+  button_url=$(replaceValue $button_url USER $user)
+  button_url=$(replaceValue $button_url PASS $pass)
+fi
 encoded_url=$(urlencode "$button_url")
 #echo "encoded_url: $encoded_url"
 reply_markup='{
