@@ -70,7 +70,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 ## 安装说明视频
 
-安装使用说明可以看[这里](https://youtu.be/bpYV8r85F-8)  
+安装使用说明可以看[这里](https://youtu.be/ZCr7YiQX8Qs)  
 临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)  
 argo+vmess 的搭建教学看[这里](https://youtu.be/nmb2F6uBKsg?si=v8twWIkIjsN8UYb-)
 
