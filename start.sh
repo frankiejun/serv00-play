@@ -34,6 +34,8 @@ install() {
       #重新给各个脚本赋权限
       chmod +x ./start.sh
       chmod +x ./keepalive.sh
+      chmod +x ./tgsend.sh
+      chmod +x ./wxsend.sh
       chmod +x ${installpath}/serv00-play/singbox/start.sh
       chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
       chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
