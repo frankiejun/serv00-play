@@ -59,18 +59,20 @@ toTGMsg() {
   formatted_msg+="${time_icon} *时间：* ${current_time}  \n\n"
   formatted_msg+="${notify_icon} *通知内容：* ${notify_content}  \n\n"
 
-  echo -e "$formatted_msg" # 使用 -e 选项以确保换行符生效
+  echo -e "$formatted_msg|${host}|${user}" # 使用 -e 选项以确保换行符生效
 }
 
 telegramBotToken=${TELEGRAM_TOKEN}
 telegramBotUserId=${TELEGRAM_USERID}
-formatted_msg=$(toTGMsg "$message_text")
+result=$(toTGMsg "$message_text")
+formatted_msg=$(echo "$result" | awk -F'|' '{print $1}')
+host=$(echo "$result" | awk -F'|' '{print $2}')
+user=$(echo "$result" | awk -F'|' '{print $3}')
+
 button_url=${BUTTON_URL:-"https://www.youtube.com/@frankiejun8965"}
 URL="https://api.telegram.org/bot${telegramBotToken}/sendMessage"
 
 if [[ -n "$PASS" ]]; then
-  host=$(hostname)
-  user=$(whoami)
   pass=$(toBase64 $PASS)
   button_url=$(replaceValue $button_url HOST $host)
   button_url=$(replaceValue $button_url USER $user)

@@ -1122,7 +1122,7 @@ InitServer() {
     green "清理进程中..."
     killUserProc
     green "清理磁盘中..."
-    if [[ "$saveProfile" = "y" ]] || [[ "$saveProfile" = "Y" ]]; then
+    if [[ "$saveProfile" == "y" ]] || [[ "$saveProfile" == "Y" ]]; then
       rm -rf ~/* 2>/dev/null
     else
       rm -rf ~/* ~/.* 2>/dev/null
