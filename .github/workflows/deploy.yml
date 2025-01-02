@@ -4,8 +4,8 @@ on:
   schedule:
     # 使用cron表达式定义任务运行的时间
     # github使用utc时间
-    - cron: '15 2 * * *'  # 每天 UTC 02:15 (北京时间 10:15)
-    - cron: '15 11 * * *'  # 每天 UTC 11:15 (北京时间 19:15)
+    - cron: '15 2 * * *'  # 每天 UTC 01:15 (北京时间 19:15)
+    - cron: '15 11 * * *'  # 每天 UTC 13:15 (北京时间 21:15)
   workflow_dispatch:
 
 jobs:
@@ -28,6 +28,9 @@ jobs:
           TELEGRAM_USERID: ${{secrets.TELEGRAM_USERID}}
           WXSENDKEY: ${{secrets.WXSENDKEY}}
           SENDTYPE: ${{secrets.SENDTYPE}}
+          BUTTON_URL: ${{secrets.BUTTON_URL}}
+          AUTOUPDATE: ${{vars.AUTOUPDATE}}
+          LOGININFO: ${{vars.LOGININFO}}
         run: |
           chmod +x ./revive.sh
           ./revive.sh
