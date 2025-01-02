@@ -543,6 +543,9 @@ localArgo() {
     fi
   fi
   sleep 1
+  if ! checkDownload "cloudflared"; then
+    return
+  fi
   echo "请把以下链接copy到浏览器打开，并选择你要作为隧道用的域名(如需中断，请按ctrl+c):"
   rt=$(./cloudflared login)
   echo "$rt"
