@@ -52,7 +52,19 @@ install() {
   touch .profile
   cat .profile | perl ./serv00-play/mkprofile.pl >tmp_profile
   mv -f tmp_profile .profile
+  if [[ ! -e "${installpath}/serv00-play" ]]; then
+    red "安装不成功！"
+    return
+  fi
 
+  cd ${installpath}/serv00-play
+  chmod +x ./start.sh
+  chmod +x ./keepalive.sh
+  chmod +x ./tgsend.sh
+  chmod +x ./wxsend.sh
+  chmod +x ${installpath}/serv00-play/singbox/start.sh
+  chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
+  chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
   read -p "$(yellow 设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:)" input
   input=${input:-y}
 
