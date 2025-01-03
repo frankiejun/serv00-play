@@ -69,7 +69,12 @@ formatted_msg=$(echo "$result" | awk -F'|' '{print $1}')
 host=$(echo "$result" | awk -F'|' '{print $2}')
 user=$(echo "$result" | awk -F'|' '{print $3}')
 
-button_url=${BUTTON_URL:-"https://www.youtube.com/@frankiejun8965"}
+if [[ "$BUTTON_URL" == "null" ]]; then
+  button_url="https://www.youtube.com/@frankiejun8965"
+else
+  button_url=${BUTTON_URL}
+fi
+
 URL="https://api.telegram.org/bot${telegramBotToken}/sendMessage"
 
 if [[ -n "$PASS" ]]; then
