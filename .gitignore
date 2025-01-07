@@ -2,6 +2,7 @@
 *.json
 *.out
 *.js
+*test
 a.*
 *.swp
 vmess/node_modules

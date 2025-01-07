@@ -18,21 +18,24 @@ red() {
   echo -e "${RED}$1${RESET}"
 }
 installpath="$HOME"
-if [[ -e "$installpath/serv00-play" ]]; then 
+USER="$(whoami)"
+if [[ -e "$installpath/serv00-play" ]]; then
   source ${installpath}/serv00-play/utils.sh
 fi
 
 PS3="请选择(输入0退出): "
-install(){
+install() {
   cd ${installpath}
   if [ -d serv00-play ]; then
     cd "serv00-play"
     git stash
     if git pull; then
       echo "更新完毕"
-     #重新给各个脚本赋权限
+      #重新给各个脚本赋权限
       chmod +x ./start.sh
       chmod +x ./keepalive.sh
+      chmod +x ./tgsend.sh
+      chmod +x ./wxsend.sh
       chmod +x ${installpath}/serv00-play/singbox/start.sh
       chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
       chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
@@ -40,25 +43,48 @@ install(){
       exit 0
     fi
   fi
-  
+
   cd ${installpath}
   echo "正在安装..."
   if ! git clone https://github.com/frankiejun/serv00-play.git; then
     echo -e "${RED}安装失败!${RESET}"
-    exit 1;
+    exit 1
+  fi
+  devil binexec on
+  touch .profile
+  cat .profile | perl ./serv00-play/mkprofile.pl >tmp_profile
+  mv -f tmp_profile .profile
+  if [[ ! -e "${installpath}/serv00-play" ]]; then
+    red "安装不成功！"
+    return
+  fi
+
+  cd ${installpath}/serv00-play
+  chmod +x ./start.sh
+  chmod +x ./keepalive.sh
+  chmod +x ./tgsend.sh
+  chmod +x ./wxsend.sh
+  chmod +x ${installpath}/serv00-play/singbox/start.sh
+  chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
+  chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
+  read -p "$(yellow 设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:)" input
+  input=${input:-y}
+
+  if [ "$input" = "y" ]; then
+    kill -9 $PPID
   fi
   echo -e "${YELLOW}安装成功${RESET}"
 }
 
-showSingBoxInfo(){
+showSingBoxInfo() {
   cd ${installpath}/serv00-play/singbox
-  
+
   if [ ! -f singbox.json ]; then
-      red "配置文件不存在，请先行配置!"
-      return
+    red "配置文件不存在，请先行配置!"
+    return
   fi
   if [ ! -e list ]; then
-     red "请先运行sing-box"
+    red "请先运行sing-box"
   fi
   config="singbox.json"
   type=$(jq -r ".TYPE" $config)
@@ -66,29 +92,28 @@ showSingBoxInfo(){
 
 }
 
+chooseSingbox() {
+  echo "保活sing-box中哪个项目: "
+  echo " 1.hy2/vmess+ws/socks5 "
+  echo " 2.argo+vmess "
+  echo " 3.all "
+  read -p "请选择:" input
 
-chooseSingbox(){
-   echo "保活sing-box中哪个项目: "
-   echo " 1.hy2/vmess+ws/socks5 "
-   echo " 2.argo+vmess "
-   echo " 3.all "
-   read -p "请选择:" input
-  
   if [ "$input" = "1" ]; then
-     item+=("hy2/vmess+ws")
+    item+=("hy2/vmess+ws")
   elif [ "$input" = "2" ]; then
-      item+=("vmess")
+    item+=("vmess")
   elif [ "$input" = "3" ]; then
-  item+=("hy2/vmess+ws")
-  item+=("vmess")
-  else 
-      red "无效选择!"
-      return 1
- fi
+    item+=("hy2/vmess+ws")
+    item+=("vmess")
+  else
+    red "无效选择!"
+    return 1
+  fi
 
 }
 
-setConfig(){
+setConfig() {
   cd ${installpath}/serv00-play/
 
   if [ -f config.json ]; then
@@ -104,8 +129,7 @@ setConfig(){
   createConfigFile
 }
 
-createConfigFile(){
-  
+createConfigFile() {
   echo "选择你要保活的项目（可多选，用空格分隔）:"
   echo "1. sun-panel "
   echo "2. sing-box(包含hy2，vmess，socks5) "
@@ -115,14 +139,15 @@ createConfigFile(){
   echo "6. webssh"
   echo "88. 暂停所有保活功能"
   echo "99. 复通所有保活功能(之前有配置的情况下)"
+  echo "0. 返回主菜单"
   item=()
 
   read -p "请选择: " choices
-  choices=($choices)  
+  choices=($choices)
 
   if [[ "${choices[@]}" =~ "88" && ${#choices[@]} -gt 1 ]]; then
-     red "选择出现了矛盾项，请重新选择!"
-     return 1
+    red "选择出现了矛盾项，请重新选择!"
+    return 1
   fi
 
   #过滤重复
@@ -131,55 +156,59 @@ createConfigFile(){
   # 根据选择来询问对应的配置
   for choice in "${choices[@]}"; do
     case "$choice" in
-    1) 
-       item+=("sun-panel")
-       ;;
+    0)
+      showMenu
+      break
+      ;;
+    1)
+      item+=("sun-panel")
+      ;;
     2)
       if ! chooseSingbox; then
-      return 
+        return
       fi
       ;;
-    3) 
+    3)
       item+=("nezha-agent")
-       ;;
+      ;;
     4)
       item+=("mtg")
       ;;
     5)
       item+=("alist")
       ;;
-    6) 
+    6)
       item+=("webssh")
       ;;
     88)
-       delCron
-       backupConfig "config.json"
-       green "设置完毕!"
-       return 0
-       ;;
+      delCron
+      backupConfig "config.json"
+      green "设置完毕!"
+      return 0
+      ;;
     99)
-       if [[ ! -e config.bak ]]; then
-          red "之前未有配置，未能复通!"
-          return 1
-       fi
-       restoreConfig "config.bak"
-       tm=$(jq -r ".chktime" config.json)
-       addCron $tm
-       green "设置完毕!"
-       return 0
-       ;;
+      if [[ ! -e config.bak ]]; then
+        red "之前未有配置，未能复通!"
+        return 1
+      fi
+      restoreConfig "config.bak"
+      tm=$(jq -r ".chktime" config.json)
+      addCron $tm
+      green "设置完毕!"
+      return 0
+      ;;
     *)
-       echo "无效选择"
-       return 1
-       ;;
-   esac
-done
+      echo "无效选择"
+      return 1
+      ;;
+    esac
+  done
 
   json_content="{\n"
   json_content+="   \"item\": [\n"
-  
+
   for item in "${item[@]}"; do
-      json_content+="      \"$item\","
+    json_content+="      \"$item\","
   done
 
   # 删除最后一个逗号并换行
@@ -189,7 +218,7 @@ done
   if [ "$num" = "4" ]; then
     json_content+="   \"chktime\": \"null\""
     json_content+="}\n"
-    printf "$json_content" > ./config.json
+    printf "$json_content" >./config.json
     echo -e "${YELLOW} 设置完成! ${RESET} "
     delCron
     return
@@ -212,33 +241,33 @@ done
     echo "3) 以上皆是"
 
     read -p "请选择:" sendtype
-    
+
     if [ "$sendtype" == "1" ]; then
       writeTG
-   elif [ "$sendtype" == "2" ]; then
+    elif [ "$sendtype" == "2" ]; then
       writeWX
-   elif [ "$sendtype" == "3" ]; then
+    elif [ "$sendtype" == "3" ]; then
       writeTG
       writeWX
-   else
-    echo "无效选择"
-    return
-   fi
-  else 
+    else
+      echo "无效选择"
+      return
+    fi
+  else
     sendtype=${sendtype:-"null"}
- fi
+  fi
   json_content+="\n \"sendtype\": $sendtype \n"
   json_content+="}\n"
-  
+
   # 使用 printf 生成文件
-  printf "$json_content" > ./config.json
+  printf "$json_content" >./config.json
   addCron $tm
   chmod +x ${installpath}/serv00-play/keepalive.sh
   echo -e "${YELLOW} 设置完成! ${RESET} "
 
 }
 
-backupConfig(){
+backupConfig() {
   local filename=$1
   if [[ -e "$filename" ]]; then
     if [[ "$filename" =~ ".json" ]]; then
@@ -248,7 +277,7 @@ backupConfig(){
   fi
 }
 
-restoreConfig(){
+restoreConfig() {
   local filename=$1
   if [[ -e "$filename" ]]; then
     if [[ "$filename" =~ ".bak" ]]; then
@@ -278,8 +307,8 @@ make_vmess_config() {
     }
 EOF
 }
-make_outbound_wireguard(){
-   cat  <<EOF
+make_outbound_wireguard() {
+  cat <<EOF
      {
         "type": "wireguard",
         "tag": "wireguard-out",
@@ -300,13 +329,13 @@ make_outbound_wireguard(){
 EOF
 }
 
-make_outbound_socks5(){
+make_outbound_socks5() {
   local server=$1
   local serv_port=$2
   local user=$3
   local pass=$4
 
-  cat  > temp_outbound_socks5.json <<EOF
+  cat >temp_outbound_socks5.json <<EOF
   {
      "type": "socks",
      "tag": "socks5_outbound",
@@ -320,7 +349,7 @@ EOF
 }
 
 make_hy2_config() {
-  cat > temphy2.json <<EOF
+  cat >temphy2.json <<EOF
    {
        "tag": "hysteria-in",
        "type": "hysteria2",
@@ -344,8 +373,8 @@ make_hy2_config() {
 EOF
 }
 
-make_socks5_config(){
-  cat > tmpsocks5.json <<EOF
+make_socks5_config() {
+  cat >tmpsocks5.json <<EOF
   {
       "type": "socks",
       "tag": "socks-in",
@@ -364,9 +393,9 @@ EOF
 }
 
 generate_config() {
-   local outbound=$1
-   comma=""
-   comma0=""
+  local outbound=$1
+  comma=""
+  comma0=""
   if [[ ! -e "private.key" || ! -e "cert.pem" ]]; then
     openssl ecparam -genkey -name prime256v1 -out "private.key"
     openssl req -new -x509 -days 3650 -key "private.key" -out "cert.pem" -subj "/CN=www.bing.com"
@@ -437,13 +466,13 @@ generate_config() {
     "inbounds": [
     $([[ "$type" =~ ^(1.3|3.3|2.4|2.5|3.3|4.4|4.5)$ ]] && cat tmpsocks5.json)
     $comma0
-    $([[ "$type" == "1.1" || "$type" == "1.2" || "$type" =~ ^(2.4|2.5|3.1|3.2|4.4|4.5)$  ]] && cat tempvmess.json)
+    $([[ "$type" == "1.1" || "$type" == "1.2" || "$type" =~ ^(2.4|2.5|3.1|3.2|4.4|4.5)$ ]] && cat tempvmess.json)
     $comma
     $([[ "$type" == "2" || "$type" =~ ^(3|4)\.[0-9]+$ ]] && cat temphy2.json)
    ],
     "outbounds": [
     $([[ "$outbound" == "1" ]] && make_outbound_wireguard) 
-    $([[ "$outbound" == "2" ]] && cat temp_outbound_socks5.json && rm -rf temp_outbound_socks5.json )
+    $([[ "$outbound" == "2" ]] && cat temp_outbound_socks5.json && rm -rf temp_outbound_socks5.json)
     {
       "type": "direct",
       "tag": "direct"
@@ -494,13 +523,110 @@ generate_config() {
    }
 }
 EOF
-rm -rf tempvmess.json temphy2.json tmpsocks5.json
+  rm -rf tempvmess.json temphy2.json tmpsocks5.json
 }
 
+generate_random_string() {
+  local num=$1
+  LC_CTYPE=C xxd </dev/urandom -p | tr -dc 'a-z' | head -c "$num"
+  echo
+}
 
-configSingBox(){
-   if ! checkInstalled "serv00-play"; then
+localArgo() {
+  local configPath="${installpath}/.cloudflared"
+  if [[ -e "$configPath/cert.pem" ]]; then
+    read -p "已有配置，是否删除重建? [y/n] [n]:" input
+    input=${input:-n}
+    if [[ "$input" == "y" ]]; then
+      #ls -l "$configPath"
+      rm -rf "$configPath"/*
+    fi
+  fi
+  sleep 1
+  if ! checkDownload "cloudflared"; then
+    return
+  fi
+  echo "请把以下链接copy到浏览器打开，并选择你要作为隧道用的域名(如需中断，请按ctrl+c):"
+  rt=$(./cloudflared login)
+  echo "$rt"
+  read -p "告诉我你选了哪个域名:" domain
+  if [[ -z "$domain" ]]; then
+    red "未有输入!"
+    return 1
+  fi
+  read -p "是否自动配置隧道信息？[y/n] [y]:" autoflag
+  autoflag=${autoflag:-y}
+
+  tunname=""
+  if [[ "$autoflag" == "y" ]]; then
+    tunname=$(printf "tun-%s" $(generate_random_string 3))
+  else
+    read -p "请输入隧道名称:" tunname
+    if [[ -z "$tunname" ]]; then
+      red "未有输入!"
       return 1
+    fi
+  fi
+  green "你所创建的隧道为 $tunname"
+  if [[ "$autoflag" == "y" ]]; then
+    subname=$(generate_random_string 3)
+    domain="$subname"".""$domain"
+  else
+    read -p "请输入隧道的cname域名:" domain
+    if [[ -z "$domain" ]]; then
+      red "未有输入!"
+      return 1
+    fi
+  fi
+  green "你的cname域名为: $domain"
+  port=""
+  randomPort tcp vmess
+  if [[ -n "$port" ]]; then
+    vmport="$port"
+  fi
+
+  echo "正在创建本地tunnel..."
+  local output=$(./cloudflared tunnel create $tunname)
+  if echo "$output" | grep -q "Created"; then
+    green "名为 $tunname 的tunnel创建成功!."
+    # 提取 .json 文件名
+    tunnelid=$(echo "$output" | sed -n 's/.*\/\([a-zA-Z0-9\-]*\)\.json.*/\1/p')
+    json_file=$tunnelid".json"
+    echo "JSON file: $json_file"
+  else
+    red "创建隧道名失败! [ $output ]."
+  fi
+
+  echo "正在添加隧道的cname域名..."
+  ./cloudflared tunnel route dns $tunname $domain
+  if [ $? -eq 0 ]; then
+    echo "隧道绑定成功！"
+  else
+    echo "隧道绑定失败！"
+  fi
+
+  makeTunnelConfig $tunname $tunnelid $domain $port
+}
+
+makeTunnelConfig() {
+  local tunnelName=$1
+  local tunnelID=$2
+  local Domain=$3
+  local port=$4
+  cat >~/.cloudflared/config.yml <<EOF
+tunnel: $tunnelName
+credentials-file: ${installpath}/.cloudflared/$tunnelID.json
+
+ingress:
+  - hostname: ${Domain}
+    service: http://127.0.0.1:${port}
+  - service: http_status:404
+EOF
+}
+
+configSingBox() {
+  if ! checkInstalled "serv00-play"; then
+    return 1
   fi
   cd ${installpath}/serv00-play/singbox
 
@@ -511,7 +637,7 @@ configSingBox(){
     read -p "$(echo -e "${RED}继续配置将会覆盖原有配置:[y/n] [n]${RESET}") " input
     input=${input:-n}
     if [ "$input" != "y" ]; then
-       return 1
+      return 1
     fi
   fi
   echo "选择你要配置的项目（可多选，用空格分隔）:"
@@ -521,7 +647,7 @@ configSingBox(){
   echo "4. all"
 
   read -p "请选择: " choices
-  choices=($choices)  
+  choices=($choices)
 
   if [[ "${choices[@]}" =~ "4" ]]; then
     choices=("4")
@@ -533,137 +659,184 @@ configSingBox(){
   # 根据选择来询问对应的配置
   for choice in "${choices[@]}"; do
     case "$choice" in
-      1)
-        echo "请选择协议(2选1):"
-        echo "1. argo+vmess"
-        echo "2. vmess+ws "
-        read -p "请选择:" co
-        
-        if [[ "$co" != "1" && "$co" != "2" ]]; then 
-          echo "无效输入!"
-          return 1
-        fi
-        
-        if [[ "$co" == "1" ]]; then
-          type=$(echo "$type + 1.1" | bc)
-           randomPort tcp vmess
-           if [[ -n "$port" ]]; then
-              vmport="$port"
-           fi
-          read -p "请输入WSPATH,默认是[serv00]: " wspath
-          read -p "请输入ARGO隧道token: " token
-          read -p "请输入ARGO隧道的域名: " domain
-        else
-          type=$(echo "$type + 1.2" | bc)
-           randomPort tcp vmess
-           if [[ -n "$port" ]]; then
-              vmport="$port"
-           else
-              red "未输入端口号"
-              return 1
-           fi
-          read -p "请输入WSPATH,默认是[serv00]: " wspath
-          read -p "请输入优选域名:"  goodDomain
-        fi
-        ;;
-      2)
-        type=$(echo "$type + 2" | bc)
-        randomPort udp hy2
-        if [[ -n "$port" ]]; then
-          hy2_port="$port"
-        else
-          red "未输入端口号"
-          return 1
-        fi
-        echo "自动选择未封ip..."
-        hy2_ip=$(get_ip)
-        if [[ -n "$hy2_ip" ]]; then
-           green "选中未封ip为 $hy2_ip"
-        else
-           red "未能找到未封IP,保持默认值！"
-        fi
-        ;;
-      3)
-         type=$(echo "$type + 1.3" | bc)
-         randomPort tcp socks5
-          if [[ -n "$port" ]]; then
-          socks5_port="$port"
-        else
-          red "未输入端口号"
-          return 1
-        fi
-        read -p "请输入socks5用户名:" username
-        read -p "请输入socks5密码:" password
-        ;;
-      4)
-        echo "请选择协议(2选1):"
-        echo "1. argo+vmess"
-        echo "2. vmess+ws "
-        read -p "请选择:" co
-        
-        if [[ "$co" != "1" && "$co" != "2" ]]; then 
-          echo "无效输入!"
-          return 1
-        fi
-        
-        if [[ "$co" == "1" ]]; then
-          type="3.1"
-           randomPort tcp vmess
-           if [[ -n "$port" ]]; then
-              vmport="$port"
-          else
-              red "未输入端口号"
-              return 1
-          fi
-          read -p "请输入WSPATH,默认是[serv00]: " wspath
-          read -p "请输入ARGO隧道token: " token
-          read -p "请输入ARGO隧道的域名: " domain
-        else
-          type="3.2"
-           randomPort tcp vmess
-           if [[ -n "$port" ]]; then
-              vmport="$port"
-          else
-              red "未输入端口号"
-              return 1
-          fi
-          read -p "请输入WSPATH,默认是[serv00]: " wspath
-          read -p "请输入优选域名:"  goodDomain
-        fi
-        # 配置 hy2
-        randomPort udp hy2
-        if [[ -n "$port" ]]; then
-          hy2_port="$port"
-        else
-           red "未输入端口号"
-           return 1
-        fi
-        echo "自动选择未封ip..."
-        hy2_ip=$(get_ip)
-        if [[ -n "$hy2_ip" ]]; then
-           green "选中未封ip为 $hy2_ip"
-        else
-           red "未能找到未封IP,保持默认值！"
-        fi
-        #配置socks5
-        type=$(echo "$type + 1.3" | bc)
-        randomPort tcp socks5
-        if [[ -n "$port" ]]; then
-          socks5_port="$port"
-        else
-          red "未输入端口号"
-          return 1
-        fi
-        read -p "请输入socks5用户名:" username
-        read -p "请输入socks5密码:" password
-        ;;
-      *)
-        echo "无效的选择: $choice"
-        ;;
-    esac
- done
+    1)
+      echo "请选择协议(2选1):"
+      echo "1. argo+vmess"
+      echo "2. vmess+ws "
+      read -p "请选择:" co
 
-  
+      if [[ "$co" != "1" && "$co" != "2" ]]; then
+        echo "无效输入!"
+        return 1
+      fi
+
+      if [[ "$co" == "1" ]]; then
+        echo "1.本地创建隧道的方式"
+        echo "2.到CF建固定隧道方式"
+        read -p "请选择:" co
+
+        if [[ "$co" != "1" && "$co" != "2" ]]; then
+          echo "无效输入!"
+          return 1
+        fi
+
+        type=$(echo "$type + 1.1" | bc)
+        if [[ "$co" == "1" ]]; then
+          tunname=""
+          domain=""
+          localArgo
+        else
+          randomPort tcp vmess
+          if [[ -n "$port" ]]; then
+            vmport="$port"
+          fi
+          read -p "请输入WSPATH,默认是[serv00]: " wspath
+          read -p "请输入ARGO隧道token: " token
+          read -p "请输入ARGO隧道的域名: " domain
+        fi
+        read -p "是否使用自己的优选域名? [y/n] [n]:" input
+        input=${input:-n}
+        if [[ "$input" == "y" ]]; then
+          read -p "请输入优选域名:" goodDomain
+          if [[ -z "$goodDomain" ]]; then
+            red "未有输入!"
+            return 1
+          fi
+        fi
+      else
+        type=$(echo "$type + 1.2" | bc)
+        randomPort tcp vmess
+        if [[ -n "$port" ]]; then
+          vmport="$port"
+        else
+          red "未输入端口号"
+          return 1
+        fi
+        read -p "请输入WSPATH,默认是[serv00]: " wspath
+        read -p "请输入优选域名:" goodDomain
+      fi
+      ;;
+    2)
+      type=$(echo "$type + 2" | bc)
+      randomPort udp hy2
+      if [[ -n "$port" ]]; then
+        hy2_port="$port"
+      else
+        red "未输入端口号"
+        return 1
+      fi
+      echo "自动选择未封ip..."
+      hy2_ip=$(get_ip)
+      if [[ -n "$hy2_ip" ]]; then
+        green "选中未封ip为 $hy2_ip"
+      else
+        red "未能找到未封IP,保持默认值！"
+      fi
+      ;;
+    3)
+      type=$(echo "$type + 1.3" | bc)
+      randomPort tcp socks5
+      if [[ -n "$port" ]]; then
+        socks5_port="$port"
+      else
+        red "未输入端口号"
+        return 1
+      fi
+      read -p "请输入socks5用户名:" username
+      read -p "请输入socks5密码:" password
+      ;;
+    4)
+      echo "请选择协议(2选1):"
+      echo "1. argo+vmess"
+      echo "2. vmess+ws "
+      read -p "请选择:" co
+
+      if [[ "$co" != "1" && "$co" != "2" ]]; then
+        echo "无效输入!"
+        return 1
+      fi
+
+      if [[ "$co" == "1" ]]; then
+        echo "1.本地创建隧道的方式"
+        echo "2.到CF建固定隧道方式"
+        read -p "请选择:" co
+
+        if [[ "$co" != "1" && "$co" != "2" ]]; then
+          echo "无效输入!"
+          return 1
+        fi
+        type="3.1"
+        if [[ "$co" == "1" ]]; then
+          tunname=""
+          domain=""
+          localArgo
+        else
+          randomPort tcp vmess
+          if [[ -n "$port" ]]; then
+            vmport="$port"
+          else
+            red "未输入端口号"
+            return 1
+          fi
+          read -p "请输入WSPATH,默认是[serv00]: " wspath
+          read -p "请输入ARGO隧道token: " token
+          read -p "请输入ARGO隧道的域名: " domain
+        fi
+        read -p "是否使用自己的优选域名? [y/n] [n]:" input
+        input=${input:-n}
+        if [[ "$input" == "y" ]]; then
+          read -p "请输入优选域名:" goodDomain
+          if [[ -z "$goodDomain" ]]; then
+            red "未有输入!"
+            return 1
+          fi
+        fi
+      else
+        type="3.2"
+        randomPort tcp vmess
+        if [[ -n "$port" ]]; then
+          vmport="$port"
+        else
+          red "未输入端口号"
+          return 1
+        fi
+        read -p "请输入WSPATH,默认是[serv00]: " wspath
+        read -p "请输入优选域名:" goodDomain
+      fi
+      # 配置 hy2
+      randomPort udp hy2
+      if [[ -n "$port" ]]; then
+        hy2_port="$port"
+      else
+        red "未输入端口号"
+        return 1
+      fi
+      echo "自动选择未封ip..."
+      hy2_ip=$(get_ip)
+      if [[ -n "$hy2_ip" ]]; then
+        green "选中未封ip为 $hy2_ip"
+      else
+        red "未能找到未封IP,保持默认值！"
+      fi
+      #配置socks5
+      type=$(echo "$type + 1.3" | bc)
+      randomPort tcp socks5
+      if [[ -n "$port" ]]; then
+        socks5_port="$port"
+      else
+        red "未输入端口号"
+        return 1
+      fi
+      read -p "请输入socks5用户名:" username
+      read -p "请输入socks5密码:" password
+      ;;
+    *)
+      echo "无效的选择: $choice"
+      ;;
+    esac
+  done
+
+  #socks5 不需要uuid
   if [[ "$type" != "1.3" ]]; then
     wspath=${wspath:-serv00}
     read -p "是否自动分配UUID? [y/n] [y]:" input
@@ -684,42 +857,42 @@ configSingBox(){
     echo "2.socks5 "
     read -p "请选择:" co
 
-    if [[ "$co" != "1" && "$co" != "2" ]]; then 
+    if [[ "$co" != "1" && "$co" != "2" ]]; then
       echo "无效输入!"
       return 1
     fi
     outbound=$co
 
     if [[ "$outbound" == "2" ]]; then
-       read -p "请输入socks5服务器域名或IP:" tmpinput
-       local out_server=$tmpinput
-       if [[ -z "$out_server" ]]; then
-          red "未输入内容!"
-          return 1
-       fi
-       read -p "请输入socks5的端口:" tmpinput
-       local out_port=$tmpinput
-       if [[ -z "$out_port" ]]; then
-          red "未输入内容!"
-          return 1
-       fi 
-       read -p "请输入socks5的用户名:" tmpinput
-       local out_user=$tmpinput
-       if [[ -z "$out_user" ]]; then
-          red "未输入内容!"
-          return 1
-       fi 
-       read -p "请输入socks5的密码:" tmpinput
-       local out_pass=$tmpinput
-       if [[ -z "$out_pass" ]]; then
-          red "未输入内容!"
-          return 1
-       fi 
-       
-       make_outbound_socks5 $out_server $out_port $out_user $out_pass
+      read -p "请输入socks5服务器域名或IP:" tmpinput
+      local out_server=$tmpinput
+      if [[ -z "$out_server" ]]; then
+        red "未输入内容!"
+        return 1
+      fi
+      read -p "请输入socks5的端口:" tmpinput
+      local out_port=$tmpinput
+      if [[ -z "$out_port" ]]; then
+        red "未输入内容!"
+        return 1
+      fi
+      read -p "请输入socks5的用户名:" tmpinput
+      local out_user=$tmpinput
+      if [[ -z "$out_user" ]]; then
+        red "未输入内容!"
+        return 1
+      fi
+      read -p "请输入socks5的密码:" tmpinput
+      local out_pass=$tmpinput
+      if [[ -z "$out_pass" ]]; then
+        red "未输入内容!"
+        return 1
+      fi
+
+      make_outbound_socks5 $out_server $out_port $out_user $out_pass
     fi
   fi
-   cat > singbox.json <<EOF
+  cat >singbox.json <<EOF
   {
      "TYPE": "$type",
      "VMPORT": ${vmport:-null},
@@ -732,39 +905,40 @@ configSingBox(){
      "GOOD_DOMAIN": "${goodDomain:-null}",
      "SOCKS5_PORT": "${socks5_port:-null}",
      "SOCKS5_USER": "${username:-null}",
-     "SOCKS5_PASS": "${password:-null}"
+     "SOCKS5_PASS": "${password:-null}",
+     "TUNNEL_NAME": "${tunname:-null}"
   }
 
 EOF
 
-    generate_config $outbound
-    yellow "sing-box配置完毕!"  
+  generate_config $outbound
+  yellow "sing-box配置完毕!"
 
 }
 
-startSingBox(){
+startSingBox() {
   cd ${installpath}/serv00-play/singbox
-  
+
   if [[ ! -e "singbox.json" ]]; then
-     red "请先进行配置!"
-     return 1
+    red "请先进行配置!"
+    return 1
   fi
-  
+
   # if [[ ! -e ${installpath}/serv00-play/singbox/serv00sb ]] || [[ ! -e ${installpath}/serv00-play/singbox/cloudflared ]]; then
   #   read -p "请输入使用密码:" password
   # fi
-  
+
   if ! checkDownload "serv00sb"; then
-     return 
+    return
   fi
   if ! checkDownload "cloudflared"; then
-     return 
+    return
   fi
-  
+
   if checkSingboxAlive; then
     red "sing-box 已在运行，请勿重复操作!"
-    exit 1
-  else
+    return 1
+  else #启动可能需要cloudflare，此处表示cloudflare和sb有一个不在线，所以干脆先杀掉再重启。
     chmod 755 ./killsing-box.sh
     ./killsing-box.sh
   fi
@@ -782,7 +956,7 @@ startSingBox(){
 
 }
 
-stopSingBox(){
+stopSingBox() {
   cd ${installpath}/serv00-play/singbox
   if [ -f killsing-box.sh ]; then
     chmod 755 ./killsing-box.sh
@@ -794,12 +968,12 @@ stopSingBox(){
   echo "已停掉sing-box!"
 }
 
-killUserProc(){
+killUserProc() {
   local user=$(whoami)
   pkill -kill -u $user
 }
 
-ImageRecovery(){
+ImageRecovery() {
   cd ${installpath}/backups/local
   # 定义一个关联数组
   declare -A snapshot_paths
@@ -809,7 +983,7 @@ ImageRecovery(){
     # 提取文件夹名称和对应的真实路径
     folder=$(echo "$line" | awk '{print $9}')
     real_path=$(echo "$line" | awk '{print $11}')
-    
+
     # 将文件夹名称和真实路径存入数组
     snapshot_paths["$folder"]="$real_path"
   done < <(ls -trl | grep -F "lrwxr")
@@ -818,130 +992,130 @@ ImageRecovery(){
   sorted_keys=($(echo "${!snapshot_paths[@]}" | tr ' ' '\n' | sort -r))
   if [ $size -eq 0 ]; then
     echo "未有备份快照!"
-    return   
+    return
   fi
-  echo  "选择你需要恢复的内容:"
+  echo "选择你需要恢复的内容:"
   echo "1. 完整快照恢复 "
   echo "2. 恢复某个文件或目录"
   read -p "请选择:" input
 
   if [ "$input" = "1" ]; then
-      local i=1
-      declare -a folders
-      for folder in "${sorted_keys[@]}"; do
-        echo "${i}. ${folder} "
-        i=$((i+1))
-      done
-      retries=3
-      while [ $retries -gt 0 ]; do
-        read -p  "请选择恢复到哪一天(序号)？" input
-         # 检查输入是否有效
-         if [[ $input =~ ^[0-9]+$ ]] && [ "$input" -gt 0 ] && [ "$input" -le $size ]; then
-          # 输入有效，退出循环
-           targetFolder="${sorted_keys[@]:$input-1:1}"
-           echo "你选择的恢复日期是：${targetFolder}"
-           break
-         else
-           # 输入无效，减少重试次数
-            retries=$((retries-1))
-            echo "输入有误，请重新输入！你还有 $retries 次机会。"
-         fi
-         if [ $retries -eq 0 ]; then
-           echo "输入错误次数过多，操作已取消。"
-           return  
-         fi
-      done
-      killUserProc
-      srcpath=${snapshot_paths["${targetFolder}"]}
-      #echo "srcpath:$srcpath"
-       rm -rf ~/* > /dev/null 2>&1  
-       rsync -a $srcpath/ ~/  2>/dev/null  
-      yellow "快照恢复完成!"
-      return
+    local i=1
+    declare -a folders
+    for folder in "${sorted_keys[@]}"; do
+      echo "${i}. ${folder} "
+      i=$((i + 1))
+    done
+    retries=3
+    while [ $retries -gt 0 ]; do
+      read -p "请选择恢复到哪一天(序号)？" input
+      # 检查输入是否有效
+      if [[ $input =~ ^[0-9]+$ ]] && [ "$input" -gt 0 ] && [ "$input" -le $size ]; then
+        # 输入有效，退出循环
+        targetFolder="${sorted_keys[@]:$input-1:1}"
+        echo "你选择的恢复日期是：${targetFolder}"
+        break
+      else
+        # 输入无效，减少重试次数
+        retries=$((retries - 1))
+        echo "输入有误，请重新输入！你还有 $retries 次机会。"
+      fi
+      if [ $retries -eq 0 ]; then
+        echo "输入错误次数过多，操作已取消。"
+        return
+      fi
+    done
+    killUserProc
+    srcpath=${snapshot_paths["${targetFolder}"]}
+    #echo "srcpath:$srcpath"
+    rm -rf ~/* >/dev/null 2>&1
+    rsync -a $srcpath/ ~/ 2>/dev/null
+    yellow "快照恢复完成!"
+    return
   elif [ "$input" = "2" ]; then
-      declare -A foundArr
-      read -p "输入你要恢复到文件或目录:" infile
-      
-      for folder in "${!snapshot_paths[@]}"; do
-          path="${snapshot_paths[$folder]}"
-         results=$(find "${path}" -name "$infile" 2>/dev/null)
-        # echo "111results:|$results|"     
-         if [[ -n "$results" ]]; then
-          #echo "put |$results| to folder:$folder"
-          foundArr["$folder"]="$results"
-         fi
-      done
-      local i=1
-      sortedFoundArr=($(echo "${!foundArr[@]}" | tr ' ' '\n' | sort -r))
-      declare -A indexPathArr
-      for folder in "${sortedFoundArr[@]}"; do
-        echo "$i. $folder:"
-        results="${foundArr[${folder}]}"
-        IFS=$'\n' read -r -d '' -a paths <<< "$results"
-        local j=1
-        for path in "${paths[@]}"; do
-          indexPathArr["$i"."$j"]="$path"
-          echo "  $j. $path"
-          
-          j=$((j+1))
-        done
-        i=$((i+1))
-      done
-      
-      while [ true ]; do
-        read -p "输入要恢复的文件序号，格式:日期序号.文件序号, 多个以逗号分隔.(如输入 1.2,3.2)[按enter返回]:" input
-        regex='^([0-9]+\.[0-9]+)(,[0-9]+\.[0-9]+)*$'
+    declare -A foundArr
+    read -p "输入你要恢复到文件或目录:" infile
 
-        if [ -z "$input" ]; then
-            return
+    for folder in "${!snapshot_paths[@]}"; do
+      path="${snapshot_paths[$folder]}"
+      results=$(find "${path}" -name "$infile" 2>/dev/null)
+      # echo "111results:|$results|"
+      if [[ -n "$results" ]]; then
+        #echo "put |$results| to folder:$folder"
+        foundArr["$folder"]="$results"
+      fi
+    done
+    local i=1
+    sortedFoundArr=($(echo "${!foundArr[@]}" | tr ' ' '\n' | sort -r))
+    declare -A indexPathArr
+    for folder in "${sortedFoundArr[@]}"; do
+      echo "$i. $folder:"
+      results="${foundArr[${folder}]}"
+      IFS=$'\n' read -r -d '' -a paths <<<"$results"
+      local j=1
+      for path in "${paths[@]}"; do
+        indexPathArr["$i"."$j"]="$path"
+        echo "  $j. $path"
+
+        j=$((j + 1))
+      done
+      i=$((i + 1))
+    done
+
+    while [ true ]; do
+      read -p "输入要恢复的文件序号，格式:日期序号.文件序号, 多个以逗号分隔.(如输入 1.2,3.2)[按enter返回]:" input
+      regex='^([0-9]+\.[0-9]+)(,[0-9]+\.[0-9]+)*$'
+
+      if [ -z "$input" ]; then
+        return
+      fi
+
+      if [[ "$input" =~ $regex ]]; then
+        declare -a pairNos
+        declare -a fileNos
+        IFS=',' read -r -a pairNos <<<"$input"
+
+        echo "请选择文件恢复的目标路径:"
+        echo "1.原路返回 "
+        echo "2.${installpath}/restore "
+        read -p "请选择:" targetDir
+
+        if [[ "$targetDir" != "1" ]] && [[ "$targetDir" != "2" ]]; then
+          red "无效输入!"
+          return
         fi
-      
-        if [[ "$input" =~ $regex ]]; then
-          declare -a pairNos
-          declare -a fileNos 
-          IFS=',' read -r -a pairNos <<< "$input"
 
-          echo "请选择文件恢复的目标路径:" 
-          echo "1.原路返回 "
-          echo "2.${installpath}/restore "
-          read -p "请选择:" targetDir
+        for pairNo in "${pairNos[@]}"; do
+          srcpath="${indexPathArr[$pairNo]}"
 
-          if [[ "$targetDir" != "1" ]] && [[ "$targetDir" != "2" ]];then
-              red "无效输入!"
-              return
+          if [ "$targetDir" = "1" ]; then
+            local user=$(whoami)
+            targetPath=${srcpath#*${user}}
+            if [ -d $srcpath ]; then
+              targetPath=${targetPath%/*}
+            fi
+            echo "cp -r $srcpath $HOME/$targetPath"
+            cp -r ${srcpath} $HOME/${targetPath}
+
+          elif [ "$targetDir" = "2" ]; then
+            targetPath="${installpath}/restore"
+            if [ ! -e "$targetPath" ]; then
+              mkdir -p "$targetPath"
+            fi
+            cp -r $srcpath $targetPath/
           fi
+        done
+        green "完成文件恢复"
 
-          for pairNo in "${pairNos[@]}"; do
-            srcpath="${indexPathArr[$pairNo]}"
-
-            if [ "$targetDir" = "1" ]; then
-              local user=$(whoami)
-              targetPath=${srcpath#*${user}}
-              if [ -d $srcpath ]; then
-                 targetPath=${targetPath%/*}
-              fi
-              echo "cp -r $srcpath $HOME/$targetPath"
-              cp -r ${srcpath} $HOME/${targetPath}
-              
-            elif [ "$targetDir" = "2" ]; then
-              targetPath="${installpath}/restore"
-              if [ ! -e "$targetPath" ]; then
-                mkdir -p "$targetPath" 
-              fi
-              cp -r $srcpath $targetPath/
-            fi  
-          done
-          green "完成文件恢复"
-          
-        else
-          red "输入格式不对，请重新输入！"
-        fi
-      done
+      else
+        red "输入格式不对，请重新输入！"
+      fi
+    done
   fi
- 
+
 }
 
-uninstall(){
+uninstall() {
   read -p "确定卸载吗? [y/n] [n]:" input
   input=${input:-n}
 
@@ -954,7 +1128,7 @@ uninstall(){
   fi
 }
 
-InitServer(){
+InitServer() {
   read -p "$(red "将初始化帐号系统，要继续？[y/n] [n]:")" input
   input=${input:-n}
   read -p "是否保留用户配置？[y/n] [y]:" saveProfile
@@ -965,35 +1139,35 @@ InitServer(){
     green "清理进程中..."
     killUserProc
     green "清理磁盘中..."
-    if [[ "$saveProfile" = "y" ]] || [[ "$saveProfile" = "Y" ]]; then
+    if [[ "$saveProfile" == "y" ]] || [[ "$saveProfile" == "Y" ]]; then
       rm -rf ~/* 2>/dev/null
     else
       rm -rf ~/* ~/.* 2>/dev/null
     fi
     cleanPort
     yellow "初始化完毕"
-    
-   exit 0
+
+    exit 0
   fi
 }
 
-manageNeZhaAgent(){
+manageNeZhaAgent() {
   if ! checkInstalled "serv00-play"; then
-     return 1
+    return 1
   fi
   while true; do
-  yellow "-------------------------"
-  echo "探针管理："
-  echo "1.安装探针"
-  echo "2.升级探针"
-  echo "3.启动/重启探针"
-  echo "4.停止探针"
-  echo "9.返回主菜单"
-  echo "0.退出脚本"
-  yellow "-------------------------"
+    yellow "-------------------------"
+    echo "探针管理："
+    echo "1.安装探针"
+    echo "2.升级探针"
+    echo "3.启动/重启探针"
+    echo "4.停止探针"
+    echo "9.返回主菜单"
+    echo "0.退出脚本"
+    yellow "-------------------------"
 
-  read -p "请选择:" choice
-  case $choice in 
+    read -p "请选择:" choice
+    case $choice in
     1)
       installNeZhaAgent
       ;;
@@ -1002,7 +1176,7 @@ manageNeZhaAgent(){
       ;;
     3)
       startAgent
-      exit 0;
+      exit 0
       ;;
     4)
       stopNeZhaAgent
@@ -1010,17 +1184,18 @@ manageNeZhaAgent(){
     9)
       break
       ;;
-    0) exit 0
+    0)
+      exit 0
       ;;
-     *)
+    *)
       echo "无效选项，请重试"
       ;;
-  esac
- done
- showMenu
+    esac
+  done
+  showMenu
 }
 
-updateAgent(){
+updateAgent() {
   red "暂不提供在线升级, 只适配哪吒面板v0版本系列。"
   return 1
   exepath="${installpath}/serv00-play/nezha/nezha-agent"
@@ -1042,8 +1217,8 @@ updateAgent(){
     local filezip="nezha-agent_latest.zip"
     curl -sL -o "$filezip" "$download_url"
     if [[ ! -e "$filezip" || -n $(file "$filezip" | grep "text") ]]; then
-       echo "下载探针文件失败!"
-       return 
+      echo "下载探针文件失败!"
+      return
     fi
     local agent_runing=0
     if checknezhaAgentAlive; then
@@ -1061,69 +1236,69 @@ updateAgent(){
     echo "已经是最新版本: $local_version"
   fi
   if [[ $agent_runing -eq 1 ]]; then
-     exit 0;
+    exit 0
   fi
 }
 
-startAgent(){
+startAgent() {
   local workedir="${installpath}/serv00-play/nezha"
   if [ ! -e "${workedir}" ]; then
-     red "未安装探针，请先安装！！!"
-     return
+    red "未安装探针，请先安装！！!"
+    return
   fi
   cd $workedir
-  
+
   local configfile="./nezha.json"
   if [ ! -e "$configfile" ]; then
     red "未安装探针，请先安装！！!"
-     return
+    return
   fi
-  
+
   nezha_domain=$(jq -r ".nezha_domain" $configfile)
   nezha_port=$(jq -r ".nezha_port" $configfile)
   nezha_pwd=$(jq -r ".nezha_pwd" $configfile)
   tls=$(jq -r ".tls" $configfile)
 
   if checknezhaAgentAlive; then
-      stopNeZhaAgent
+    stopNeZhaAgent
   fi
 
   local args="--report-delay 4 --disable-auto-update --disable-force-update "
   if [[ "$tls" == "y" ]]; then
-     args="${args} --tls "
+    args="${args} --tls "
   fi
 
   #echo "./nezha-agent ${args} -s ${nezha_domain}:${nezha_port} -p ${nezha_pwd}"
   nohup ./nezha-agent ${args} -s ${nezha_domain}:${nezha_port} -p ${nezha_pwd} >/dev/null 2>&1 &
-  
+
   if checknezhaAgentAlive; then
-      green "启动成功!"
+    green "启动成功!"
   else
-      red "启动失败!"
+    red "启动失败!"
   fi
   #即便使用nohup放后台，此处如果使用ctrl+c退出脚本，nezha-agent进程也会退出。非常奇葩，因此startAgent后只能exit退出脚本，避免用户使用ctrl+c退出。
- 
+
 }
 
-installNeZhaAgent(){
+installNeZhaAgent() {
   local workedir="${installpath}/serv00-play/nezha"
   if [ ! -e "${workedir}" ]; then
-     mkdir -p "${workedir}"
+    mkdir -p "${workedir}"
   fi
-   cd ${workedir}
-   if [[ ! -e nezha-agent ]]; then
+  cd ${workedir}
+  if [[ ! -e nezha-agent ]]; then
     echo "正在下载哪吒探针..."
     local url="https://github.com/nezhahq/agent/releases/download/v0.20.3/nezha-agent_freebsd_amd64.zip"
     agentZip="nezha-agent.zip"
     if ! wget -qO "$agentZip" "$url"; then
-        red "下载哪吒探针失败"
-        return 1
+      red "下载哪吒探针失败"
+      return 1
     fi
-    unzip $agentZip  > /dev/null 2>&1 
+    unzip $agentZip >/dev/null 2>&1
     chmod +x ./nezha-agent
     green "下载完毕"
   fi
-  
+
   local config="nezha.json"
   local input="y"
   if [[ -e "$config" ]]; then
@@ -1132,7 +1307,7 @@ installNeZhaAgent(){
     read -p "是否修改？ [y/n] [n]:" input
     input=${input:-n}
   fi
-  
+
   if [[ "$input" == "y" ]]; then
     read -p "请输入哪吒面板的域名或ip:" nezha_domain
     read -p "请输入哪吒面板RPC端口(默认 5555):" nezha_port
@@ -1148,11 +1323,11 @@ installNeZhaAgent(){
   fi
 
   if [[ -z "$nezha_domain" || -z "$nezha_port" || -z "$nezha_pwd" ]]; then
-      red "以上参数都不能为空！"
-      return 1
+    red "以上参数都不能为空！"
+    return 1
   fi
 
-    cat > $config <<EOF
+  cat >$config <<EOF
     {
       "nezha_domain": "$nezha_domain",
       "nezha_port": "$nezha_port",
@@ -1163,25 +1338,25 @@ EOF
 
   local args="--report-delay 4 --disable-auto-update --disable-force-update "
   if [[ "$tls" == "y" ]]; then
-     args="${args} --tls "
+    args="${args} --tls "
   fi
 
   if checknezhaAgentAlive; then
-      stopNeZhaAgent
+    stopNeZhaAgent
   fi
 
   nohup ./nezha-agent ${args} -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
   green "哪吒探针成功启动!"
-  
+
 }
 
-uninstallAgent(){
+uninstallAgent() {
   read -p "确定卸载哪吒探针? [y/n] [n]:" input
   input=${input:-n}
 
   if [[ "$input" == "y" ]]; then
     if checknezhaAgentAlive; then
-        stopNeZhaAgent
+      stopNeZhaAgent
     fi
     local workedir="${installpath}/serv00-play/nezha"
     rm -rf $workedir
@@ -1190,28 +1365,28 @@ uninstallAgent(){
 
 }
 
-setCnTimeZone(){
+setCnTimeZone() {
   read -p "确定设置中国上海时区? [y/n] [y]:" input
   input=${input:-y}
-  
+
   cd ${installpath}
   if [ "$input" = "y" ]; then
     devil binexec on
     touch .profile
-    cat .profile | perl ./serv00-play/mkprofile.pl > tmp_profile
+    cat .profile | perl ./serv00-play/mkprofile.pl >tmp_profile
     mv -f tmp_profile .profile
-    
-    read -p "$(yellow 设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:)"  input
+
+    read -p "$(yellow 设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:)" input
     input=${input:-y}
 
     if [ "$input" = "y" ]; then
-       kill -9 $PPID
+      kill -9 $PPID
     fi
   fi
-  
+
 }
 
-setColorWord(){
+setColorWord() {
   cd ${installpath}
   # 定义颜色编码
   bright_black="\033[1;90m"
@@ -1242,26 +1417,29 @@ setColorWord(){
 
   # 根据用户的选择设置颜色
   case $color_choice in
-      1) color_code="90" ;; # 明亮黑色
-      2) color_code="91" ;; # 明亮红色
-      3) color_code="92" ;; # 明亮绿色
-      4) color_code="93" ;; # 明亮黄色
-      5) color_code="94" ;; # 明亮蓝色
-      6) color_code="95" ;; # 明亮紫色
-      7) color_code="96" ;; # 明亮青色
-      8) color_code="97" ;; # 明亮白色
-      *) echo "无效选择，使用默认颜色 (明亮白色)"; color_code="97" ;;
+  1) color_code="90" ;; # 明亮黑色
+  2) color_code="91" ;; # 明亮红色
+  3) color_code="92" ;; # 明亮绿色
+  4) color_code="93" ;; # 明亮黄色
+  5) color_code="94" ;; # 明亮蓝色
+  6) color_code="95" ;; # 明亮紫色
+  7) color_code="96" ;; # 明亮青色
+  8) color_code="97" ;; # 明亮白色
+  *)
+    echo "无效选择，使用默认颜色 (明亮白色)"
+    color_code="97"
+    ;;
   esac
-  
-  if grep "chAngEYourName" .profile > /dev/null ; then
-     cat .profile | grep -v "chAngEYourName" > tmp_profile
-     echo "echo -e \"\033[1;${color_code}m\$(figlet \"${name}\")\033[0m\"  #chAngEYourName" >> tmp_profile
-     mv -f tmp_profile .profile
+
+  if grep "chAngEYourName" .profile >/dev/null; then
+    cat .profile | grep -v "chAngEYourName" >tmp_profile
+    echo "echo -e \"\033[1;${color_code}m\$(figlet \"${name}\")\033[0m\"  #chAngEYourName" >>tmp_profile
+    mv -f tmp_profile .profile
   else
-    echo "echo -e \"\033[1;${color_code}m\$(figlet \"${name}\")\033[0m\" #chAngEYourName" >> .profile
+    echo "echo -e \"\033[1;${color_code}m\$(figlet \"${name}\")\033[0m\" #chAngEYourName" >>.profile
   fi
 
-  read -p  "设置完毕! 重新登录看效果? [y/n] [y]:" input
+  read -p "设置完毕! 重新登录看效果? [y/n] [y]:" input
   input=${input:-y}
   if [[ "$input" == "y" ]]; then
     kill -9 $PPID
@@ -1269,17 +1447,17 @@ setColorWord(){
 
 }
 
-showIP(){
+showIP() {
   myip="$(curl -s icanhazip.com)"
   green "本机IP: $myip"
 }
 
-uninstallMtg(){
+uninstallMtg() {
   read -p "确定卸载? [y/n] [n]:" input
   input=${input:-n}
 
   if [[ "$input" == "n" ]]; then
-     return 1
+    return 1
   fi
 
   if [[ -e "mtg" ]]; then
@@ -1292,116 +1470,116 @@ uninstallMtg(){
   fi
 }
 
-installMtg(){
-   if [ ! -e "mtg" ]; then 
+installMtg() {
+  if [ ! -e "mtg" ]; then
     # read -p "请输入使用密码:" password
     if ! checkDownload "mtg"; then
       return 1
     fi
-   fi
-
-   chmod +x ./mtg 
-   if [ -e "config.json" ]; then 
-      echo "已存在配置如下:"
-      cat config.json
-      read -p "是否重新生成配置? [y/n] [n]:" input
-      input=${input:-n}
-      if [ "$input" == "n" ]; then
-         return 0
-      fi
-   fi
-    
-   #自动生成密钥
-   head=$(hostname | cut -d '.' -f 1)
-   no=${head#s}
-   host="panel${no}.serv00.com"
-   secret=$(./mtg generate-secret --hex $host )
-   loadPort
-   randomPort tcp mtg
-  if [[ -n "$port" ]]; then
-      mtpport="$port"
   fi
 
-   cat > config.json <<EOF
+  chmod +x ./mtg
+  if [ -e "config.json" ]; then
+    echo "已存在配置如下:"
+    cat config.json
+    read -p "是否重新生成配置? [y/n] [n]:" input
+    input=${input:-n}
+    if [ "$input" == "n" ]; then
+      return 0
+    fi
+  fi
+
+  #自动生成密钥
+  head=$(hostname | cut -d '.' -f 1)
+  no=${head#s}
+  host="panel${no}.serv00.com"
+  secret=$(./mtg generate-secret --hex $host)
+  loadPort
+  randomPort tcp mtg
+  if [[ -n "$port" ]]; then
+    mtpport="$port"
+  fi
+
+  cat >config.json <<EOF
    {
       "secret": "$secret",
       "port": "$mtpport"
    }
 EOF
-   yellow "安装完成!"
+  yellow "安装完成!"
 }
 
-startMtg(){
+startMtg() {
   cd ${installpath}/serv00-play
 
   if [ ! -e "dmtg" ]; then
-     ehco "未安装mtproto，请先行安装配置!"
-     return 1
+    ehco "未安装mtproto，请先行安装配置!"
+    return 1
   fi
   cd dmtg
   config="config.json"
-   if [ ! -e $config ]; then
-      red "未安装mtproto，请先行安装配置!"
-      return 1
-   fi
+  if [ ! -e $config ]; then
+    red "未安装mtproto，请先行安装配置!"
+    return 1
+  fi
 
-   if checkMtgAlive; then
-     echo "已在运行,请勿重复启动"
-     return 0
-   fi
+  if checkMtgAlive; then
+    echo "已在运行,请勿重复启动"
+    return 0
+  fi
 
-   read -p "是否需要日志？: [y/n] [n]:" input
-   input=${input:-n}
+  read -p "是否需要日志？: [y/n] [n]:" input
+  input=${input:-n}
 
-   if [ "$input" == "y" ]; then
-      green "日志文件名称为:mtg.log"
-      logfile="-d >mtg.log"
-   else
-       logfile=" >/dev/null "
-   fi
+  if [ "$input" == "y" ]; then
+    green "日志文件名称为:mtg.log"
+    logfile="-d >mtg.log"
+  else
+    logfile=" >/dev/null "
+  fi
 
-   host="$(hostname | cut -d '.' -f 1)"
+  host="$(hostname | cut -d '.' -f 1)"
 
-   secret=$(jq -r ".secret" $config)
-   port=$(jq -r ".port" $config)
+  secret=$(jq -r ".secret" $config)
+  port=$(jq -r ".port" $config)
 
-   cmd="nohup ./mtg simple-run -n 1.1.1.1 -t 30s -a 1MB 0.0.0.0:${port} ${secret} -c 8192 --prefer-ip=\"prefer-ipv6\" ${logfile} 2>&1 &"
-   eval "$cmd"
-   sleep 3
-   if checkMtgAlive; then
+  cmd="nohup ./mtg simple-run -n 1.1.1.1 -t 30s -a 1MB 0.0.0.0:${port} ${secret} -c 8192 --prefer-ip=\"prefer-ipv6\" ${logfile} 2>&1 &"
+  eval "$cmd"
+  sleep 3
+  if checkMtgAlive; then
     mtproto="https://t.me/proxy?server=${host}.serv00.com&port=${port}&secret=${secret}"
-     echo "$mtproto"
-     green "启动成功"
-   else 
-     echo "启动失败，请检查进程"
-   fi
+    echo "$mtproto"
+    green "启动成功"
+  else
+    echo "启动失败，请检查进程"
+  fi
 
 }
 
-stopMtg(){
-  r=$(ps aux | grep  mtg | grep -v "grep" | awk '{print $2}' )
+stopMtg() {
+  r=$(ps aux | grep mtg | grep -v "grep" | awk '{print $2}')
   if [ -z "$r" ]; then
     echo "没有运行!"
     return
-  else  
+  else
     kill -9 $r
   fi
   echo "已停掉mtproto!"
 
 }
 
-mtprotoServ(){
+mtprotoServ() {
   if ! checkInstalled "serv00-play"; then
-     return 1
+    return 1
   fi
-   cd ${installpath}/serv00-play
+  cd ${installpath}/serv00-play
 
-   if [ ! -e "dmtg" ]; then
-      mkdir -p dmtg
-   fi
-   cd dmtg
+  if [ ! -e "dmtg" ]; then
+    mkdir -p dmtg
+  fi
+  cd dmtg
 
-   while true; do
+  while true; do
     yellow "---------------------"
     echo "服务状态: $(checkProcStatus mtg)"
     echo "mtproto管理:"
@@ -1413,59 +1591,64 @@ mtprotoServ(){
     echo "0. 退出脚本"
     yellow "---------------------"
     read -p "请选择:" input
-    
+
     case $input in
-      1) installMtg
-         ;;
-      2) startMtg
-         ;;
-      3) stopMtg
-         ;;
-      4) uninstallMtg
-         ;;
-      9)  break
-         ;;
-      0) exit 0
-         ;;
-      *)
-         echo "无效选项，请重试"
-         ;;
+    1)
+      installMtg
+      ;;
+    2)
+      startMtg
+      ;;
+    3)
+      stopMtg
+      ;;
+    4)
+      uninstallMtg
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
     esac
   done
   showMenu
-   
+
 }
 
 extract_user_and_password() {
-    output=$1
+  output=$1
 
-    username=$(echo "$output" | grep "username:" | sed 's/.*username: //')
-    password=$(echo "$output" | grep "password:" | sed 's/.*password: //')
-    echo "生成用户密码如下，请谨记! 只会出现一次:"
-    green "Username: $username"
-    green "Password: $password"
+  username=$(echo "$output" | grep "username:" | sed 's/.*username: //')
+  password=$(echo "$output" | grep "password:" | sed 's/.*password: //')
+  echo "生成用户密码如下，请谨记! 只会出现一次:"
+  green "Username: $username"
+  green "Password: $password"
 }
 
 update_http_port() {
-   cd data || return 1
-    local port=$1
-    local config_file="config.json"
+  cd data || return 1
+  local port=$1
+  local config_file="config.json"
 
-    if [ -z "$port" ]; then
-        echo "Error: No port number provided."
-        return 1
-    fi
-    # 使用 jq 来更新配置文件中的 http_port
-    jq --argjson new_port "$port" '.scheme.http_port = $new_port' "$config_file" > tmp.$$.json && mv tmp.$$.json "$config_file"
+  if [ -z "$port" ]; then
+    echo "Error: No port number provided."
+    return 1
+  fi
+  # 使用 jq 来更新配置文件中的 http_port
+  jq --argjson new_port "$port" '.scheme.http_port = $new_port' "$config_file" >tmp.$$.json && mv tmp.$$.json "$config_file"
 
-    echo "配置文件处理完毕."
+  echo "配置文件处理完毕."
 
 }
 
-
-installAlist(){
+installAlist() {
   if ! checkInstalled "serv00-play"; then
-     return 1
+    return 1
   fi
   cd ${installpath}/serv00-play/ || return 1
   alistpath="${installpath}/serv00-play/alist"
@@ -1473,28 +1656,28 @@ installAlist(){
   if [[ ! -e "$alistpath" ]]; then
     mkdir -p $alistpath
   fi
-  if [[ -d "$alistpath/data" && -e "$alistpath/alist" ]]; then 
-      echo "已安装，请勿重复安装。"
-      return 
-  else 
-      cd "alist" || return 1
-      if [ ! -e "alist" ]; then
-        # read -p "请输入使用密码:" password
-        if ! checkDownload "alist"; then
-          return 1
-        fi
+  if [[ -d "$alistpath/data" && -e "$alistpath/alist" ]]; then
+    echo "已安装，请勿重复安装。"
+    return
+  else
+    cd "alist" || return 1
+    if [ ! -e "alist" ]; then
+      # read -p "请输入使用密码:" password
+      if ! checkDownload "alist"; then
+        return 1
       fi
+    fi
   fi
 
-  loadPort 
+  loadPort
   randomPort tcp alist
   if [[ -n "$port" ]]; then
-      alist_port="$port"
+    alist_port="$port"
   fi
   echo "正在安装alist，请等待..."
   domain=""
   webIp=""
-  if ! makeWWW alist $alist_port ; then
+  if ! makeWWW alist $alist_port; then
     echo "绑定域名失败!"
     return 1
   fi
@@ -1503,26 +1686,26 @@ installAlist(){
     return 1
   fi
   cd $alistpath
-  rt=$(chmod +x ./alist && ./alist admin random 2>&1 )
+  rt=$(chmod +x ./alist && ./alist admin random 2>&1)
   extract_user_and_password "$rt"
   update_http_port "$alist_port"
 
   green "安装完毕"
-  
+
 }
 
-startAlist(){
+startAlist() {
   alistpath="${installpath}/serv00-play/alist"
   cd $alistpath
   domain=$(jq -r ".domain" config.json)
 
-  if [[ -d "$alistpath/data" && -e "$alistpath/alist" ]]; then 
+  if [[ -d "$alistpath/data" && -e "$alistpath/alist" ]]; then
     cd $alistpath
     echo "正在启动alist..."
-    if  checkProcAlive alist; then
+    if checkProcAlive alist; then
       echo "alist已启动，请勿重复启动!"
     else
-      nohup ./alist server > /dev/null 2>&1 &
+      nohup ./alist server >/dev/null 2>&1 &
       sleep 3
       if ! checkProcAlive alist; then
         red "启动失败，请检查!"
@@ -1534,16 +1717,16 @@ startAlist(){
     fi
   else
     red "请先行安装再启动!"
-    return     
+    return
   fi
 }
 
-stopAlist(){
+stopAlist() {
   if checkProcAlive "alist"; then
-     stopProc "alist"
-     sleep 3
+    stopProc "alist"
+    sleep 3
   fi
-     
+
 }
 
 # uninstallPHP(){
@@ -1553,13 +1736,13 @@ stopAlist(){
 #   yellow "已删除域名 $domain 的相关服务!"
 # }
 
-uninstallProc(){
+uninstallProc() {
   local path=$1
   local procname=$2
 
-  if [ ! -e "$path" ]; then   
-      red "未安装$procname!!!"
-      return 1
+  if [ ! -e "$path" ]; then
+    red "未安装$procname!!!"
+    return 1
   fi
   cd $path
   read -p "确定卸载${procname}吗? [y/n] [n]:" input
@@ -1577,13 +1760,13 @@ uninstallProc(){
 
 }
 
-uninstallAlist(){
+uninstallAlist() {
   alistpath="${installpath}/serv00-play/alist"
   uninstallProc "$alistpath" alist
-  
+
 }
 
-resetAdminPass(){
+resetAdminPass() {
   alistpath="${installpath}/serv00-play/alist"
   cd $alistpath
 
@@ -1591,41 +1774,48 @@ resetAdminPass(){
   extract_user_and_password "$output"
 }
 
-alistServ(){
+alistServ() {
   if ! checkInstalled "serv00-play"; then
-     return 1
+    return 1
   fi
   while true; do
-   yellow "----------------------"
-   echo "alist:"
-   echo "服务状态: $(checkProcStatus alist)"
-   echo "1. 安装部署alist "
-   echo "2. 启动alist"
-   echo "3. 停掉alist"
-   echo "4. 重置admin密码"
-   echo "8. 卸载alist"
-   echo "9. 返回主菜单"
-   echo "0. 退出脚本"
-   yellow "----------------------"
-   read -p "请选择:" input
+    yellow "----------------------"
+    echo "alist:"
+    echo "服务状态: $(checkProcStatus alist)"
+    echo "1. 安装部署alist "
+    echo "2. 启动alist"
+    echo "3. 停掉alist"
+    echo "4. 重置admin密码"
+    echo "8. 卸载alist"
+    echo "9. 返回主菜单"
+    echo "0. 退出脚本"
+    yellow "----------------------"
+    read -p "请选择:" input
 
-   case $input in
-     1) installAlist
-        ;;
-     2) startAlist
-        ;;
-     3) stopAlist
-        ;;
-     4) resetAdminPass
-        ;;
-     8) uninstallAlist
-        ;;
-     9)  break
-        ;;
-     0) exit 0
-        ;;
-     *)
-       echo "无效选项，请重试"
+    case $input in
+    1)
+      installAlist
+      ;;
+    2)
+      startAlist
+      ;;
+    3)
+      stopAlist
+      ;;
+    4)
+      resetAdminPass
+      ;;
+    8)
+      uninstallAlist
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
       ;;
     esac
   done
@@ -1633,30 +1823,29 @@ alistServ(){
 }
 
 declare -a indexPorts
-loadIndexPorts(){
+loadIndexPorts() {
   output=$(devil port list)
 
   indexPorts=()
   # 解析输出内容
   index=0
   while read -r port typ opis; do
-      # 跳过标题行
-      if [[ "$port" =~ "Port" ]]; then
-          continue
-      fi
-      #echo "port:$port,typ:$typ, opis:$opis"
-      if [[ "$port" =~ "Brak" || "$port" =~ "No" ]]; then
-          echo "未分配端口"
-          return 0
-      fi
+    # 跳过标题行
+    if [[ "$port" =~ "Port" ]]; then
+      continue
+    fi
+    #echo "port:$port,typ:$typ, opis:$opis"
+    if [[ "$port" =~ "Brak" || "$port" =~ "No" ]]; then
+      echo "未分配端口"
+      return 0
+    fi
 
-      if [[ -n "$port" ]]; then
-        opis=${opis:-""} 
-        indexPorts[$index]="$port|$typ|$opis"
-        ((index++)) 
-      fi
-  done <<< "$output"
-
+    if [[ -n "$port" ]]; then
+      opis=${opis:-""}
+      indexPorts[$index]="$port|$typ|$opis"
+      ((index++))
+    fi
+  done <<<"$output"
 
 }
 
@@ -1666,41 +1855,40 @@ printIndexPorts() {
   for entry in "${indexPorts[@]}"; do
     # 使用 | 作为分隔符拆分 port、typ 和 opis
 
-    IFS='|' read -r port typ opis <<< "$entry"
+    IFS='|' read -r port typ opis <<<"$entry"
     echo "${i}. $port |  $typ | $opis"
     ((i++))
   done
 }
 
-
-delPortMenu(){
+delPortMenu() {
   loadIndexPorts
 
   if [[ ${#indexPorts[@]} -gt 0 ]]; then
-     printIndexPorts
-     read -p "请选择要删除的端口记录编号(输入0删除所有端口记录, 回车返回):" number
-     number=${number:-99}
-     
-     if [[ $number -eq 99 ]]; then
-        return
-     elif [[ $number -gt 3 || $number -lt 0 ]]; then
-       echo "非法输入!"
-       return 
-     elif [[ $number -eq 0 ]]; then
-       cleanPort
-     else 
-         idx=$((number-1))
-         IFS='|' read -r port typ opis <<< ${indexPorts[$idx]}
-         devil port del $typ $port  > /dev/null 2>&1
-     fi
-      echo "删除完毕!"
+    printIndexPorts
+    read -p "请选择要删除的端口记录编号(输入0删除所有端口记录, 回车返回):" number
+    number=${number:-99}
+
+    if [[ $number -eq 99 ]]; then
+      return
+    elif [[ $number -gt 3 || $number -lt 0 ]]; then
+      echo "非法输入!"
+      return
+    elif [[ $number -eq 0 ]]; then
+      cleanPort
+    else
+      idx=$((number - 1))
+      IFS='|' read -r port typ opis <<<${indexPorts[$idx]}
+      devil port del $typ $port >/dev/null 2>&1
+    fi
+    echo "删除完毕!"
   else
-     red "未有分配任何端口!"
+    red "未有分配任何端口!"
   fi
-        
+
 }
 
-addPortMenu(){
+addPortMenu() {
   echo "选择端口类型:"
   echo "1. tcp"
   echo "2. udp"
@@ -1708,17 +1896,17 @@ addPortMenu(){
 
   if [[ "$co" != "1" && "$co" != "2" ]]; then
     red "非法输入"
-    return 
+    return
   fi
   local type=""
   if [[ "$co" == "1" ]]; then
-     type="tcp"
+    type="tcp"
   else
-     type="udp"
+    type="udp"
   fi
   loadPort
   read -p "请输入端口备注(如hy2，vmess，用于脚本自动获取端口):" opts
-  local port=$(getPort $type $opts )
+  local port=$(getPort $type $opts)
   if [[ "$port" == "failed" ]]; then
     red "分配端口失败,请重新操作!"
   else
@@ -1726,61 +1914,63 @@ addPortMenu(){
   fi
 }
 
-portServ(){
+portServ() {
   while true; do
-  yellow "----------------------"
+    yellow "----------------------"
     echo "端口管理:"
     echo "1. 删除某条端口记录"
     echo "2. 增加一条端口记录"
     echo "9. 返回主菜单"
     echo "0. 退出脚本"
-  yellow "----------------------"
+    yellow "----------------------"
     read -p "请选择:" input
     case $input in
-      1) delPortMenu
-        ;;
-      2) addPortMenu
-        ;;
-      9)
-        break
-        ;;
-      0)
-        exit 0
-        ;;
-      *)
-        echo "无效选项，请重试"
-        ;;
+    1)
+      delPortMenu
+      ;;
+    2)
+      addPortMenu
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
     esac
   done
   showMenu
 }
 
-cronLE(){
+cronLE() {
   read -p "请输入定时运行的时间间隔(小时[1-23]):" tm
   tm=${tm:-""}
   if [[ -z "$tm" ]]; then
-     red "时间不能为空"
-     return 1
-  fi   
+    red "时间不能为空"
+    return 1
+  fi
   if [[ $tm -lt 1 || $tm -gt 23 ]]; then
     red "输入非法!"
-    return 1  
+    return 1
   fi
-  crontab -l > le.cron
-  echo "0 */$tm * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >> le.cron
-  crontab le.cron > /dev/null 2>&1 
+  crontab -l >le.cron
+  echo "0 */$tm * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
+  crontab le.cron >/dev/null 2>&1
   rm -rf le.cron
   echo "设置完毕!"
 }
 
-get_default_webip(){
-      local host="$(hostname | cut -d '.' -f 1)"
-      local sno=${host/s/web}
-      local webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
-      echo "$webIp"
+get_default_webip() {
+  local host="$(hostname | cut -d '.' -f 1)"
+  local sno=${host/s/web}
+  local webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
+  echo "$webIp"
 }
 
-applyLE(){
+applyLE() {
   local domain=$1
   local webIp=$2
   workpath="${installpath}/serv00-play/ssl"
@@ -1795,24 +1985,24 @@ applyLE(){
     fi
   fi
   inCron="0"
-  if crontab -l | grep -F "$domain" > /dev/null 2>&1 ; then
-     inCron="1"
-     echo "该域名已配置定时申请证书，是否删除定时配置记录，改为手动申请？[y/n] [n]:" input
-     input=${input:-n}
+  if crontab -l | grep -F "$domain" >/dev/null 2>&1; then
+    inCron="1"
+    echo "该域名已配置定时申请证书，是否删除定时配置记录，改为手动申请？[y/n] [n]:" input
+    input=${input:-n}
 
-     if [[ "$input" == "y" ]]; then
-        crontab -l | grep -v "$domain" | crontab -
-     fi
+    if [[ "$input" == "y" ]]; then
+      crontab -l | grep -v "$domain" | crontab -
+    fi
   fi
   if [[ -z "$webIp" ]]; then
     read -p "是否指定webip? [y/n] [n]:" input
     input=${input:-n}
     if [[ "$input" == "y" ]]; then
-       read -p "请输入webip:" webIp
-       if [[ -z "webIp" ]]; then
-          red "webip 不能为空!!!"
-          return 1
-       fi
+      read -p "请输入webip:" webIp
+      if [[ -z "webIp" ]]; then
+        red "webip 不能为空!!!"
+        return 1
+      fi
     else
       host="$(hostname | cut -d '.' -f 1)"
       sno=${host/s/web}
@@ -1821,34 +2011,34 @@ applyLE(){
   fi
   #echo "申请证书时，webip是: $webIp"
   resp=$(devil ssl www add $webIp le le $domain)
-  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
-     red "申请ssl证书失败！$resp"
-     if [[ "$inCron" == "0" ]]; then
-        read -p "是否配置定时任务自动申请SSL证书？ [y/n] [n]:" input
-        input=${input:-n}
-        if [[ "$input" == "y" ]]; then
-            cronLE
-        fi
-     fi
+  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then
+    red "申请ssl证书失败！$resp"
+    if [[ "$inCron" == "0" ]]; then
+      read -p "是否配置定时任务自动申请SSL证书？ [y/n] [n]:" input
+      input=${input:-n}
+      if [[ "$input" == "y" ]]; then
+        cronLE
+      fi
+    fi
   else
-     green "证书申请成功!"
-  fi    
+    green "证书申请成功!"
+  fi
 }
 
-selfSSL(){
+selfSSL() {
   workpath="${installpath}/serv00-play/ssl"
   cd "$workpath"
 
   read -p "请输入待申请证书的域名:" self_domain
   self_domain=${self_domain:-""}
   if [[ -z "$self_domain" ]]; then
-     red "域名不能为空"
-     return 1
+    red "域名不能为空"
+    return 1
   fi
-  
+
   echo "正在生成证书..."
 
-  cat > openssl.cnf <<EOF
+  cat >openssl.cnf <<EOF
     [req]
     distinguished_name = req_distinguished_name
     req_extensions = req_ext
@@ -1873,7 +2063,7 @@ selfSSL(){
     DNS.1 = $self_domain
 
 EOF
-  openssl req -new -newkey rsa:2048 -nodes -keyout _private.key -x509 -days 3650 -out _cert.crt -config openssl.cnf -extensions v3_ca > /dev/null 2>&1 
+  openssl req -new -newkey rsa:2048 -nodes -keyout _private.key -x509 -days 3650 -out _cert.crt -config openssl.cnf -extensions v3_ca >/dev/null 2>&1
   if [ $? -ne 0 ]; then
     echo "生成证书失败!"
     return 1
@@ -1887,18 +2077,18 @@ EOF
   host="$(hostname | cut -d '.' -f 1)"
   sno=${host/s/web}
   webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
-  resp=$(devil ssl www add "$webIp" ./_cert.crt ./_private.key "$self_domain" )
+  resp=$(devil ssl www add "$webIp" ./_cert.crt ./_private.key "$self_domain")
 
-  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then 
-     echo "导入证书失败:$resp"
-     return 1
+  if [[ ! "$resp" =~ .*succesfully.*$ ]]; then
+    echo "导入证书失败:$resp"
+    return 1
   fi
 
   echo "导入成功！"
-  
+
 }
 
-domainSSLServ(){
+domainSSLServ() {
   while true; do
     yellow "---------------------"
     echo "域名证书管理:"
@@ -1908,87 +2098,90 @@ domainSSLServ(){
     echo "0. 退出脚本"
     yellow "---------------------"
     read -p "请选择:" input
-  
-    case $input in 
-      1) applyLE
-        ;;
-      2) selfSSL
-        ;;
-      9) break
-        ;;
-      0)
-         exit 0
-         ;;
-      *) 
-        echo "无效选项，请重试"
-        ;;
-    esac 
- done
- showMenu
+
+    case $input in
+    1)
+      applyLE
+      ;;
+    2)
+      selfSSL
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
+    esac
+  done
+  showMenu
 }
 
-installRoot(){
-   workpath="${installpath}/serv00-play/root"
-   if [[ ! -e $workpath ]]; then
-      mkdir -p "$workpath"
-   fi
+installRoot() {
+  workpath="${installpath}/serv00-play/root"
+  if [[ ! -e $workpath ]]; then
+    mkdir -p "$workpath"
+  fi
 
-    if [[ -e "$workpath/MrChrootBSD/mrchroot" ]]; then
-      echo "检测到已经安装mrchroot，请勿重复安装!"
-      return 
-    fi
-   echo "正在安装..."
-   cd $workpath
-   git clone https://github.com/nrootconauto/MrChrootBSD.git  
-   cd MrChrootBSD
-   wget https://download.freebsd.org/releases/amd64/14.1-RELEASE/base.txz
-   wget https://download.freebsd.org/releases/amd64/14.1-RELEASE/lib32.txz #Needed for gdb for some reason
-   mkdir chroot
-   cd chroot 
-   tar xvf ../base.txz
-   tar xvf ../lib32.txz
-   cd ..
-   cmake .
-   make
-   cp /etc/resolv.conf chroot/etc
-   if screen -S rootsession -dm ./mrchroot chroot /bin/sh; then
-       echo "安装成功!"
-   else
-       echo "安装失败!"
-   fi
+  if [[ -e "$workpath/MrChrootBSD/mrchroot" ]]; then
+    echo "检测到已经安装mrchroot，请勿重复安装!"
+    return
+  fi
+  echo "正在安装..."
+  cd $workpath
+  git clone https://github.com/nrootconauto/MrChrootBSD.git
+  cd MrChrootBSD
+  wget https://download.freebsd.org/releases/amd64/14.1-RELEASE/base.txz
+  wget https://download.freebsd.org/releases/amd64/14.1-RELEASE/lib32.txz #Needed for gdb for some reason
+  mkdir chroot
+  cd chroot
+  tar xvf ../base.txz
+  tar xvf ../lib32.txz
+  cd ..
+  cmake .
+  make
+  cp /etc/resolv.conf chroot/etc
+  if screen -S rootsession -dm ./mrchroot chroot /bin/sh; then
+    echo "安装成功!"
+  else
+    echo "安装失败!"
+  fi
 
 }
 
-enterRoot(){
-    workpath="${installpath}/serv00-play/root/MrChrootBSD"
-    if [[ ! -e "$workpath/mrchroot" ]]; then
-      red "未安装mrchroot，请先行安装!"
-      return 
-    fi
-      
-    SESSION_NAME="rootsession"
-    if screen -list | grep -q "\.$SESSION_NAME"; then
-        echo "进入root..."
-        screen -r "$SESSION_NAME"
+enterRoot() {
+  workpath="${installpath}/serv00-play/root/MrChrootBSD"
+  if [[ ! -e "$workpath/mrchroot" ]]; then
+    red "未安装mrchroot，请先行安装!"
+    return
+  fi
+
+  SESSION_NAME="rootsession"
+  if screen -list | grep -q "\.$SESSION_NAME"; then
+    echo "进入root..."
+    screen -r "$SESSION_NAME"
+  else
+    echo "未发现root进程，尝试创建井进入root..."
+    cd $workpath
+    if screen -S $SESSION_NAME -dm ./mrchroot chroot /bin/sh; then
+      echo "创建成功!"
+      screen -r "$SESSION_NAME"
     else
-        echo "未发现root进程，尝试创建井进入root..."
-        cd $workpath
-        if screen -S $SESSION_NAME -dm ./mrchroot chroot /bin/sh; then
-          echo "创建成功!"
-          screen -r "$SESSION_NAME"
-        else
-          echo "创建失败!"
-        fi
-
+      echo "创建失败!"
     fi
+
+  fi
 }
 
-uninstallRoot(){
+uninstallRoot() {
   SESSION_NAME="rootsession"
 
   if [[ ! -e "${installpath}/serv00-play/root" ]]; then
-     echo "未安装root，无需卸载!"
-     return
+    echo "未安装root，无需卸载!"
+    return
   fi
 
   read -p "确定卸载root吗？[y/n] [n]:" input
@@ -2004,11 +2197,11 @@ uninstallRoot(){
     cd $workpath
     rm -rf ./root
   fi
-  
+
   green "卸载完毕!"
 }
 
-rootServ(){
+rootServ() {
   while true; do
     yellow "---------------------"
     echo "一键root:"
@@ -2019,26 +2212,32 @@ rootServ(){
     echo "0. 退出脚本"
     yellow "---------------------"
     read -p "请选择:" input
-    
-    case $input in 
-      1) installRoot
-        ;;
-      2) enterRoot
-        ;;
-      3) uninstallRoot
-        ;;
-      9) break
-        ;;
-      0) exit 0
-         ;;
-      *)  echo "无效选项，请重试"
-        ;;
-    esac 
- done
-   showMenu
+
+    case $input in
+    1)
+      installRoot
+      ;;
+    2)
+      enterRoot
+      ;;
+    3)
+      uninstallRoot
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
+    esac
+  done
+  showMenu
 }
 
-getUnblockIP(){
+getUnblockIP() {
   local hostname=$(hostname)
   local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
   local hosts=("cache${host_number}.serv00.com" "web${host_number}.serv00.com" "$hostname")
@@ -2058,24 +2257,24 @@ getUnblockIP(){
     fi
     local ip=$(echo "$response" | awk -F "|" '{print $1 }')
     local status=$(echo "$response" | awk -F "|" '{print $2 }')
-    printf "%-20s | %-15s | %-10s\n" "$host" "$ip" "$status"   
+    printf "%-20s | %-15s | %-10s\n" "$host" "$ip" "$status"
   done
-    
+
 }
 
-checkProcStatus(){
+checkProcStatus() {
   local procname=$1
-  if checkProcAlive $procname ; then
-     green "运行"
+  if checkProcAlive $procname; then
+    green "运行"
   else
-     red "未运行"
+    red "未运行"
   fi
-  
+
 }
 
-sunPanelServ(){
+sunPanelServ() {
   if ! checkInstalled "serv00-play"; then
-     return 1
+    return 1
   fi
   while true; do
     yellow "---------------------"
@@ -2090,104 +2289,112 @@ sunPanelServ(){
     echo "0. 退出脚本"
     yellow "---------------------"
     read -p "请选择:" input
-    
-    case $input in 
-      1) installSunPanel
-        ;;
-      2) startSunPanel
-        ;;
-      3) stopSunPanel
-        ;;
-      4) resetSunPanelPwd
-        ;;
-      8) uninstallSunPanel
-        ;;
-      9) break
-        ;;
-      0) exit 0
-         ;;
-      *)  echo "无效选项，请重试"
-        ;;
-    esac 
- done
-   showMenu
+
+    case $input in
+    1)
+      installSunPanel
+      ;;
+    2)
+      startSunPanel
+      ;;
+    3)
+      stopSunPanel
+      ;;
+    4)
+      resetSunPanelPwd
+      ;;
+    8)
+      uninstallSunPanel
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
+    esac
+  done
+  showMenu
 }
 
-uninstallSunPanel(){
+uninstallSunPanel() {
   local workdir="${installpath}/serv00-play/sunpanel"
   uninstallProc "$workdir" "sun-panel"
 }
 
-resetSunPanelPwd(){
+resetSunPanelPwd() {
   local exepath="${installpath}/serv00-play/sunpanel/sun-panel"
   if [[ ! -e $exepath ]]; then
-     echo "未安装，请先安装!"
-     return 
+    echo "未安装，请先安装!"
+    return
   fi
   read -p "确定初始化密码? [y/n][n]:" input
   input=${input:-n}
 
   if [[ "$input" == "y" ]]; then
-     local workdir="${installpath}/serv00-play/sunpanel"
-     cd $workdir
-     ./sun-panel -password-reset
+    local workdir="${installpath}/serv00-play/sunpanel"
+    cd $workdir
+    ./sun-panel -password-reset
   fi
-     
+
 }
 
-stopSunPanel(){
+stopSunPanel() {
   stopProc "sun-panel"
   if checkProcAlive "sun-panel"; then
-     echo "未能停止，请手动杀进程!"
+    echo "未能停止，请手动杀进程!"
   fi
- 
+
 }
 
-installSunPanel(){
+installSunPanel() {
   local workdir="${installpath}/serv00-play/sunpanel"
   local exepath="${installpath}/serv00-play/sunpanel/sun-panel"
   if [[ -e $exepath ]]; then
-     echo "已安装，请勿重复安装!"
-     return 
+    echo "已安装，请勿重复安装!"
+    return
   fi
   mkdir -p $workdir
   cd $workdir
 
   if ! checkDownload "sun-panel"; then
-     return 1
+    return 1
   fi
   if ! checkDownload "panelweb" 1; then
-     return 1
+    return 1
   fi
-     
+
   if [[ ! -e "sun-panel" ]]; then
-     echo "下载文件解压失败！"
-     return 1
+    echo "下载文件解压失败！"
+    return 1
   fi
   #初始化密码，并且生成相关目录文件
   ./sun-panel -password-reset
 
   if [[ ! -e "conf/conf.ini" ]]; then
-     echo "无配置文件生成!"
-     return 1
+    echo "无配置文件生成!"
+    return 1
   fi
-  
+
   loadPort
   port=""
   randomPort "tcp" "sun-panel"
   if [ -n "$port" ]; then
-     sunPanelPort=$port
+    sunPanelPort=$port
   else
-     echo "未输入端口!"
-     return 1
+    echo "未输入端口!"
+    return 1
   fi
   cd conf
   sed -i.bak -E "s/^http_port=[0-9]+$/http_port=${sunPanelPort}/" conf.ini
   cd ..
-  
+
   domain=""
   webIp=""
-  if ! makeWWW panel $sunPanelPort ; then
+  if ! makeWWW panel $sunPanelPort; then
     echo "绑定域名失败!"
     return 1
   fi
@@ -2197,21 +2404,21 @@ installSunPanel(){
       echo "申请证书失败!"
       return 1
     fi
-  else  # 没有自定义域名时，webip是内置固定的，就是web(x).serv00.com
-    if ! applyLE $domain ; then
+  else # 没有自定义域名时，webip是内置固定的，就是web(x).serv00.com
+    if ! applyLE $domain; then
       echo "申请证书失败!"
       return 1
     fi
   fi
   green "安装完毕!"
-  
+
 }
 
-makeWWW(){
+makeWWW() {
   local proc=$1
   local port=$2
   local www_type=${3:-"proxy"}
-  
+
   echo "正在处理服务IP,请等待..."
   is_self_domain=0
   webIp=$(get_webip)
@@ -2224,7 +2431,7 @@ makeWWW(){
     read -p "请输入域名(确保此前域名已指向webip):" domain
   else
     user="$(whoami)"
-    if isServ00 ; then
+    if isServ00; then
       domain="${proc}.$user.serv00.net"
     else
       domain="$proc.$user.ct8.pl"
@@ -2235,7 +2442,7 @@ makeWWW(){
     red "输入无效域名!"
     return 1
   fi
-  
+
   domain=${domain,,}
   echo "正在绑定域名,请等待..."
   if [[ "$www_type" == "proxy" ]]; then
@@ -2244,13 +2451,13 @@ makeWWW(){
     resp=$(devil www add $domain php)
   fi
   #echo "resp:$resp"
-  if [[ ! "$resp" =~ .*succesfully.*$  && ! "$resp" =~ .*Ok.*$ ]]; then 
-     if [[ ! "$resp" =~ "This domain already exists" ]]; then 
-        red "申请域名$domain 失败！"
-        return 1
-     fi
+  if [[ ! "$resp" =~ .*succesfully.*$ && ! "$resp" =~ .*Ok.*$ ]]; then
+    if [[ ! "$resp" =~ "This domain already exists" ]]; then
+      red "申请域名$domain 失败！"
+      return 1
+    fi
   fi
-  
+
   # 自定义域名的特殊处理
   if [[ $is_self_domain -eq 1 ]]; then
     host="$(hostname | cut -d '.' -f 1)"
@@ -2259,12 +2466,12 @@ makeWWW(){
     rid=$(devil dns list "$domain" | grep "$default_webIp" | awk '{print $1}')
     resp=$(echo "y" | devil dns del "$domain" $rid)
     #echo "resp:$resp"
-  else 
+  else
     webIp=$(get_default_webip)
   fi
   # 保存信息
   if [[ "$www_type" == "proxy" ]]; then
-  cat > config.json <<EOF
+    cat >config.json <<EOF
   {
      "webip": "$webIp",
      "domain": "$domain",
@@ -2277,16 +2484,16 @@ EOF
   green "你的webip是:$webIp"
 }
 
-startSunPanel(){
+startSunPanel() {
   local workdir="${installpath}/serv00-play/sunpanel"
   local exepath="${installpath}/serv00-play/sunpanel/sun-panel"
   if [[ ! -e $exepath ]]; then
-     red "未安装，请先安装!"
-     return 
+    red "未安装，请先安装!"
+    return
   fi
   cd $workdir
   if checkProcAlive "sun-panel"; then
-     stopProc "sun-panel"
+    stopProc "sun-panel"
   fi
   read -p "是否需要日志($workdir/running.log)? [y/n] [n]:" input
   input=${input:-n}
@@ -2300,19 +2507,18 @@ startSunPanel(){
   eval "$cmd"
   sleep 1
   if checkProcAlive "sun-panel"; then
-     green "启动成功"
-  else 
-     red "启动失败"
+    green "启动成功"
+  else
+    red "启动失败"
   fi
 
 }
 
-
-burnAfterReadingServ(){
-   if ! checkInstalled "serv00-play"; then
-      return 1
-    fi
-    while true; do
+burnAfterReadingServ() {
+  if ! checkInstalled "serv00-play"; then
+    return 1
+  fi
+  while true; do
     yellow "---------------------"
     echo "1. 安装"
     echo "2. 卸载"
@@ -2322,56 +2528,61 @@ burnAfterReadingServ(){
     read -p "请选择:" input
 
     case $input in
-    1) installBurnReading
-       ;;
-    2) uninstallBurnReading
-       ;;
-    9) break
+    1)
+      installBurnReading
       ;;
-    0) exit 0
-       ;;
-    *)  echo "无效选项，请重试"
+    2)
+      uninstallBurnReading
       ;;
-    esac 
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
+    esac
   done
   showMenu
 }
 
-installBurnReading(){
-   local workdir="${installpath}/serv00-play/burnreading"
+installBurnReading() {
+  local workdir="${installpath}/serv00-play/burnreading"
 
-   if [[ ! -e "$workdir" ]]; then
-      mkdir -p $workdir
-   fi
-  cd $workdir 
+  if [[ ! -e "$workdir" ]]; then
+    mkdir -p $workdir
+  fi
+  cd $workdir
 
-  if  ! check_domains_empty; then
+  if ! check_domains_empty; then
     red "已有安装如下服务，是否继续安装?"
     print_domains
     read -p "继续安装? [y/n] [n]:" input
     input=${input:-n}
     if [[ "$input" == "n" ]]; then
-       return 0
+      return 0
     fi
   fi
-  
+
   domain=""
   webIp=""
-  if ! makeWWW burnreading "null" php ; then
+  if ! makeWWW burnreading "null" php; then
     echo "绑定域名失败!"
     return 1
   fi
-  
+
   domainPath="$installpath/domains/$domain/public_html"
   cd $domainPath
   echo "正在下载并安装 OneTimeMessagePHP ..."
   if ! download_from_github_release frankiejun OneTimeMessagePHP OneTimeMessagePHP; then
-      red "下载失败!"
-      return 1
+    red "下载失败!"
+    return 1
   fi
-  passwd=$(uuidgen -r )
+  passwd=$(uuidgen -r)
   sed -i '' -e "s/^ENCRYPTION_KEY=.*/ENCRYPTION_KEY=\"$passwd\"/" \
-              -e "s|^SITE_DOMAIN=.*|SITE_DOMAIN=\"$domain\"|" "env"
+    -e "s|^SITE_DOMAIN=.*|SITE_DOMAIN=\"$domain\"|" "env"
   mv env .env
   echo "已更新配置文件!"
 
@@ -2384,25 +2595,25 @@ installBurnReading(){
       return 1
     fi
   fi
-  cd $workdir 
+  cd $workdir
   add_domain $domain $webIp
 
   echo "安装完成!"
 }
 
-uninstallBurnReading(){
+uninstallBurnReading() {
   local workdir="${installpath}/serv00-play/burnreading"
 
   if [[ ! -e "$workdir" ]]; then
-     echo "已没有可以卸载的服务!"
-     return 1
-  fi 
+    echo "已没有可以卸载的服务!"
+    return 1
+  fi
 
   cd $workdir
 
   if ! check_domains_empty; then
-     echo "目前已安装服务的域名有:"
-     print_domains
+    echo "目前已安装服务的域名有:"
+    print_domains
   fi
   read -p "是否删除所有域名服务? [y/n] [n]:" input
   input=${input:-n}
@@ -2416,11 +2627,11 @@ uninstallBurnReading(){
 
 }
 
-websshServ(){
-    if ! checkInstalled "serv00-play"; then
-      return 1
-    fi
-    while true; do
+websshServ() {
+  if ! checkInstalled "serv00-play"; then
+    return 1
+  fi
+  while true; do
     yellow "---------------------"
     echo "webssh:"
     echo "服务状态: $(checkProcStatus wssh)"
@@ -2433,35 +2644,42 @@ websshServ(){
     yellow "---------------------"
     read -p "请选择:" input
 
-    case $input in 
-    1) installWebSSH
+    case $input in
+    1)
+      installWebSSH
       ;;
-    2) startWebSSH
+    2)
+      startWebSSH
       ;;
-    3) stopWebSSH
+    3)
+      stopWebSSH
       ;;
-    8) uninstallWebSSH
+    8)
+      uninstallWebSSH
       ;;
-    9) break
+    9)
+      break
       ;;
-    0) exit 0
-       ;;
-    *)  echo "无效选项，请重试"
+    0)
+      exit 0
       ;;
-    esac 
- done
-   showMenu
+    *)
+      echo "无效选项，请重试"
+      ;;
+    esac
+  done
+  showMenu
 }
 
-uninstallWebSSH(){
+uninstallWebSSH() {
   local workdir="${installpath}/serv00-play/webssh"
   uninstallProc "$workdir" "wssh"
 }
 
-installWebSSH(){
+installWebSSH() {
   local workdir="${installpath}/serv00-play/webssh"
   if [[ ! -e "$workdir" ]]; then
-     mkdir -p $workdir
+    mkdir -p $workdir
   fi
   cd $workdir
   configfile="./config.json"
@@ -2474,10 +2692,10 @@ installWebSSH(){
     read -p "是否修改配置? [y/n] [n]:" input
     input=${input:-n}
     if [[ "$input" == "n" ]]; then
-      return 
+      return
     fi
   fi
-  
+
   port=""
   loadPort
   randomPort tcp "webssh"
@@ -2488,17 +2706,17 @@ installWebSSH(){
     return 1
   fi
 
-#   cat > $configfile <<EOF
-#   {
-#     "port": $websshPort
-#   }
-# EOF
+  #   cat > $configfile <<EOF
+  #   {
+  #     "port": $websshPort
+  #   }
+  # EOF
 
   if [[ $is_installed -eq 0 ]]; then
     echo "正在安装webssh..."
     pip install webssh
   fi
-  
+
   user="$(whoami)"
   target_path="/home/$user/.local/bin"
   wsshpath="$target_path/wssh"
@@ -2508,14 +2726,14 @@ installWebSSH(){
   fi
   cp $wsshpath $workdir
   profile="${installpath}/.profile"
-  
+
   if ! grep -q "export PATH=.*$target_path" "$profile"; then
-     echo "export PATH=$target_path:\$PATH" >> "$profile"
-     source $profile
+    echo "export PATH=$target_path:\$PATH" >>"$profile"
+    source $profile
   fi
   domain=""
   webIp=""
-  if ! makeWWW ssh $websshPort ; then
+  if ! makeWWW ssh $websshPort; then
     echo "绑定域名失败!"
     return 1
   fi
@@ -2524,34 +2742,34 @@ installWebSSH(){
     return 1
   fi
   echo "安装完成!"
-  
+
 }
 
-stopWebSSH(){
+stopWebSSH() {
   stopProc "wssh"
   sleep 2
   if ! checkProcAlive "wssh"; then
-     echo "wssh已停止！"
+    echo "wssh已停止！"
   else
-     echo "未能停止，请手动杀进程!"
+    echo "未能停止，请手动杀进程!"
   fi
 }
 
-startWebSSH(){
+startWebSSH() {
   local workdir="${installpath}/serv00-play/webssh"
   local configfile="$workdir/config.json"
   if [ ! -e "$configfile" ]; then
-     echo "未安装，请先安装!"
-     return 
+    echo "未安装，请先安装!"
+    return
   fi
   cd $workdir
   read -p "是否需要日志($workdir/running.log)? [y/n] [n]:" input
   input=${input:-n}
   args=""
   if [[ "$input" == "y" ]]; then
-     args=" > running.log 2>&1 "
+    args=" > running.log 2>&1 "
   else
-     args=" > /dev/null 2>&1 "
+    args=" > /dev/null 2>&1 "
   fi
   port=$(jq -r ".port" $configfile)
   if checkProcAlive "wssh"; then
@@ -2568,7 +2786,7 @@ startWebSSH(){
   fi
 }
 
-nonServ(){
+nonServ() {
   cat <<EOF
    占坑位，未开发功能，敬请期待！
    如果你知道有好的项目，可以到我的频道进行留言投稿，
@@ -2577,60 +2795,60 @@ nonServ(){
 EOF
 }
 
-checkInstalled(){
+checkInstalled() {
   local model=$1
   if [[ "$model" == "serv00-play" ]]; then
-     if [[ ! -d "${installpath}/$model" ]]; then 
-        red "请先安装$model !!!"
-        return 1
-     else 
-        return 0
-     fi
+    if [[ ! -d "${installpath}/$model" ]]; then
+      red "请先安装$model !!!"
+      return 1
+    else
+      return 0
+    fi
   else
-     if [[ ! -d "${installpath}/serv00-play/$model" ]]; then 
-        red "请先安装$model !!!"
-        return 1
-     else 
-        return 0
-     fi
+    if [[ ! -d "${installpath}/serv00-play/$model" ]]; then
+      red "请先安装$model !!!"
+      return 1
+    else
+      return 0
+    fi
   fi
   return 1
 }
 
-changeHy2IP(){
-   read -p "是否让程序为HY2选择可用的IP？[y/n] [y]:" input
-   input=${input:-y}
+changeHy2IP() {
+  read -p "是否让程序为HY2选择可用的IP？[y/n] [y]:" input
+  input=${input:-y}
 
-   if [[ "$input" == "y" ]]; then
-     cd ${installpath}/serv00-play/singbox
-     if [[ ! -e "singbox.json"  || ! -e "config.json" ]]; then
-        red "未安装节点，请先安装!"
-        return 1
-     fi
-     hy2_ip=$(get_ip)
-     if [[ -z "hy2_ip" ]]; then
-        red "很遗憾，已无可用IP!"
-        return 1
-     fi
-     if ! upInsertFd singbox.json HY2IP "$hy2_ip"; then
-        red "更新singbox.json配置文件失败!"
-        return 1
-     fi
+  if [[ "$input" == "y" ]]; then
+    cd ${installpath}/serv00-play/singbox
+    if [[ ! -e "singbox.json" || ! -e "config.json" ]]; then
+      red "未安装节点，请先安装!"
+      return 1
+    fi
+    hy2_ip=$(get_ip)
+    if [[ -z "hy2_ip" ]]; then
+      red "很遗憾，已无可用IP!"
+      return 1
+    fi
+    if ! upInsertFd singbox.json HY2IP "$hy2_ip"; then
+      red "更新singbox.json配置文件失败!"
+      return 1
+    fi
 
-     if ! upSingboxFd config.json "inbounds" "tag" "hysteria-in" "listen" "$hy2_ip"; then 
-        red "更新config.json配置文件失败!"
-        return 1
-     fi
-     green "HY2 更换IP成功，当前IP为 $hy2_ip"
+    if ! upSingboxFd config.json "inbounds" "tag" "hysteria-in" "listen" "$hy2_ip"; then
+      red "更新config.json配置文件失败!"
+      return 1
+    fi
+    green "HY2 更换IP成功，当前IP为 $hy2_ip"
 
-     echo "正在重启sing-box..."
-     stopSingBox
-     startSingBox
-   fi
+    echo "正在重启sing-box..."
+    stopSingBox
+    startSingBox
+  fi
 
 }
 
-showMenu(){
+showMenu() {
   art_wrod=$(figlet "serv00-play")
   echo "<------------------------------------------------------------------>"
   echo -e "${CYAN}${art_wrod}${RESET}"
@@ -2639,100 +2857,98 @@ showMenu(){
   echo "<------------------------------------------------------------------>"
   echo "请选择一个选项:"
 
-  options=("安装/更新serv00-play项目" "sun-panel"  "webssh"  "阅后即焚"  "待开发"  "设置保活的项目" "配置sing-box" \
-          "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "管理哪吒探针" "卸载探针" "设置彩色开机字样" "显示本机IP" \
-          "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "卸载" )
+  options=("安装/更新serv00-play项目" "sun-panel" "webssh" "阅后即焚" "待开发" "设置保活的项目" "配置sing-box"
+    "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "管理哪吒探针" "卸载探针" "设置彩色开机字样" "显示本机IP"
+    "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "卸载")
 
-  select opt in "${options[@]}"
-  do
-      case $REPLY in
-          1)
-              install
-              ;;
-          2)
-              sunPanelServ
-              ;;
-          3)
-              websshServ
-              ;;
-          4)
-              burnAfterReadingServ
-              ;;
-          5)
-              nonServ
-              ;;
-          6)
-            setConfig
-            ;;
-          7)
-            configSingBox
-            ;;
-          8)
-            startSingBox
-            ;;
-         9)
-            stopSingBox
-            ;;
-        10)
-            showSingBoxInfo
-            ;;
-        11)
-            ImageRecovery
-            ;;
-        12)
-            InitServer
-            ;;
-        13)
-           setCnTimeZone
-           ;;
-        14)
-           manageNeZhaAgent
-           ;;
-        15)
-           uninstallAgent
-           ;;
-        16)
-           setColorWord
-           ;;
-        17)
-           showIP
-           ;;
-        18)
-           mtprotoServ
-           ;; 
-        19)
-           alistServ
-           ;;
-        20)
-           portServ
-           ;;
-        21)
-           domainSSLServ
-           ;;
-        22)
-           rootServ
-           ;;
-        23)
-           getUnblockIP
-           ;;
-        24)
-           changeHy2IP
-           ;;
-        25)
-            uninstall
-            ;;
-        0)
-              echo "退出"
-              exit 0
-              ;;
-          *)
-              echo "无效的选项 "
-              ;;
-      esac
-      
+  select opt in "${options[@]}"; do
+    case $REPLY in
+    1)
+      install
+      ;;
+    2)
+      sunPanelServ
+      ;;
+    3)
+      websshServ
+      ;;
+    4)
+      burnAfterReadingServ
+      ;;
+    5)
+      nonServ
+      ;;
+    6)
+      setConfig
+      ;;
+    7)
+      configSingBox
+      ;;
+    8)
+      startSingBox
+      ;;
+    9)
+      stopSingBox
+      ;;
+    10)
+      showSingBoxInfo
+      ;;
+    11)
+      ImageRecovery
+      ;;
+    12)
+      InitServer
+      ;;
+    13)
+      setCnTimeZone
+      ;;
+    14)
+      manageNeZhaAgent
+      ;;
+    15)
+      uninstallAgent
+      ;;
+    16)
+      setColorWord
+      ;;
+    17)
+      showIP
+      ;;
+    18)
+      mtprotoServ
+      ;;
+    19)
+      alistServ
+      ;;
+    20)
+      portServ
+      ;;
+    21)
+      domainSSLServ
+      ;;
+    22)
+      rootServ
+      ;;
+    23)
+      getUnblockIP
+      ;;
+    24)
+      changeHy2IP
+      ;;
+    25)
+      uninstall
+      ;;
+    0)
+      echo "退出"
+      exit 0
+      ;;
+    *)
+      echo "无效的选项 "
+      ;;
+    esac
+
   done
 
 }
-
 
 showMenu
