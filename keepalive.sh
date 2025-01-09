@@ -54,6 +54,9 @@ checkResetCron() {
 #构建消息配置文件
 makeMsgConfig() {
   if [ -n "$TELEGRAM_TOKEN" ] || [ -n "$WXSENDKEY" ]; then
+    if [[ "$TELEGRAM_TOKEN" != "null" || "$WXSENDKEY" != "null" ]]; then
+      echo "构造消息配置文件..."
+      cat >msg.json <<EOF
     echo "构造消息配置文件..."
     cat >msg.json <<EOF
    {
@@ -65,6 +68,7 @@ makeMsgConfig() {
       "password": "$PASS"
    }
 EOF
+    fi
   else
     echo "TELEGRAM_TOKEN 和 WXSENDKEY 变量均未设置"
   fi
