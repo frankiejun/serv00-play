@@ -55,10 +55,7 @@ checkResetCron() {
 makeMsgConfig() {
   if [ -n "$TELEGRAM_TOKEN" ] || [ -n "$WXSENDKEY" ]; then
     if [[ "$TELEGRAM_TOKEN" != "null" || "$WXSENDKEY" != "null" ]]; then
-      echo "构造消息配置文件..."
       cat >msg.json <<EOF
-    echo "构造消息配置文件..."
-    cat >msg.json <<EOF
    {
       "telegram_token": "$TELEGRAM_TOKEN",
       "telegram_userid": "$TELEGRAM_USERID",
