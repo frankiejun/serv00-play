@@ -348,10 +348,16 @@ cleanPort() {
   return 0
 }
 
+ISIDR=1
+ISFILE=0
+ISVIP=1
+NOTVIP=0
 checkDownload() {
   local file=$1
-  local filegz="$file.gz"
   local is_dir=${2:-0}
+  local passwd=${3:"fkjyyds666"}
+  local vipflag=${4:-0}
+  local filegz="$file.gz"
 
   if [[ $is_dir -eq 1 ]]; then
     filegz="$file.tar.gz"
@@ -360,7 +366,12 @@ checkDownload() {
   #检查并下载核心程序
   if [[ ! -e $file ]] || [[ $(file $file) == *"text"* ]]; then
     echo "正在下载 $file..."
-    url="https://gfg.fkj.pp.ua/app/serv00/$filegz?pwd=fkjyyds666"
+    if [[ $vipflag -eq 1 ]]; then
+      url="https://gfg.fkj.pp.ua/app/vip/$filegz?pwd=$passwd"
+    else
+      url="https://gfg.fkj.pp.ua/app/serv00/$filegz?pwd=$passwd"
+    fi
+    echo "url:$url"
     curl -L -sS --max-time 20 -o $filegz "$url"
 
     if file $filegz | grep -q "text"; then

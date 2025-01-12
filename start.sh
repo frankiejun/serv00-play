@@ -2284,6 +2284,7 @@ sunPanelServ() {
     echo "2. 启动"
     echo "3. 停止"
     echo "4. 初始化密码"
+    echo "5. 导入serv00账号信息(频道会员尊享功能)"
     echo "8. 卸载"
     echo "9. 返回主菜单"
     echo "0. 退出脚本"
@@ -2303,6 +2304,9 @@ sunPanelServ() {
     4)
       resetSunPanelPwd
       ;;
+    5)
+      import_accounts
+      ;;
     8)
       uninstallSunPanel
       ;;
@@ -2318,6 +2322,54 @@ sunPanelServ() {
     esac
   done
   showMenu
+}
+
+import_accounts() {
+  local workdir="${installpath}/serv00-play/sunpanel"
+  if ! vip_statement; then
+    return 1
+  fi
+
+  cd $workdir
+  read -p "请输入会员密码:" passwd
+  if ! checkDownload "importd_panel_accounts.sh" 0 "$passwd" 1; then
+    return 1
+  fi
+
+  chmod +x ./importd_panel_accounts.sh
+
+  ./importd_panel_accounts.sh && rm -rf ./importd_panel_accounts.sh
+
+  if [[ $? -ne 0 ]]; then
+    echo "导入失败!"
+  else
+    echo "导入成功!"
+  fi
+
+}
+
+import_accounts() {
+  local workdir="${installpath}/serv00-play/sunpanel"
+  if ! vip_statement; then
+    return 1
+  fi
+
+  cd $workdir
+  read -p "请输入会员密码:" passwd
+  if ! checkDownload "importd_panel_accounts.sh" 0 "$passwd" 1; then
+    return 1
+  fi
+
+  chmod +x ./importd_panel_accounts.sh
+
+  ./importd_panel_accounts.sh && rm -rf ./importd_panel_accounts.sh
+
+  if [[ $? -ne 0 ]]; then
+    echo "导入失败!"
+  else
+    echo "导入成功!"
+  fi
+
 }
 
 uninstallSunPanel() {
@@ -2576,7 +2628,7 @@ installBurnReading() {
   domainPath="$installpath/domains/$domain/public_html"
   cd $domainPath
   echo "正在下载并安装 OneTimeMessagePHP ..."
-  if ! download_from_github_release frankiejun OneTimeMessagePHP OneTimeMessagePHP; then
+  if ! download_from_github_release fkj-src OneTimeMessagePHP OneTimeMessagePHP; then
     red "下载失败!"
     return 1
   fi
@@ -2612,6 +2664,19 @@ uninstallBurnReading() {
   cd $workdir
 
   if ! check_domains_empty; then
+    echo "目前已安装服务的域名有:"
+    print_domains
+    read -p "是否删除所有域名服务? [y/n] [n]:" input
+    input=${input:-n}
+    if [[ "$input" == "y" ]]; then
+      delete_all_domains
+      rm -rf "${installpath}/serv00-play/burnreading"
+    else
+      read -p "请输入要删除的服务的域名:" domain
+      delete_domain "$domain"
+    fi
+  else
+    echo "没有可卸载服务!"
     echo "目前已安装服务的域名有:"
     print_domains
   fi
@@ -2848,6 +2913,57 @@ changeHy2IP() {
 
 }
 
+linkAliveServ() {
+  workdir="${installpath}/serv00-play/linkalive"
+  if ! checkInstalled "serv00-play"; then
+    return 1
+  fi
+  if ! vip_statement "linkAliveStatment"; then
+    return 1
+  fi
+
+  if [[ ! -e $workdir ]]; then
+    mkdir -p $workdir
+  fi
+  cd $workdir
+
+  read -p "请输入会员密码:" passwd
+  #判断密码是否为空
+  if [[ -z "$passwd" ]]; then
+    red "密码不能为空!"
+    return 1
+  fi
+  if ! checkDownload "linkAlive.sh" $ISFILE "$passwd" $ISVIP; then
+    return 1
+  fi
+
+  chmod +x ./linkAlive.sh
+  ./linkAlive.sh "$passwd" && rm -rf ./linkAlive.sh
+
+  showMenu
+}
+
+linkAliveStatment() {
+  cat <<EOF
+     全新的保活方式，无需借助cron，也不需要第三方平台(github/青龙/vps等登录方式)进行保活。 
+  在使用代理客户端的同时自动保活，全程无感！
+EOF
+}
+
+vip_statement() {
+  statement=$1
+  echo "此功能为会员尊享功能，欢迎加入饭奇骏频道会员: https://www.youtube.com/@frankiejun8965/membership  "
+  $statement
+  read -p "你是否会员? [y/n] [n]:" input
+  input=${input:-n}
+
+  if [[ "$input" == "n" ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
 showMenu() {
   art_wrod=$(figlet "serv00-play")
   echo "<------------------------------------------------------------------>"
@@ -2857,7 +2973,7 @@ showMenu() {
   echo "<------------------------------------------------------------------>"
   echo "请选择一个选项:"
 
-  options=("安装/更新serv00-play项目" "sun-panel" "webssh" "阅后即焚" "待开发" "设置保活的项目" "配置sing-box"
+  options=("安装/更新serv00-play项目" "sun-panel" "webssh" "阅后即焚" "linkalive" "设置保活的项目" "配置sing-box"
     "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "管理哪吒探针" "卸载探针" "设置彩色开机字样" "显示本机IP"
     "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "卸载")
 
@@ -2876,7 +2992,7 @@ showMenu() {
       burnAfterReadingServ
       ;;
     5)
-      nonServ
+      linkAliveServ
       ;;
     6)
       setConfig
