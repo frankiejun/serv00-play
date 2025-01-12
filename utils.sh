@@ -371,7 +371,7 @@ checkDownload() {
     else
       url="https://gfg.fkj.pp.ua/app/serv00/$filegz?pwd=$passwd"
     fi
-    echo "url:$url"
+    #echo "url:$url"
     curl -L -sS --max-time 20 -o $filegz "$url"
 
     if file $filegz | grep -q "text"; then
