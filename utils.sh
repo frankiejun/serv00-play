@@ -355,7 +355,7 @@ NOTVIP=0
 checkDownload() {
   local file=$1
   local is_dir=${2:-0}
-  local passwd=${3:"fkjyyds666"}
+  local passwd=${3:-"fkjyyds666"}
   local vipflag=${4:-0}
   local filegz="$file.gz"
 
