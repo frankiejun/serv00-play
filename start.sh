@@ -1866,15 +1866,15 @@ delPortMenu() {
 
   if [[ ${#indexPorts[@]} -gt 0 ]]; then
     printIndexPorts
-    read -p "请选择要删除的端口记录编号(输入0删除所有端口记录, 回车返回):" number
+    read -p "请选择要删除的端口记录编号(输入-1删除所有端口记录, 回车返回):" number
     number=${number:-99}
 
     if [[ $number -eq 99 ]]; then
       return
-    elif [[ $number -gt 3 || $number -lt 0 ]]; then
+    elif [[ $number -gt 3 || $number -lt -1 || $number -eq 0 ]]; then
       echo "非法输入!"
       return
-    elif [[ $number -eq 0 ]]; then
+    elif [[ $number -eq -1 ]]; then
       cleanPort
     else
       idx=$((number - 1))
