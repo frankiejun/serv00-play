@@ -2952,7 +2952,7 @@ EOF
 
 vip_statement() {
   statement=$1
-  echo "此功能为会员尊享功能，欢迎加入饭奇骏频道会员: https://www.youtube.com/@frankiejun8965/membership  "
+  echo "此功能为会员尊享功能，欢迎加入饭奇骏频道会员: https://www.youtube.com/channel/UCjS3UKSmQ2mvsThXhJIFobA/join  "
   $statement
   read -p "你是否会员? [y/n] [n]:" input
   input=${input:-n}
