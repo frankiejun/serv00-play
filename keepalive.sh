@@ -42,10 +42,13 @@ checkResetCron() {
   echo "run checkResetCron"
   local msg=""
   cd ${installpath}/serv00-play/
+  tm=$(jq -r ".chktime" config.json)
+  if [ "$tm" == "null" ]; then
+    return
+  fi
   crontab -l | grep keepalive
   if ! crontab -l | grep keepalive; then
     msg="crontab记录被删过,并且已重建。"
-    tm=$(jq -r ".chktime" config.json)
     addCron "$tm"
     sendMsg $msg
   fi

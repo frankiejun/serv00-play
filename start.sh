@@ -93,7 +93,7 @@ showSingBoxInfo() {
 }
 
 chooseSingbox() {
-  echo "保活sing-box中哪个项目: "
+  echo "保活sing-box中哪个项目(单选): "
   echo " 1.hy2/vmess+ws/socks5 "
   echo " 2.argo+vmess "
   echo " 3.all "
@@ -215,20 +215,6 @@ createConfigFile() {
   json_content="${json_content%,}\n"
   json_content+="   ],\n"
 
-  if [ "$num" = "4" ]; then
-    json_content+="   \"chktime\": \"null\""
-    json_content+="}\n"
-    printf "$json_content" >./config.json
-    echo -e "${YELLOW} 设置完成! ${RESET} "
-    delCron
-    return
-  fi
-
-  read -p "配置保活检查的时间间隔(单位分钟，默认5分钟):" tm
-  tm=${tm:-"5"}
-
-  json_content+="   \"chktime\": \"$tm\","
-
   read -p "是否需要配置消息推送? [y/n] [n]:" input
   input=${input:-n}
 
@@ -256,12 +242,24 @@ createConfigFile() {
   else
     sendtype=${sendtype:-"null"}
   fi
+
+  read -p "是否使用cron保活? [y/n] [n]:" setcron
+  setcron=${setcron:-n}
+
+  if [[ "$setcron" == "y" ]]; then
+    read -p "配置保活检查的时间间隔(单位分钟[1~59]，默认5分钟):" tm
+    tm=${tm:-"5"}
+    json_content+="   \"chktime\": \"$tm\","
+  fi
   json_content+="\n \"sendtype\": $sendtype \n"
   json_content+="}\n"
 
   # 使用 printf 生成文件
   printf "$json_content" >./config.json
-  addCron $tm
+  if [[ "$setcron" == "y" ]]; then
+    addCron $tm
+  fi
+
   chmod +x ${installpath}/serv00-play/keepalive.sh
   echo -e "${YELLOW} 设置完成! ${RESET} "
 
