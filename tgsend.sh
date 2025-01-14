@@ -77,10 +77,14 @@ fi
 
 URL="https://api.telegram.org/bot${telegramBotToken}/sendMessage"
 
+if [[ -n "$host" ]]; then
+  button_url=$(replaceValue $button_url HOST $host)
+fi
+if [[ -n "$user" ]]; then
+  button_url=$(replaceValue $button_url USER $user)
+fi
 if [[ -n "$PASS" ]]; then
   pass=$(toBase64 $PASS)
-  button_url=$(replaceValue $button_url HOST $host)
-  button_url=$(replaceValue $button_url USER $user)
   button_url=$(replaceValue $button_url PASS $pass)
 fi
 encoded_url=$(urlencode "$button_url")
