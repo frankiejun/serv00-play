@@ -264,9 +264,9 @@ for obj in "${monitor[@]}"; do
       startSunPanel
       sleep 3
       if ! checkProcAlive "sun-panel"; then
-        msg="sun-panel restarted failure."
+        msg="sun-panel 重启失败."
       else
-        msg="sun-panel restarted successfully."
+        msg="sun-panel 重启成功."
       fi
     fi
   elif [ "$obj" == "webssh" ]; then
@@ -274,9 +274,9 @@ for obj in "${monitor[@]}"; do
       startWebSSH
       sleep 5
       if ! checkProcAlive "wssh"; then
-        msg="webssh restarted failure."
+        msg="webssh 重启失败."
       else
-        msg="webssh restarted successfully."
+        msg="webssh 重启成功."
       fi
     fi
   elif [ "$obj" == "vmess" ]; then
@@ -285,9 +285,9 @@ for obj in "${monitor[@]}"; do
       chmod +x ./start.sh && ./start.sh 1 keep
       sleep 5
       if ! checkvmessAlive; then
-        msg="vmess restarted failure."
+        msg="vmess 重启失败."
       else
-        msg="vmess restarted successfully."
+        msg="vmess 重启成功."
       fi
     fi
     #hy2和vmess+ws都只需要启动serv00sb，所以可以这么写
@@ -298,9 +298,9 @@ for obj in "${monitor[@]}"; do
       chmod +x ./start.sh && ./start.sh 2 keep
       sleep 5
       if ! checkHy2Alive; then
-        msg="hy2 restarted failure."
+        msg="hy2 重启失败."
       else
-        msg="hy2 restarted successfully."
+        msg="hy2 重启成功."
       fi
     fi
   elif [ "$obj" == "nezha-agent" ]; then
@@ -309,9 +309,9 @@ for obj in "${monitor[@]}"; do
       startNeZhaAgent
       sleep 5
       if ! checknezhaAgentAlive; then
-        msg="nezha-agent restarted failure."
+        msg="nezha-agent 重启失败."
       else
-        msg="nezha-agent restarted successfully."
+        msg="nezha-agent 重启成功."
       fi
     fi
   elif [ "$obj" == "mtg" ]; then
@@ -320,9 +320,9 @@ for obj in "${monitor[@]}"; do
       startMtg
       sleep 5
       if ! checkMtgAlive; then
-        msg="mtproto restarted failure."
+        msg="mtproto 重启失败."
       else
-        msg="mtproto restarted successfully."
+        msg="mtproto 重启成功."
       fi
     fi
   elif [ "$obj" == "alist" ]; then
@@ -330,9 +330,9 @@ for obj in "${monitor[@]}"; do
       startAlist
       sleep 5
       if ! checkProcAlive "alist"; then
-        msg="alist restarted failure."
+        msg="alist 重启失败."
       else
-        msg="alist restarted successfully."
+        msg="alist 重启成功."
       fi
     fi
   elif [ "$obj" == "wssh" ]; then
@@ -340,9 +340,9 @@ for obj in "${monitor[@]}"; do
       startAlist
       sleep 5
       if ! checkAlistAlive; then
-        msg="alist restarted failure."
+        msg="wssh 重启失败."
       else
-        msg="alist restarted successfully."
+        msg="wssh 重启成功."
       fi
     fi
   else
