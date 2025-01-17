@@ -340,9 +340,9 @@ for obj in "${monitor[@]}"; do
       startAlist
       sleep 5
       if ! checkAlistAlive; then
-        msg="alist 重启失败."
+        msg="wssh 重启失败."
       else
-        msg="alist 重启成功."
+        msg="wssh 重启成功."
       fi
     fi
   else
