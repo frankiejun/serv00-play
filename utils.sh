@@ -269,7 +269,7 @@ getPort() {
     rt=$(devil port add $type random $opts)
     if [[ "$rt" =~ .*succesfully.*$ || "$rt" =~ .*Ok.*$ ]]; then
       loadPort
-      if [[ -n "$port_array["$key"]" ]]; then
+      if [[ -n "${port_array["$key"]}" ]]; then
         echo "${port_array["$key"]}"
       else
         echo "failed"
