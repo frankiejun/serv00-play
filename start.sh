@@ -1141,6 +1141,9 @@ InitServer() {
       rm -rf ~/* 2>/dev/null
     else
       rm -rf ~/* ~/.* 2>/dev/null
+      clean_all_domains
+      clean_all_dns
+      create_default_domain
     fi
     cleanPort
     yellow "初始化完毕"
@@ -1904,12 +1907,29 @@ addPortMenu() {
   fi
   loadPort
   read -p "请输入端口备注(如hy2，vmess，用于脚本自动获取端口):" opts
-  local port=$(getPort $type $opts)
-  if [[ "$port" == "failed" ]]; then
-    red "分配端口失败,请重新操作!"
+  read -p "是否自动分配端口? [y/n] [y]:" input
+  input=${input:-y}
+  if [[ "$input" == "y" ]]; then
+    port=$(getPort $type $opts)
+    if [[ "$port" == "failed" ]]; then
+      red "分配端口失败,请重新操作!"
+    else
+      green "分配出来的端口是:$port"
+    fi
   else
-    green "分配出来的端口是:$port"
+    read -p "请输入端口号:" port
+    if [[ -z "$port" ]]; then
+      red "端口不能为空"
+      return 1
+    fi
+    resp=$(devil port add $type $port $opts)
+    if [[ "$resp" =~ .*succesfully.*$ || "$resp" =~ .*Ok.*$ ]]; then
+      green "添加端口成功!"
+    else
+      red "添加端口失败!"
+    fi
   fi
+
 }
 
 portServ() {
@@ -2235,7 +2255,8 @@ rootServ() {
   showMenu
 }
 
-getUnblockIP() {
+showIPStatus() {
+  localIPs=()
   local hostname=$(hostname)
   local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
   local hosts=("cache${host_number}.serv00.com" "web${host_number}.serv00.com" "$hostname")
@@ -2244,7 +2265,9 @@ getUnblockIP() {
   green "  主机名称          |      IP        |  状态"
   yellow "----------------------------------------------"
   # 遍历主机名称数组
+  local i=0
   for host in "${hosts[@]}"; do
+    ((i++))
     # 获取 API 返回的数据
     local response=$(curl -s "https://ss.botai.us.kg/api/getip?host=$host")
 
@@ -2255,7 +2278,8 @@ getUnblockIP() {
     fi
     local ip=$(echo "$response" | awk -F "|" '{print $1 }')
     local status=$(echo "$response" | awk -F "|" '{print $2 }')
-    printf "%-20s | %-15s | %-10s\n" "$host" "$ip" "$status"
+    localIPs+=("$ip")
+    printf "%-2d %-20s | %-15s | %-10s\n" $i "$host" "$ip" "$status"
   done
 
 }
@@ -2879,35 +2903,54 @@ checkInstalled() {
 }
 
 changeHy2IP() {
+  cd ${installpath}/serv00-play/singbox
+  if [[ ! -e "singbox.json" || ! -e "config.json" ]]; then
+    red "未安装节点，请先安装!"
+    return 1
+  fi
+  showIPStatus
   read -p "是否让程序为HY2选择可用的IP？[y/n] [y]:" input
   input=${input:-y}
 
-  if [[ "$input" == "y" ]]; then
-    cd ${installpath}/serv00-play/singbox
-    if [[ ! -e "singbox.json" || ! -e "config.json" ]]; then
-      red "未安装节点，请先安装!"
+  if [[ "$input" == "n" ]]; then
+    read -p "是否手动选择IP？[y/n] [y]:" choose
+    choose=${choose:-y}
+    if [[ "$choose" == "y" ]]; then
+      read -p "请选择你要的IP的序号:" num
+      if [[ -z "$num" ]]; then
+        red "选择不能为空!"
+        return 1
+      fi
+      if [[ $num -lt 1 || $num -gt ${#localIPs[@]} ]]; then
+        echo "错误：num 的值非法！请输入 1 到 ${#localIPs[@]} 之间的整数。"
+        return 1
+      fi
+      hy2_ip=${localIPs[$((num - 1))]}
+    else
       return 1
     fi
+  else
     hy2_ip=$(get_ip)
-    if [[ -z "hy2_ip" ]]; then
-      red "很遗憾，已无可用IP!"
-      return 1
-    fi
-    if ! upInsertFd singbox.json HY2IP "$hy2_ip"; then
-      red "更新singbox.json配置文件失败!"
-      return 1
-    fi
-
-    if ! upSingboxFd config.json "inbounds" "tag" "hysteria-in" "listen" "$hy2_ip"; then
-      red "更新config.json配置文件失败!"
-      return 1
-    fi
-    green "HY2 更换IP成功，当前IP为 $hy2_ip"
-
-    echo "正在重启sing-box..."
-    stopSingBox
-    startSingBox
   fi
+
+  if [[ -z "$hy2_ip" ]]; then
+    red "很遗憾，已无可用IP!"
+    return 1
+  fi
+  if ! upInsertFd singbox.json HY2IP "$hy2_ip"; then
+    red "更新singbox.json配置文件失败!"
+    return 1
+  fi
+
+  if ! upSingboxFd config.json "inbounds" "tag" "hysteria-in" "listen" "$hy2_ip"; then
+    red "更新config.json配置文件失败!"
+    return 1
+  fi
+  green "HY2 更换IP成功，当前IP为 $hy2_ip"
+
+  echo "正在重启sing-box..."
+  stopSingBox
+  startSingBox
 
 }
 
@@ -3044,7 +3087,7 @@ showMenu() {
       rootServ
       ;;
     23)
-      getUnblockIP
+      showIPStatus
       ;;
     24)
       changeHy2IP

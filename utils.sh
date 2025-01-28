@@ -552,3 +552,42 @@ download_from_github_release() {
   echo "下载并解压 $zippackage 成功!"
   return 0
 }
+
+clean_all_domains() {
+  echo "正在清理域名..."
+  output=$(devil www list)
+  if echo "$output" | grep -q "No elements to display"; then
+    echo "没有发现在用域名."
+    return 0
+  fi
+  domains=($(echo "$output" | awk 'NF && NR>2 {print $1}'))
+
+  for domain in "${domains[@]}"; do
+    devil www del $domain --remove
+  done
+  echo "域名清理完毕!"
+}
+
+create_default_domain() {
+  echo "正在创建默认域名..."
+  user="$(whoami)"
+  local domain="${user}.serv00.net"
+  domain="${domain,,}"
+  devil www add $domain php
+  echo "默认域名创建成功!"
+}
+
+clean_all_dns() {
+  echo "正在清理DNS..."
+  output=$(devil dns list)
+  if echo "$output" | grep -q "No elements to display"; then
+    echo "没有发现在用DNS."
+    return 0
+  fi
+  domains=($(echo "$output" | awk 'NF && NR>2 {print $1}'))
+
+  for domain in "${domains[@]}"; do
+    devil dns del $domain
+  done
+  echo "DNS清理完毕!"
+}
