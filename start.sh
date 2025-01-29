@@ -3011,6 +3011,7 @@ showMenu() {
   echo -e "${CYAN}${art_wrod}${RESET}"
   echo -e "${GREEN} 饭奇骏频道:https://www.youtube.com/@frankiejun8965 ${RESET}"
   echo -e "${GREEN} TG交流群:https://t.me/fanyousuiqun ${RESET}"
+  echo -e "${GREEN} 当前版本:2025-01-29 ${RESET}"
   echo "<------------------------------------------------------------------>"
   echo "请选择一个选项:"
 
