@@ -1,18 +1,19 @@
 #!/bin/bash
-r=$(ps aux | grep cloudflare | grep -v grep | awk '{print $2}')
 
-if [ -z "$r" ]; then
-  echo "can't find cloudflare" >/dev/null
-else
-  echo $r
-  kill -9 $r
-fi
+# 定义需要检查和终止的进程名
+processes=("cloudflare" "serv00sb")
 
-r=$(ps aux | grep serv00sb | grep -v grep | awk '{print $2}')
+for process in "${processes[@]}"; do
+  # 查找进程 ID
+  pids=$(ps aux | grep "$process" | grep -v grep | awk '{print $2}')
 
-if [ -z "$r" ]; then
-  echo "can't find serv00sb" >/dev/null
-else
-  echo $r
-  kill -9 $r
-fi
+  if [ -z "$pids" ]; then
+    echo "No process found: $process"
+  else
+    echo "Killing process: $process (PIDs: $pids)"
+    # 逐个杀死进程
+    for pid in $pids; do
+      kill -9 "$pid"
+    done
+  fi
+done
