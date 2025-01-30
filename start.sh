@@ -945,7 +945,7 @@ startSingBox() {
     red "sing-box启动失败！"
     exit 1
   fi
-  sleep 1
+  sleep 5
   if checkProcAlive "serv00sb"; then
     yellow "启动成功!"
   else
