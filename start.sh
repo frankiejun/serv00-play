@@ -945,7 +945,7 @@ startSingBox() {
     red "sing-box启动失败！"
     exit 1
   fi
-  sleep 5
+  sleep 2
   if checkProcAlive "serv00sb"; then
     yellow "启动成功!"
   else
@@ -2979,9 +2979,9 @@ linkAliveServ() {
   fi
 
   chmod +x ./linkAlive.sh
-  ./linkAlive.sh "$passwd" && rm -rf ./linkAlive.sh
+  ./linkAlive.sh "$passwd"
 
-  showMenu
+  #showMenu
 }
 
 linkAliveStatment() {
