@@ -2968,7 +2968,7 @@ linkAliveServ() {
   fi
   cd $workdir
 
-  read -p "请输入会员密码:" passwd
+  read -s -p "请输入会员密码:" passwd
   #判断密码是否为空
   if [[ -z "$passwd" ]]; then
     red "密码不能为空!"
