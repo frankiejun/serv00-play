@@ -915,55 +915,12 @@ EOF
 }
 
 startSingBox() {
-  cd ${installpath}/serv00-play/singbox
-
-  if [[ ! -e "singbox.json" ]]; then
-    red "请先进行配置!"
-    return 1
-  fi
-
-  # if [[ ! -e ${installpath}/serv00-play/singbox/serv00sb ]] || [[ ! -e ${installpath}/serv00-play/singbox/cloudflared ]]; then
-  #   read -p "请输入使用密码:" password
-  # fi
-
-  if ! checkDownload "serv00sb"; then
-    return
-  fi
-  if ! checkDownload "cloudflared"; then
-    return
-  fi
-
-  if checkSingboxAlive; then
-    red "sing-box 已在运行，请勿重复操作!"
-    return 1
-  else #启动可能需要cloudflare，此处表示cloudflare和sb有一个不在线，所以干脆先杀掉再重启。
-    chmod 755 ./killsing-box.sh
-    ./killsing-box.sh
-  fi
-
-  if chmod +x start.sh && ! ./start.sh; then
-    red "sing-box启动失败！"
-    exit 1
-  fi
-  sleep 2
-  if checkProcAlive "serv00sb"; then
-    yellow "启动成功!"
-  else
-    red "启动失败!"
-  fi
+  start_sing_box
 
 }
 
 stopSingBox() {
-  cd ${installpath}/serv00-play/singbox
-  if [ -f killsing-box.sh ]; then
-    chmod 755 ./killsing-box.sh
-    ./killsing-box.sh
-  else
-    echo "请先安装serv00-play!!!"
-    return
-  fi
-  echo "已停掉sing-box!"
+  stop_sing_box
 }
 
 killUserProc() {
@@ -2256,32 +2213,11 @@ rootServ() {
 }
 
 showIPStatus() {
-  localIPs=()
-  local hostname=$(hostname)
-  local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
-  local hosts=("cache${host_number}.serv00.com" "web${host_number}.serv00.com" "$hostname")
-
   yellow "----------------------------------------------"
   green "  主机名称          |      IP        |  状态"
   yellow "----------------------------------------------"
-  # 遍历主机名称数组
-  local i=0
-  for host in "${hosts[@]}"; do
-    ((i++))
-    # 获取 API 返回的数据
-    local response=$(curl -s "https://ss.botai.us.kg/api/getip?host=$host")
 
-    # 检查返回的结果是否包含 "not found"
-    if [[ "$response" =~ "not found" ]]; then
-      echo "未识别主机${host}, 请联系作者饭奇骏!"
-      return
-    fi
-    local ip=$(echo "$response" | awk -F "|" '{print $1 }')
-    local status=$(echo "$response" | awk -F "|" '{print $2 }')
-    localIPs+=("$ip")
-    printf "%-2d %-20s | %-15s | %-10s\n" $i "$host" "$ip" "$status"
-  done
-
+  show_ip_status
 }
 
 checkProcStatus() {

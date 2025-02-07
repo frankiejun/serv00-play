@@ -5,11 +5,9 @@ processes=("cloudflare" "serv00sb")
 
 for process in "${processes[@]}"; do
   # 查找进程 ID
-  pids=$(ps aux | grep "$process" | grep -v grep | awk '{print $2}')
+  pids=$(pgrep "$process")
 
-  if [ -z "$pids" ]; then
-    echo "No process found: $process"
-  else
+  if [ -n "$pids" ]; then
     echo "Killing process: $process (PIDs: $pids)"
     # 逐个杀死进程
     for pid in $pids; do
