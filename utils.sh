@@ -594,6 +594,7 @@ clean_all_dns() {
 
 show_ip_status() {
   localIPs=()
+  useIPs=()
   local hostname=$(hostname)
   local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
   local hosts=("cache${host_number}.serv00.com" "web${host_number}.serv00.com" "$hostname")
@@ -613,6 +614,9 @@ show_ip_status() {
     local ip=$(echo "$response" | awk -F "|" '{print $1 }')
     local status=$(echo "$response" | awk -F "|" '{print $2 }')
     localIPs+=("$ip")
+    if [[ "$status" == "Accessible" ]]; then
+      useIPs+=("$ip")
+    fi
     printf "%-2d %-20s | %-15s | %-10s\n" $i "$host" "$ip" "$status"
   done
 }
