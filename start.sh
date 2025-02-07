@@ -29,7 +29,7 @@ install() {
   if [ -d serv00-play ]; then
     cd "serv00-play"
     git stash
-    if git pull; then
+    if git pull origin main; then
       echo "更新完毕"
       #重新给各个脚本赋权限
       chmod +x ./start.sh
@@ -38,6 +38,7 @@ install() {
       chmod +x ./wxsend.sh
       chmod +x ${installpath}/serv00-play/singbox/start.sh
       chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
+      chmod +x ${installpath}/serv00-play/singbox/autoUpdateHyIP.sh
       chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
       red "请重新启动脚本!"
       exit 0
@@ -66,6 +67,7 @@ install() {
   chmod +x ./wxsend.sh
   chmod +x ${installpath}/serv00-play/singbox/start.sh
   chmod +x ${installpath}/serv00-play/singbox/killsing-box.sh
+  chmod +x ${installpath}/serv00-play/singbox/autoUpdateHyIP.sh
   chmod +x ${installpath}/serv00-play/ssl/cronSSL.sh
   read -p "$(yellow 设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:)" input
   input=${input:-y}
