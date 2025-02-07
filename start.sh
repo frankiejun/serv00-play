@@ -26,7 +26,7 @@ fi
 PS3="请选择(输入0退出): "
 install() {
   cd ${installpath}
-  if [ -d serv00-play ]; then
+  if [ -d "serv00-play" ]; then
     cd "serv00-play"
     git stash
     if git pull origin main; then
