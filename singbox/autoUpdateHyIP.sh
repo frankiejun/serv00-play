@@ -25,7 +25,13 @@ if printf '%s\n' "${useIPs[@]}" | grep -q "$cur_hy2_ip"; then
   echo "目前ip可用"
   exit
 fi
-hy2_ip=$(get_ip)
+
+if [[ ${#useIPs[@]} -eq 0 ]]; then
+  red "当前无可用IP!"
+  exit
+fi
+
+hy2_ip=${useIPs[0]}
 
 if [[ -z "$hy2_ip" ]]; then
   red "很遗憾，已无可用IP!"
