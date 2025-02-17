@@ -3018,6 +3018,7 @@ installkeepAlive() {
   green "你的token是:$uuid"
   sed -i '' "s/uuid/$uuid/g" config.json
   read -p "输入保活时间间隔(单位:分钟)[默认:2分钟]:" interval
+  interval=${interval:-2}
   sed -i '' "s/TM/$interval/g" config.json
 
   green "安装成功"
