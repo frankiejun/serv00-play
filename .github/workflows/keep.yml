@@ -29,6 +29,7 @@ jobs:
           BUTTON_URL: ${{secrets.BUTTON_URL}}
           AUTOUPDATE: ${{vars.AUTOUPDATE}}
           LOGININFO: ${{vars.LOGININFO}}
+          TOKEN: ${{secrets.TOKEN}}
         run: |
           chmod +x ./revive_node.sh
           ./revive_node.sh
