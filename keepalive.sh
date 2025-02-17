@@ -3,7 +3,7 @@
 installpath="$HOME"
 source ${installpath}/serv00-play/utils.sh
 
-LOCKFILE="/tmp/keepalive.lock"
+LOCKFILE="$installpath/.keepalive.lock"
 
 # 检查是否已经有一个实例在运行
 if [ -e "$LOCKFILE" ]; then
