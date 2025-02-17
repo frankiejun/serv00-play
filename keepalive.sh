@@ -3,6 +3,26 @@
 installpath="$HOME"
 source ${installpath}/serv00-play/utils.sh
 
+LOCKFILE="/tmp/keepalive.lock"
+
+# 检查是否已经有一个实例在运行
+if [ -e "$LOCKFILE" ]; then
+  echo "另一个实例正在运行，退出..."
+  exit 1
+fi
+
+# 创建锁文件
+touch "$LOCKFILE"
+
+# 定义清理函数
+cleanup() {
+  rm -f "$LOCKFILE"
+  exit
+}
+
+# 捕获脚本退出信号并调用清理函数
+trap cleanup INT TERM EXIT
+
 autoUp=$1
 sendtype=$2
 TELEGRAM_TOKEN="$3"
@@ -197,7 +217,7 @@ if [[ -n "$autoUp" ]]; then
 fi
 if [ ! -f config.json ]; then
   echo "未配置保活项目，请先行配置!"
-  exit 0
+  cleanup
 fi
 
 monitor=($(jq -r ".item[]" config.json))
@@ -365,3 +385,6 @@ if [[ "$autoUpdateHyIP" == "Y" ]]; then
 fi
 
 devil info account &>/dev/null
+
+# 清理锁文件
+cleanup

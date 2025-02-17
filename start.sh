@@ -183,7 +183,7 @@ createConfigFile() {
       item+=("webssh")
       ;;
     88)
-      delCron
+      #delCron
       backupConfig "config.json"
       green "设置完毕!"
       return 0
@@ -2922,6 +2922,160 @@ linkAliveServ() {
   #showMenu
 }
 
+keepAliveServ() {
+  if ! checkInstalled "serv00-play"; then
+    return 1
+  fi
+  while true; do
+    yellow "---------------------"
+    echo "keepAlive:"
+    echo "1. 安装"
+    echo "2. 更新(须先按1更新serv00-play)"
+    echo "3. 更新保活时间间隔"
+    echo "8. 卸载"
+    echo "9. 返回主菜单"
+    echo "0. 退出脚本"
+    yellow "---------------------"
+    read -p "请选择:" input
+
+    case $input in
+    1)
+      installkeepAlive
+      ;;
+    2)
+      updatekeepAlive
+      ;;
+    3)
+      setKeepAliveInterval
+      ;;
+    8)
+      uninstallkeepAlive
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
+    esac
+  done
+
+  showMenu
+}
+
+user="$(whoami)"
+domain="$user.serv00.net"
+domain="${domain,,}"
+domainPath="${installpath}/domains/$domain/public_nodejs"
+installkeepAlive() {
+  local workdir="${installpath}/serv00-play/keepalive"
+  if [[ -e "$domainPath/config.json" ]]; then
+    red "已安装,请勿重复安装!"
+    return 1
+  fi
+  cd $workdir
+
+  read -p "需要使用默认域名[$domain]进行安装，若继续安装将会删除默认域名，确认是否继续? [y/n] [y]:" input
+  input=${input:-y}
+  if [[ "$input" != "y" ]]; then
+    echo "取消安装"
+    return 1
+  fi
+  delDefaultDomain
+  echo "正在安装..."
+  if ! createDefaultDomain; then
+    return 1
+  fi
+  mv "$domainPath/public" "$domainPath/static"
+  cp ./nezha.jpg $domainPath/static
+  cp ./config.json $domainPath
+  cp ./app.js $domainPath
+
+  cd $domainPath
+  if ! npm22 install express body-parser child_process fs; then
+    red "安装依赖失败"
+    return 1
+  fi
+
+  uuid=$(uuidgen)
+  sed -i '' "s/uuid/$uuid/g" config.json
+  read -p "输入保活时间间隔(单位:分钟)[默认:2分钟]:" interval
+  sed -i '' "s/TM/$interval/g" config.json
+
+  green "安装成功"
+
+}
+
+uninstallkeepAlive() {
+  read -p "是否卸载? [y/n] [n]:" input
+  input=${input:-n}
+  if [[ "$input" != "y" ]]; then
+    return 1
+  fi
+  domainPath="${installpath}/domains/$domain/public_nodejs"
+  if ! delDefaultDomain; then
+    return 1
+  fi
+  green "卸载成功"
+}
+
+createDefaultDomain() {
+  rt=$(devil www add $domain nodejs /usr/local/bin/node22 production)
+  if [[ ! "$rt" =~ .*succesfully*$ ]]; then
+    red "创建默认域名失败"
+    return 1
+  fi
+}
+
+delDefaultDomain() {
+  rt=$(devil www del $domain --remove)
+  if [[ ! "$rt" =~ .*deleted*$ ]]; then
+    red "删除默认域名失败"
+    return 1
+  fi
+}
+
+updatekeepAlive() {
+  domainPath="${installpath}/domains/$domain/public_nodejs"
+  workDir="$installpath/serv00-play/keepalive"
+  if [[ ! -e "$domainPath/config.json" ]]; then
+    red "未安装,请先安装!"
+    return 1
+  fi
+  if [[ ! -e "$workDir" ]]; then
+    mkdir -p $workDir
+  fi
+  cd $workDir
+
+  cp ./app.js $domainPath
+
+  cp $workDir/app.js $domainPath
+  devil www restart $domain
+  green "更新成功"
+}
+
+setKeepAliveInterval() {
+  domainPath="${installpath}/domains/$domain/public_nodejs"
+  if [[ ! -e "$domainPath/config.json" ]]; then
+    red "未安装,请先安装!"
+    return 1
+  fi
+
+  cur_interval=$(jq -r ".interval" $domainPath/config.json)
+  echo "当前保活时间间隔为: $cur_interval 分钟"
+  read -p "输入保活时间间隔(单位:分钟)[默认:2分钟]:" interval
+  interval=${interval:-2}
+  upInsertFd $domainPath/config.json interval $interval
+  if [ $? -ne 0 ]; then
+    red "更新失败!"
+    return 1
+  fi
+  green "更新成功"
+}
+
 linkAliveStatment() {
   cat <<EOF
      全新的保活方式，无需借助cron，也不需要第三方平台(github/青龙/vps等登录方式)进行保活。 
@@ -2968,7 +3122,7 @@ showMenu() {
 
   options=("安装/更新serv00-play项目" "sun-panel" "webssh" "阅后即焚" "linkalive" "设置保活的项目" "配置sing-box"
     "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "管理哪吒探针" "卸载探针" "设置彩色开机字样" "显示本机IP"
-    "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "卸载")
+    "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "KeepAlive" "卸载")
 
   select opt in "${options[@]}"; do
     case $REPLY in
@@ -3045,6 +3199,9 @@ showMenu() {
       changeHy2IP
       ;;
     25)
+      keepAliveServ
+      ;;
+    26)
       uninstall
       ;;
     0)
