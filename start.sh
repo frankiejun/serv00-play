@@ -3007,6 +3007,7 @@ installkeepAlive() {
   read -p "是否需要自定义token? [y/n] [y]:" input
   input=${input:-y}
   if [[ "$input" == "y" ]]; then
+    uuid=""
     read -p "请输入token:" uuid
     if [[ -z "$uuid" ]]; then
       red "token不能为空!"
@@ -3082,6 +3083,7 @@ changeKeepAliveToken() {
 
   cur_token=$(jq -r ".token" $domainPath/config.json)
   echo "当前token为: $cur_token"
+  token=""
   read -p "输入新的token:" token
   if [[ -z "$token" ]]; then
     red "token不能为空!"
