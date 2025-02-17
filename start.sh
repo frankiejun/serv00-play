@@ -2932,6 +2932,7 @@ keepAliveServ() {
     echo "1. 安装"
     echo "2. 更新(须先按1更新serv00-play)"
     echo "3. 更新保活时间间隔"
+    echo "4. 修改token"
     echo "8. 卸载"
     echo "9. 返回主菜单"
     echo "0. 退出脚本"
@@ -2947,6 +2948,9 @@ keepAliveServ() {
       ;;
     3)
       setKeepAliveInterval
+      ;;
+    4)
+      changeKeepAliveToken
       ;;
     8)
       uninstallkeepAlive
@@ -3000,18 +3004,18 @@ installkeepAlive() {
     return 1
   fi
 
-  read -p "是否需要自定义密钥? [y/n] [y]:" input
+  read -p "是否需要自定义token? [y/n] [y]:" input
   input=${input:-y}
   if [[ "$input" == "y" ]]; then
-    read -p "请输入密钥:" uuid
+    read -p "请输入token:" uuid
     if [[ -z "$uuid" ]]; then
-      red "密钥不能为空!"
+      red "token不能为空!"
       return 1
     fi
   else
     uuid=$(uuidgen)
   fi
-  green "你的密钥是:$uuid"
+  green "你的token是:$uuid"
   sed -i '' "s/uuid/$uuid/g" config.json
   read -p "输入保活时间间隔(单位:分钟)[默认:2分钟]:" interval
   sed -i '' "s/TM/$interval/g" config.json
@@ -3065,6 +3069,28 @@ updatekeepAlive() {
 
   cp $workDir/app.js $domainPath
   devil www restart $domain
+  green "更新成功"
+}
+
+changeKeepAliveToken() {
+  domainPath="${installpath}/domains/$domain/public_nodejs"
+  if [[ ! -e "$domainPath/config.json" ]]; then
+    red "未安装,请先安装!"
+    return 1
+  fi
+
+  cur_token=$(jq -r ".token" $domainPath/config.json)
+  echo "当前token为: $cur_token"
+  read -p "输入新的token:" token
+  if [[ -z "$token" ]]; then
+    red "token不能为空!"
+    return 1
+  fi
+  upInsertFd $domainPath/config.json token $token
+  if [ $? -ne 0 ]; then
+    red "更新失败!"
+    return 1
+  fi
   green "更新成功"
 }
 
