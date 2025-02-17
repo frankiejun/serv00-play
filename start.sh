@@ -3000,7 +3000,18 @@ installkeepAlive() {
     return 1
   fi
 
-  uuid=$(uuidgen)
+  read -p "是否需要自定义密钥? [y/n] [y]:" input
+  input=${input:-y}
+  if [[ "$input" == "y" ]]; then
+    read -p "请输入密钥:" uuid
+    if [[ -z "$uuid" ]]; then
+      red "密钥不能为空!"
+      return 1
+    fi
+  else
+    uuid=$(uuidgen)
+  fi
+  green "你的密钥是:$uuid"
   sed -i '' "s/uuid/$uuid/g" config.json
   read -p "输入保活时间间隔(单位:分钟)[默认:2分钟]:" interval
   sed -i '' "s/TM/$interval/g" config.json
