@@ -1,7 +1,6 @@
 *.log
 *.json
 *.out
-*.js
 *test
 a.*
 *.swp

@@ -64,9 +64,9 @@ V2-rayN:
 
 $([[ "$type" =~ ^(1.1|3.1|4.4|2.4)$ ]] && echo "vmess://$(echo -n ${ARGOVMESS} | base64 | tr -d '\n')")
 $([[ "$type" =~ ^(1.2|3.2|4.5|2.5)$ ]] && echo "vmess://$(echo -n ${VMESSWS} | base64 | tr -d '\n')")
-$([[ "$type" =~ ^(2|3.3|3.1|3.2|4.4|4.5)$ ]] && echo $hysteria2)
-$([[ "$type" =~ ^(1.3|2.4|2.5|3.3|4.4|4.5)$ ]] && echo $socks5)
-$([[ "$type" =~ ^(1.3|2.4|2.5|3.3|4.4|4.5)$ ]] && echo $proxyip)
+$([[ "$type" =~ ^(2|3.3|3.1|3.2|4.4|4.5)$ ]] && echo $hysteria2 && echo "")
+$([[ "$type" =~ ^(1.3|2.4|2.5|3.3|4.4|4.5)$ ]] && echo $socks5 && echo "")
+$([[ "$type" =~ ^(1.3|2.4|2.5|3.3|4.4|4.5)$ ]] && echo $proxyip && echo "")
 
 EOF
   cat list
