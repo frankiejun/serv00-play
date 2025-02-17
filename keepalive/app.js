@@ -80,10 +80,11 @@ function cleanAndDecode(str) {
 
 // 定时调用脚本的方法
 function scheduleScript() {
-  const interval = (parseInt(config.interval, 10) || 5) * 60000 // 默认5分钟
   const cmd = `cd ${serv00PlayDir} && bash ${keepaliveScript} `
 
-  setInterval(() => {
+  const executeScript = () => {
+    const interval = (parseInt(config.interval, 10) || 5) * 60000 // 默认5分钟
+
     logError(`定时执行脚本: ${cmd}, 间隔: ${interval}ms`)
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
@@ -94,7 +95,13 @@ function scheduleScript() {
         logError(stdout)
       }
     })
-  }, interval)
+
+    // 设置定时器
+    setTimeout(executeScript, interval)
+  }
+
+  // 立即执行一次
+  executeScript()
 }
 
 // 启动定时任务
