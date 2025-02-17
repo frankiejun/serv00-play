@@ -19,6 +19,17 @@ let config = {}
 if (fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, 'utf8'))
 }
+
+// 实现 loadConfig 方法
+function loadConfig() {
+  if (fs.existsSync(configPath)) {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+    logError('配置文件重新加载成功')
+  } else {
+    logError('配置文件不存在')
+  }
+}
+
 // 监听配置文件变化
 fs.watchFile(configPath, (curr, prev) => {
   if (curr.mtime !== prev.mtime) {
