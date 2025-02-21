@@ -39,7 +39,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 4.自动更新 serv00-play 代码  
 5.同步更新 telegram、微信等参数  
 6.默认情况下只有登录失败才有 TG 消息通知，提醒可能封号(平时正常不会给你发消息，发消息之时便是你封号之日)
-也可以设定 LOGININFO=Y，每次保活都会做汇总通知(但相信我，你不会喜欢这个功能)
+也可以设定 LOGININFO=Y，每次保活都会做汇总通知(但相信我，你不会喜欢这个功能)  
 7.keepalive 保活虽然不做 ssh 登录，但一样有延续服务器有效期的效果(不再需要 3 月一登)。
 
 ## 消息推送
