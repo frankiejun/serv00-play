@@ -187,7 +187,7 @@ get_webip() {
   # 遍历主机名称数组
   for host in "${hosts[@]}"; do
     # 获取 API 返回的数据
-    local response=$(curl -s "https://ss.serv0.us.kg/api/getip?host=$host")
+    local response=$(curl -s "https://ss.fkj.pp.ua/api/getip?host=$host")
 
     # 检查返回的结果是否包含 "not found"
     if [[ "$response" =~ "not found" ]]; then
@@ -227,7 +227,7 @@ get_ip() {
   # 遍历主机名称数组
   for host in "${hosts[@]}"; do
     # 获取 API 返回的数据
-    local response=$(curl -s "https://ss.serv0.us.kg/api/getip?host=$host")
+    local response=$(curl -s "https://ss.fkj.pp.ua/api/getip?host=$host")
 
     # 检查返回的结果是否包含 "not found"
     if [[ "$response" =~ "not found" ]]; then
@@ -604,7 +604,7 @@ show_ip_status() {
   for host in "${hosts[@]}"; do
     ((i++))
     # 获取 API 返回的数据
-    local response=$(curl -s "https://ss.serv0.us.kg/api/getip?host=$host")
+    local response=$(curl -s "https://ss.fkj.pp.ua/api/getip?host=$host")
 
     # 检查返回的结果是否包含 "not found"
     if [[ "$response" =~ "not found" ]]; then
