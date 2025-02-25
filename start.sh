@@ -30,6 +30,7 @@ install() {
     cd "serv00-play"
     git stash
     if git pull origin main; then
+      git fetch --tags
       echo "更新完毕"
       #重新给各个脚本赋权限
       chmod +x ./start.sh
