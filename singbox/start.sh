@@ -1,7 +1,7 @@
 #!/bin/bash
 
 config="singbox.json"
-
+installpath="$HOME"
 VMPORT=$(jq -r ".VMPORT" $config)
 HY2PORT=$(jq -r ".HY2PORT" $config)
 HY2IP=$(jq -r ".HY2IP" $config)
@@ -15,6 +15,7 @@ GOOD_DOMAIN=$(jq -r ".GOOD_DOMAIN" $config)
 SOCKS5_PORT=$(jq -r ".SOCKS5_PORT" $config)
 SOCKS5_USER=$(jq -r ".SOCKS5_USER" $config)
 SOCKS5_PASS=$(jq -r ".SOCKS5_PASS" $config)
+user="$(whoami)"
 
 if [ -z $1 ]; then
   type=$(jq -r ".TYPE" $config)
@@ -34,6 +35,26 @@ run() {
     nohup ./cloudflared tunnel run $TUNNEL_NAME >/dev/null 2>&1 &
   else
     echo "未有tunnel相关配置！"
+    return 1
+  fi
+}
+
+uploadList() {
+  local token="$1"
+  local content="$2"
+  local user="${user,,}"
+  local url="${linkBaseurl}/addlist?token=$token"
+  local encode_content=$(echo -n "$content" | base64 -w 0)
+
+  #echo "encode_content:$encode_content"
+  curl -X POST "$url" \
+    -H "Content-Type: application/json" \
+    -d "{\"content\":\"$encode_content\",
+    \"user\":\"$user\"}"
+
+  if [[ $? -eq 0 ]]; then
+    return 0
+  else
     return 1
   fi
 }
@@ -70,6 +91,20 @@ $([[ "$type" =~ ^(1.3|2.4|2.5|3.3|4.4|4.5)$ ]] && echo $proxyip && echo "")
 
 EOF
   cat list
+  if [[ -e "${installpath}/serv00-play/linkalive/linkAlive.sh" ]]; then
+    local domain="$user.serv00.net"
+    domain="${domain,,}"
+    local linkBaseurl="https://la.fkj.pp.ua"
+    if [[ -e "${installpath}/domains/$domain/public_nodejs/config.json" ]]; then
+      token=$(jq -r ".token" "${installpath}/domains/$domain/public_nodejs/config.json")
+      if [[ -n "$token" ]]; then
+        content=$(cat ./list | grep -E "vmess|hyster")
+        if uploadList "$token" "$content"; then
+          echo " "
+        fi
+      fi
+    fi
+  fi
 }
 
 if [ "$keep" = "list" ]; then
