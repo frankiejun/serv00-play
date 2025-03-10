@@ -195,7 +195,7 @@ startSunPanel() {
 startWebSSH() {
   cd ${installpath}/serv00-play/webssh
   ssh_port=$(jq -r ".port" config.json)
-  cmd="nohup ./wssh --port=$ssh_port  --fbidhttp=False --xheaders=False --encoding='utf-8' --delay=10  >/dev/null 2>&1 &"
+  cmd="nohup ./wssh --port=$ssh_port  --fbidhttp=False --wpintvl=30 --xheaders=False --encoding='utf-8' --delay=10  >/dev/null 2>&1 &"
   eval "$cmd"
 }
 
