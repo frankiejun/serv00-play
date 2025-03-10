@@ -2819,7 +2819,7 @@ startWebSSH() {
     stopProc "wssh"
   fi
   echo "正在启动中..."
-  cmd="nohup ./wssh --port=$port --fbidhttp=False --xheaders=False --encoding='utf-8' --delay=10  $args &"
+  cmd="nohup ./wssh --port=$port --wpintvl=30 --fbidhttp=False --xheaders=False --encoding='utf-8' --delay=10  $args &"
   eval "$cmd"
   sleep 2
   if checkProcAlive wssh; then
