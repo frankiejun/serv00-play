@@ -1,11 +1,11 @@
 #!/bin/bash
 
+config="singbox.json"
+installpath="$HOME"
 if [[ -e "$installpath/serv00-play" ]]; then
   source ${installpath}/serv00-play/utils.sh
 fi
 
-config="singbox.json"
-installpath="$HOME"
 VMPORT=$(jq -r ".VMPORT" $config)
 HY2PORT=$(jq -r ".HY2PORT" $config)
 HY2IP=$(jq -r ".HY2IP" $config)

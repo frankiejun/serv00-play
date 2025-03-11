@@ -183,7 +183,7 @@ get_webip() {
   local hosts=("web${host_number}.$(getDoMain)" "cache${host_number}.$(getDoMain)")
 
   # 初始化最终 IP 变量
-  local final_ip=""
+  local final_ip="$(devil vhost list | grep web | awk '{print $1}')"
 
   # 遍历主机名称数组
   for host in "${hosts[@]}"; do
@@ -223,7 +223,7 @@ get_ip() {
   local hosts=("cache${host_number}.$(getDoMain)" "web${host_number}.$(getDoMain)" "$hostname")
 
   # 初始化最终 IP 变量
-  local final_ip="$hostname"
+  local final_ip="$(curl -s icanhazip.com)"
 
   # 遍历主机名称数组
   for host in "${hosts[@]}"; do
