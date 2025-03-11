@@ -223,7 +223,7 @@ get_ip() {
   local hosts=("cache${host_number}.$(getDoMain)" "web${host_number}.$(getDoMain)" "$hostname")
 
   # 初始化最终 IP 变量
-  local final_ip=""
+  local final_ip="$hostname"
 
   # 遍历主机名称数组
   for host in "${hosts[@]}"; do
