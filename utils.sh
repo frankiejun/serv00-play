@@ -180,7 +180,7 @@ get_webip() {
   local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
 
   # 构造主机名称的数组
-  local hosts=("web${host_number}.serv00.com" "cache${host_number}.serv00.com")
+  local hosts=("web${host_number}.$(getDoMain)" "cache${host_number}.$(getDoMain)")
 
   # 初始化最终 IP 变量
   local final_ip=""
@@ -198,7 +198,7 @@ get_webip() {
     # 提取第一个字段作为 IP，并检查第二个字段是否为 "Accessible"
     local ip=$(echo "$response" | awk -F "|" '{ if ($2 == "Accessible") print $1 }')
     # webxx.serv00.com域名对应的ip作为兜底ip
-    if [[ "$host" == "web${host_number}.serv00.com" ]]; then
+    if [[ "$host" == "web${host_number}.$(getDoMain)" ]]; then
       final_ip=$(echo "$response" | awk -F "|" '{print $1}')
     fi
 
@@ -220,7 +220,7 @@ get_ip() {
   local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
 
   # 构造主机名称的数组
-  local hosts=("cache${host_number}.serv00.com" "web${host_number}.serv00.com" "$hostname")
+  local hosts=("cache${host_number}.$(getDoMain)" "web${host_number}.$(getDoMain)" "$hostname")
 
   # 初始化最终 IP 变量
   local final_ip=""
@@ -252,6 +252,30 @@ get_ip() {
 
 isServ00() {
   [[ $(hostname) == *"serv00"* ]]
+}
+
+getDoMain() {
+  if isServ00; then
+    echo -n "serv00.com"
+  else
+    echo -n "hostuno.com"
+  fi
+}
+
+getUserDoMain() {
+  local proc=$1
+  local baseDomain=""
+  user="$(whoami)"
+  if isServ00; then
+    baseDomain="$user.serv00.net"
+  else
+    baseDomain="$user.hostuno.com"
+  fi
+  if [[ -n "$proc" ]]; then
+    echo -n "$proc.$baseDomain"
+  else
+    echo -n "$baseDomain"
+  fi
 }
 
 #获取端口
@@ -632,8 +656,7 @@ clean_all_domains() {
 
 create_default_domain() {
   echo "正在创建默认域名..."
-  user="$(whoami)"
-  local domain="${user}.serv00.net"
+  local domain=$(getUserDoMain)
   domain="${domain,,}"
   devil www add $domain php
   echo "默认域名创建成功!"
@@ -659,7 +682,7 @@ show_ip_status() {
   useIPs=()
   local hostname=$(hostname)
   local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
-  local hosts=("cache${host_number}.serv00.com" "web${host_number}.serv00.com" "$hostname")
+  local hosts=("cache${host_number}.$(getDoMain)" "web${host_number}.$(getDoMain)" "$hostname")
 
   # 遍历主机名称数组
   local i=0

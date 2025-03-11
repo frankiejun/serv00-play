@@ -1453,7 +1453,7 @@ installMtg() {
   #自动生成密钥
   head=$(hostname | cut -d '.' -f 1)
   no=${head#s}
-  host="panel${no}.serv00.com"
+  host="panel${no}.$(getDoMain)"
   secret=$(./mtg generate-secret --hex $host)
   loadPort
   randomPort tcp mtg
@@ -1508,7 +1508,7 @@ startMtg() {
   eval "$cmd"
   sleep 3
   if checkMtgAlive; then
-    mtproto="https://t.me/proxy?server=${host}.serv00.com&port=${port}&secret=${secret}"
+    mtproto="https://t.me/proxy?server=${host}.$(getDoMain)&port=${port}&secret=${secret}"
     echo "$mtproto"
     green "启动成功"
   else
@@ -2460,12 +2460,7 @@ makeWWW() {
     is_self_domain=1
     read -p "请输入域名(确保此前域名已指向webip):" domain
   else
-    user="$(whoami)"
-    if isServ00; then
-      domain="${proc}.$user.serv00.net"
-    else
-      domain="$proc.$user.ct8.pl"
-    fi
+    domain=$(getUserDoMain "$proc")
   fi
 
   if [[ -z "$domain" ]]; then
@@ -2989,8 +2984,7 @@ keepAliveServ() {
 }
 
 installkeepAlive() {
-  local user="$(whoami)"
-  local domain="$user.serv00.net"
+  local domain=$(getUserDoMain)
   domain="${domain,,}"
   local domainPath="${installpath}/domains/$domain/public_nodejs"
   local workdir="${installpath}/serv00-play/keepalive"
@@ -3045,8 +3039,7 @@ installkeepAlive() {
 }
 
 uninstallkeepAlive() {
-  local user="$(whoami)"
-  local domain="$user.serv00.net"
+  local domain=$(getUserDoMain)
   domain="${domain,,}"
   local domainPath="${installpath}/domains/$domain/public_nodejs"
   read -p "是否卸载? [y/n] [n]:" input
@@ -3062,8 +3055,7 @@ uninstallkeepAlive() {
 }
 
 createDefaultDomain() {
-  local user="$(whoami)"
-  local domain="$user.serv00.net"
+  local domain=$(getUserDoMain)
   domain="${domain,,}"
   rt=$(devil www add $domain nodejs /usr/local/bin/node22 production)
   if [[ ! "$rt" =~ .*succesfully*$ ]]; then
@@ -3073,8 +3065,7 @@ createDefaultDomain() {
 }
 
 delDefaultDomain() {
-  local user="$(whoami)"
-  local domain="$user.serv00.net"
+  local domain=$(getUserDoMain)
   domain="${domain,,}"
   rt=$(devil www del $domain --remove)
   if [[ ! "$rt" =~ .*deleted*$ ]]; then
@@ -3084,8 +3075,7 @@ delDefaultDomain() {
 }
 
 updatekeepAlive() {
-  local user="$(whoami)"
-  local domain="$user.serv00.net"
+  local domain=$(getUserDoMain)
   domain="${domain,,}"
   domainPath="${installpath}/domains/$domain/public_nodejs"
   workDir="$installpath/serv00-play/keepalive"
@@ -3106,8 +3096,7 @@ updatekeepAlive() {
 }
 
 changeKeepAliveToken() {
-  local user="$(whoami)"
-  local domain="$user.serv00.net"
+  local domain=$(getUserDoMain)
   domain="${domain,,}"
   domainPath="${installpath}/domains/$domain/public_nodejs"
   if [[ ! -e "$domainPath/config.json" ]]; then
@@ -3132,8 +3121,7 @@ changeKeepAliveToken() {
 }
 
 setKeepAliveInterval() {
-  local user="$(whoami)"
-  local domain="$user.serv00.net"
+  local domain=$(getUserDoMain)
   domain="${domain,,}"
   domainPath="${installpath}/domains/$domain/public_nodejs"
   if [[ ! -e "$domainPath/config.json" ]]; then
