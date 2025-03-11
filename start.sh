@@ -2453,6 +2453,9 @@ makeWWW() {
   is_self_domain=0
   webIp=$(get_webip)
   default_webip=$(get_default_webip)
+  if [[ -z "$webIp" ]]; then
+    webIp=$default_webip
+  fi
   green "可用webip是: $webIp, 默认webip是: $default_webip"
   read -p "是否使用自定义域名? [y/n] [n]:" input
   input=${input:-n}
