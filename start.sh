@@ -731,6 +731,7 @@ configSingBox() {
       if [[ -n "$hy2_ip" ]]; then
         green "选中未封ip为 $hy2_ip"
       else
+        hy2_ip=$(curl -s icanhazip.com)
         red "未能找到未封IP,保持默认值！"
       fi
       ;;
@@ -817,6 +818,7 @@ configSingBox() {
       if [[ -n "$hy2_ip" ]]; then
         green "选中未封ip为 $hy2_ip"
       else
+        hy2_ip=$(curl -s icanhazip.com)
         red "未能找到未封IP,保持默认值！"
       fi
       #配置socks5
@@ -1246,6 +1248,7 @@ installNeZhaAgent() {
   if [ ! -e "${workedir}" ]; then
     mkdir -p "${workedir}"
   fi
+
   cd ${workedir}
   if [[ ! -e nezha-agent ]]; then
     echo "正在下载哪吒探针..."
