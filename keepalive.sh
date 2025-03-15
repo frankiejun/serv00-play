@@ -126,6 +126,7 @@ startNeZhaAgent() {
   nezha_domain=$(jq -r ".nezha_domain" $config)
   nezha_port=$(jq -r ".nezha_port" $config)
   nezha_pwd=$(jq -r ".nezha_pwd" $config)
+  ver=$(jq -r ".version" $config)
   tls=$(jq -r ".tls" $config)
 
   if checknezhaAgentAlive; then
@@ -137,7 +138,18 @@ startNeZhaAgent() {
     args="${args} --tls "
   fi
 
-  nohup ./nezha-agent ${args} -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
+  if [[ "$ver" == "1" ]]; then
+    nohup ./nezha-agent ${args} -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
+  else
+    local yamlcfg="config.yaml"
+    local datatls=""
+    if [[ "$tls" == "y" ]]; then
+      datatls="tls: true"
+    else
+      datatls="tls: false"
+    fi
+    nohup ./nezha-agent -c $yamlcfg 2>&1 &
+  fi
 
 }
 

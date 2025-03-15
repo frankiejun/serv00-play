@@ -1121,8 +1121,8 @@ manageNeZhaAgent() {
   while true; do
     yellow "-------------------------"
     echo "探针管理："
-    echo "1.安装探针"
-    echo "2.升级探针"
+    echo "1.安装探针(v0或v1)"
+    echo "2.升级探针(v1以上版本)"
     echo "3.启动/重启探针"
     echo "4.停止探针"
     echo "9.返回主菜单"
@@ -1158,9 +1158,122 @@ manageNeZhaAgent() {
   showMenu
 }
 
+installNeZhaAgent() {
+  local workedir="${installpath}/serv00-play/nezha"
+  if [ ! -e "${workedir}" ]; then
+    mkdir -p "${workedir}"
+  fi
+
+  cd ${workedir}
+  if [ -e nezha-agent ]; then
+    red "探针已安装,重新安装请先卸载!"
+    return 1
+  fi
+  echo "确认安装哪吒探针的版本:"
+  echo "1. v0.20.5"
+  echo "2. v1 -latest"
+  read -p "请选择:" ver
+  if [[ "$ver" != "1" && "$ver" != "2" ]]; then
+    echo "无效输入!"
+    return 1
+  fi
+
+  echo "正在下载哪吒探针..."
+  if [[ "$ver" == "1" ]]; then
+    # 安装v0版本
+    local url="https://github.com/nezhahq/agent/releases/download/v0.20.5/nezha-agent_freebsd_amd64.zip"
+    agentZip="nezha-agent.zip"
+    if ! wget -qO "$agentZip" "$url"; then
+      red "下载哪吒探针失败"
+      return 1
+    fi
+    unzip $agentZip >/dev/null 2>&1
+  else
+    latest_version=$(curl -sL https://github.com/nezhahq/agent/releases/latest | sed -n 's/.*tag\/\(v[0-9.]*\).*/\1/p' | head -1)
+    download_url="https://github.com/nezhahq/agent/releases/download/$latest_version/nezha-agent_freebsd_amd64.zip"
+    local filezip="nezha-agent_latest.zip"
+    curl -sL -o "$filezip" "$download_url"
+    if [[ ! -e "$filezip" || -n $(file "$filezip" | grep "text") ]]; then
+      echo "下载探针文件失败!"
+      return
+    fi
+    unzip -o $filezip -d .
+  fi
+  chmod +x ./nezha-agent
+  green "下载完毕"
+
+  local config="nezha.json"
+
+  read -p "请输入哪吒面板的域名或ip:" nezha_domain
+  read -p "请输入哪吒面板RPC端口(默认 5555):" nezha_port
+  nezha_port=${nezha_port:-5555}
+  read -p "请输入服务器密钥(从哪吒面板中获取):" nezha_pwd
+  read -p "是否启用针对 gRPC 端口的 SSL/TLS加密 (--tls)，需要请按 [y]，默认是不需要，不理解用户可回车跳过: " tls
+  tls=${tls:-"N"}
+
+  if [[ -z "$nezha_domain" || -z "$nezha_port" || -z "$nezha_pwd" ]]; then
+    red "以上参数都不能为空！"
+    return 1
+  fi
+
+  cat >$config <<EOF
+    {
+      "nezha_domain": "$nezha_domain",
+      "nezha_port": "$nezha_port",
+      "nezha_pwd": "$nezha_pwd",
+      "tls": "$tls",
+      "version": "$ver"
+    }
+EOF
+  local uuid=$(uuidgen -r)
+  local yamlcfg="config.yaml"
+  local datatls=""
+  if [[ "$tls" == "y" ]]; then
+    datatls="tls: true"
+  else
+    datatls="tls: false"
+  fi
+  cat >$yamlcfg <<EOF
+    client_secret: $nezha_pwd
+    debug: false
+    disable_auto_update: false
+    disable_command_execute: false
+    disable_force_update: false
+    disable_nat: false
+    disable_send_query: false
+    gpu: false
+    insecure_tls: false
+    ip_report_period: 1800
+    report_delay: 2
+    server: $nezha_domain:$nezha_port
+    skip_connection_count: false
+    skip_procs_count: false
+    temperature: false
+    $datatls
+    use_gitee_to_upgrade: false
+    use_ipv6_country_code: false
+    uuid: $uuid
+EOF
+
+  local args="--report-delay 4 --disable-auto-update --disable-force-update "
+  if [[ "$tls" == "y" ]]; then
+    args="${args} --tls "
+  fi
+
+  if checknezhaAgentAlive; then
+    stopNeZhaAgent
+  fi
+
+  if [[ "$ver" == "1" ]]; then
+    nohup ./nezha-agent ${args} -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
+  else
+    nohup ./nezha-agent -c $yamlcfg 2>&1 &
+  fi
+  green "哪吒探针成功启动!"
+
+}
+
 updateAgent() {
-  red "暂不提供在线升级, 只适配哪吒面板v0版本系列。"
-  return 1
   exepath="${installpath}/serv00-play/nezha/nezha-agent"
   if [ ! -e "$exepath" ]; then
     red "未安装探针，请先安装！！!"
@@ -1240,77 +1353,6 @@ startAgent() {
     red "启动失败!"
   fi
   #即便使用nohup放后台，此处如果使用ctrl+c退出脚本，nezha-agent进程也会退出。非常奇葩，因此startAgent后只能exit退出脚本，避免用户使用ctrl+c退出。
-
-}
-
-installNeZhaAgent() {
-  local workedir="${installpath}/serv00-play/nezha"
-  if [ ! -e "${workedir}" ]; then
-    mkdir -p "${workedir}"
-  fi
-
-  cd ${workedir}
-  if [[ ! -e nezha-agent ]]; then
-    echo "正在下载哪吒探针..."
-    local url="https://github.com/nezhahq/agent/releases/download/v0.20.3/nezha-agent_freebsd_amd64.zip"
-    agentZip="nezha-agent.zip"
-    if ! wget -qO "$agentZip" "$url"; then
-      red "下载哪吒探针失败"
-      return 1
-    fi
-    unzip $agentZip >/dev/null 2>&1
-    chmod +x ./nezha-agent
-    green "下载完毕"
-  fi
-
-  local config="nezha.json"
-  local input="y"
-  if [[ -e "$config" ]]; then
-    echo "哪吒探针配置如下:"
-    cat "$config"
-    read -p "是否修改？ [y/n] [n]:" input
-    input=${input:-n}
-  fi
-
-  if [[ "$input" == "y" ]]; then
-    read -p "请输入哪吒面板的域名或ip:" nezha_domain
-    read -p "请输入哪吒面板RPC端口(默认 5555):" nezha_port
-    nezha_port=${nezha_port:-5555}
-    read -p "请输入服务器密钥(从哪吒面板中获取):" nezha_pwd
-    read -p "是否启用针对 gRPC 端口的 SSL/TLS加密 (--tls)，需要请按 [y]，默认是不需要，不理解用户可回车跳过: " tls
-    tls=${tls:-"N"}
-  else
-    nezha_domain=$(jq -r ".nezha_domain" $config)
-    nezha_port=$(jq -r ".nezha_port" $config)
-    nezha_pwd=$(jq -r ".nezha_pwd" $config)
-    tls=$(jq -r ".tls" $config)
-  fi
-
-  if [[ -z "$nezha_domain" || -z "$nezha_port" || -z "$nezha_pwd" ]]; then
-    red "以上参数都不能为空！"
-    return 1
-  fi
-
-  cat >$config <<EOF
-    {
-      "nezha_domain": "$nezha_domain",
-      "nezha_port": "$nezha_port",
-      "nezha_pwd": "$nezha_pwd",
-      "tls": "$tls"
-    }
-EOF
-
-  local args="--report-delay 4 --disable-auto-update --disable-force-update "
-  if [[ "$tls" == "y" ]]; then
-    args="${args} --tls "
-  fi
-
-  if checknezhaAgentAlive; then
-    stopNeZhaAgent
-  fi
-
-  nohup ./nezha-agent ${args} -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
-  green "哪吒探针成功启动!"
 
 }
 
