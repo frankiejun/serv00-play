@@ -1121,10 +1121,12 @@ manageNeZhaAgent() {
   while true; do
     yellow "-------------------------"
     echo "探针管理："
+    echo "服务状态: $(checkProcStatus nezha-agent)"
     echo "1.安装探针(v0或v1)"
-    echo "2.升级探针(v1以上版本)"
+    echo "2.升级探针(仅v1以上版本)"
     echo "3.启动/重启探针"
     echo "4.停止探针"
+    echo "5.卸载探针"
     echo "9.返回主菜单"
     echo "0.退出脚本"
     yellow "-------------------------"
@@ -1143,6 +1145,9 @@ manageNeZhaAgent() {
       ;;
     4)
       stopNeZhaAgent
+      ;;
+    5)
+      uninstallAgent
       ;;
     9)
       break
@@ -1317,8 +1322,8 @@ updateAgent() {
 }
 
 startAgent() {
-  local workedir="${installpath}/serv00-play/nezha"
-  if [ ! -e "${workedir}" ]; then
+  local exepath="${installpath}/serv00-play/nezha/nezha-agent"
+  if [ ! -e "${exepath}" ]; then
     red "未安装探针，请先安装！！!"
     return
   fi
@@ -1333,6 +1338,7 @@ startAgent() {
   nezha_domain=$(jq -r ".nezha_domain" $configfile)
   nezha_port=$(jq -r ".nezha_port" $configfile)
   nezha_pwd=$(jq -r ".nezha_pwd" $configfile)
+  ver=$(jq -r ".version" $configfile)
   tls=$(jq -r ".tls" $configfile)
 
   if checknezhaAgentAlive; then
@@ -1344,8 +1350,12 @@ startAgent() {
     args="${args} --tls "
   fi
 
-  #echo "./nezha-agent ${args} -s ${nezha_domain}:${nezha_port} -p ${nezha_pwd}"
-  nohup ./nezha-agent ${args} -s ${nezha_domain}:${nezha_port} -p ${nezha_pwd} >/dev/null 2>&1 &
+  if [[ "$ver" == "1" ]]; then
+    #echo "./nezha-agent ${args} -s ${nezha_domain}:${nezha_port} -p ${nezha_pwd}"
+    nohup ./nezha-agent ${args} -s ${nezha_domain}:${nezha_port} -p ${nezha_pwd} >/dev/null 2>&1 &
+  else
+    nohup ./nezha-agent -c config.yaml 2>&1 &
+  fi
 
   if checknezhaAgentAlive; then
     green "启动成功!"
@@ -1369,6 +1379,69 @@ uninstallAgent() {
     green "卸载完毕!"
   fi
 
+}
+manageNeZhaBoard() {
+  if ! checkInstalled "serv00-play"; then
+    return 1
+  fi
+  while true; do
+    yellow "---------------------"
+    echo "哪吒面板管理(仅支持v1):"
+    echo "服务状态: $(checkProcStatus dashboard)"
+    echo "1. 安装"
+    echo "2. 启动"
+    echo "3. 停止"
+    echo "4. 更新"
+    echo "8. 卸载"
+    echo "9. 返回主菜单"
+    echo "0. 退出脚本"
+    yellow "---------------------"
+    read -p "请选择:" input
+
+    case $input in
+    1)
+      installNeZhaDashboard
+      ;;
+    2)
+      startNeZhaDashboard
+      ;;
+    3)
+      stopNeZhaDashboard
+      ;;
+    4)
+      updateNeZhaDashboard
+      ;;
+    8)
+      uninstallNeZhaDashboard
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
+    esac
+  done
+  showMenu
+}
+
+installNeZhaDashboard() {
+  local workedir="${installpath}/serv00-play/nezha-board"
+  if [ ! -e "${workedir}" ]; then
+    mkdir -p "${workedir}"
+  fi
+
+  cd ${workedir}
+  if [ -e dashboard ]; then
+    red "面板已安装,重新安装请先卸载!"
+    return 1
+  fi
+  if ! checkDownload "dashboard"; then
+    return 1
+  fi
 }
 
 setCnTimeZone() {
@@ -3234,7 +3307,7 @@ showMenu() {
   echo "请选择一个选项:"
 
   options=("安装/更新serv00-play项目" "sun-panel" "webssh" "阅后即焚" "linkalive" "设置保活的项目" "配置sing-box"
-    "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "管理哪吒探针" "卸载探针" "设置彩色开机字样" "显示本机IP"
+    "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "哪吒探针管理" "哪吒面板管理" "设置彩色开机字样" "显示本机IP"
     "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "KeepAlive" "卸载")
 
   select opt in "${options[@]}"; do
@@ -3282,7 +3355,7 @@ showMenu() {
       manageNeZhaAgent
       ;;
     15)
-      uninstallAgent
+      manageNeZhaBoard
       ;;
     16)
       setColorWord
