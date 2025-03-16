@@ -259,7 +259,7 @@ getDoMain() {
   if isServ00; then
     echo -n "serv00.com"
   else
-    echo -n "hostuno.com"
+    echo -n "useruno.com"
   fi
 }
 
@@ -270,7 +270,7 @@ getUserDoMain() {
   if isServ00; then
     baseDomain="$user.serv00.net"
   else
-    baseDomain="$user.hostuno.com"
+    baseDomain="$user.useruno.com"
   fi
   if [[ -n "$proc" ]]; then
     echo -n "$proc.$baseDomain"
