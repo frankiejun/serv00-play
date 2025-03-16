@@ -1456,8 +1456,7 @@ installNeZhaDashboard() {
     red "未输入端口号"
     return 1
   fi
-  echo "请输入站点标题: "
-  read -r nz_site_title
+  read -p "请输入站点标题: " nz_site_title
   # printf "请指定安装命令中预设的 nezha-agent 连接地址 （例如 example.com:12345）"
   # read -r nz_hostport
   echo "请指定后台语言"
@@ -1465,8 +1464,7 @@ installNeZhaDashboard() {
   echo "2. 中文（台灣）"
   echo "3. English"
   while true; do
-    echo "请输入选项 [1-3]"
-    read -r option
+    read -p "请输入选项 [1-3]" option
     case "${option}" in
     1)
       nz_lang=zh_CN
@@ -1481,7 +1479,7 @@ installNeZhaDashboard() {
       break
       ;;
     *)
-      err "请输入正确的选项 [1-3]"
+      echo "请输入正确的选项 [1-3]"
       ;;
     esac
   done
