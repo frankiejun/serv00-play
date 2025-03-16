@@ -1387,7 +1387,7 @@ manageNeZhaBoard() {
   while true; do
     yellow "---------------------"
     echo "哪吒面板管理(仅支持v1):"
-    echo "服务状态: $(checkProcStatus dashboard)"
+    echo "服务状态: $(checkProcStatus nezha-dashboard)"
     echo "1. 安装"
     echo "2. 启动"
     echo "3. 停止"
@@ -1435,12 +1435,125 @@ installNeZhaDashboard() {
   fi
 
   cd ${workedir}
-  if [ -e dashboard ]; then
+  if [ -e "./nezha-dashboard" ]; then
     red "面板已安装,重新安装请先卸载!"
     return 1
   fi
   if ! checkDownload "dashboard"; then
     return 1
+  fi
+  if [[ -e "dashboard" ]]; then
+    mv ./dashboard ./nezha-dashboard
+    chmod +x ./nezha-dashboard
+  fi
+
+  #自动分配端口
+  loadPort
+  randomPort tcp nezha-dashboard
+  if [[ -n "$port" ]]; then
+    nz_port="$port"
+  else
+    red "未输入端口号"
+    return 1
+  fi
+  printf "请输入站点标题: "
+  read -r nz_site_title
+  # printf "请指定安装命令中预设的 nezha-agent 连接地址 （例如 example.com:12345）"
+  # read -r nz_hostport
+  println "请指定后台语言"
+  println "1. 中文（简体）"
+  println "2. 中文（台灣）"
+  println "3. English"
+  while true; do
+    printf "请输入选项 [1-3]"
+    read -r option
+    case "${option}" in
+    1)
+      nz_lang=zh_CN
+      break
+      ;;
+    2)
+      nz_lang=zh_TW
+      break
+      ;;
+    3)
+      nz_lang=en_US
+      break
+      ;;
+    *)
+      err "请输入正确的选项 [1-3]"
+      ;;
+    esac
+  done
+  echo "正在安装哪吒面板，请等待..."
+  domain=""
+  webIp=""
+  if ! makeWWW "" $nz_port; then
+    echo "绑定域名失败!"
+    return 1
+  fi
+  if ! applyLE $domain $webIp; then
+    echo "申请证书失败!"
+    return 1
+  fi
+  nz_hostport="${domain}:${nz_port}"
+  #serv00不支持gprc转发，所以不需要tls
+  cat >config.yaml <<EOF
+  debug: false
+  listen_port: $nz_port
+  language: $nz_lang
+  site_name: "$nz_site_title"
+  install_host: $nz_hostport
+  tls: false
+ 
+EOF
+
+  green "面板安装成功!"
+}
+startNeZhaDashboard() {
+  if [ ! -e "${installpath}/serv00-play/nezha-board/nezha-dashboard" ]; then
+    red "未安装面板，请先安装！！!"
+    return
+  fi
+  cd ${installpath}/serv00-play/nezha-board
+  if checkProcAlive nezha-dashboard; then
+    stopNeZhaDashboard
+  fi
+  if [ ! -e "config.yaml" ]; then
+    red "未安装面板，请先安装！！!"
+    return
+  fi
+  nohup ./nezha-dashboard -c config.yaml >borad.log 2>&1 &
+  if checkProcAlive nezha-dashboard; then
+    green "面板已启动!"
+  else
+    red "面板启动失败,请查看日志borad.log"
+  fi
+
+}
+stopNeZhaDashboard() {
+  if checkProcAlive nezha-dashboard; then
+    stopProc nezha-dashboard
+  else
+    red "面板未启动!"
+  fi
+}
+updateNeZhaDashboard() {
+  echo "暂不支持"
+  return
+}
+
+uninstallNeZhaDashboard() {
+  read -p "确定卸载哪吒面板? [y/n] [n]:" input
+  input=${input:-n}
+
+  if [[ "$input" == "y" ]]; then
+    if checkProcAlive nezha-dashboard; then
+      stopNeZhaDashboard
+    fi
+    local workedir="${installpath}/serv00-play/nezha-board"
+    rm -rf $workedir
+    green "卸载完毕!"
   fi
 }
 
@@ -2581,6 +2694,9 @@ makeWWW() {
     is_self_domain=1
     read -p "请输入域名(确保此前域名已指向webip):" domain
   else
+    if [[ -z ${proc:""} ]]; then
+      read -p "请输入默认域名的二级域名的前缀(如二级域名 sub.main.com， 则填sub):" proc
+    fi
     domain=$(getUserDoMain "$proc")
   fi
 

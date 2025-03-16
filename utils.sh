@@ -66,6 +66,7 @@ stopProc() {
     kill -9 $r
   fi
   echo "已停掉$procname!"
+  return 0
 }
 
 checkSingboxAlive() {
