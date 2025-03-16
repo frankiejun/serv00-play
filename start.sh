@@ -1505,7 +1505,7 @@ installNeZhaDashboard() {
   tls: false
  
 EOF
-
+  mkdir ./data
   green "面板安装成功!"
 }
 startNeZhaDashboard() {
@@ -1550,7 +1550,19 @@ uninstallNeZhaDashboard() {
       stopNeZhaDashboard
     fi
     local workedir="${installpath}/serv00-play/nezha-board"
-    rm -rf $workedir
+    if [ ! -e "${workedir}" ]; then
+      red "未安装面板!"
+      return
+    fi
+    cd $workedir
+    if [ ! -e "config.json" ]; then
+      red "未安装面板!"
+      return
+    fi
+    the_domain=$(jq -r ".domain" config.json)
+    #获取二级域名前缀
+    subdomain=$(echo $the_domain | cut -d. -f1)
+    uninstallProc $subdomain $the_domain
     green "卸载完毕!"
   fi
 }
