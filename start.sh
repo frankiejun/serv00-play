@@ -1494,6 +1494,7 @@ installNeZhaDashboard() {
     echo "申请证书失败!"
     return 1
   fi
+  cd ${workedir}
   nz_hostport="${domain}:${nz_port}"
   #serv00不支持gprc转发，所以不需要tls
 
@@ -1543,21 +1544,12 @@ updateNeZhaDashboard() {
 }
 
 uninstallNeZhaDashboard() {
-  read -p "确定卸载哪吒面板? [y/n] [n]:" input
-  input=${input:-n}
-
-  if [[ "$input" == "y" ]]; then
-    if checkProcAlive nezha-dashboard; then
-      stopNeZhaDashboard
-    fi
-    local workedir="${installpath}/serv00-play/nezha-board"
-    if [ ! -e "${workedir}" ]; then
-      red "未安装面板!"
-      return
-    fi
-    uninstallProc $workedir "nezha-dashboard"
-    green "卸载完毕!"
+  local workedir="${installpath}/serv00-play/nezha-board"
+  if [ ! -e "${workedir}" ]; then
+    red "未安装面板!"
+    return
   fi
+  uninstallProc $workedir "nezha-dashboard"
 }
 
 setCnTimeZone() {
