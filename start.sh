@@ -1496,6 +1496,7 @@ installNeZhaDashboard() {
   fi
   nz_hostport="${domain}:${nz_port}"
   #serv00不支持gprc转发，所以不需要tls
+
   cat >config.yaml <<EOF
   debug: false
   listen_port: $nz_port
@@ -1503,8 +1504,8 @@ installNeZhaDashboard() {
   site_name: "$nz_site_title"
   install_host: $nz_hostport
   tls: false
- 
 EOF
+
   mkdir ./data
   green "面板安装成功!"
 }
@@ -1554,15 +1555,7 @@ uninstallNeZhaDashboard() {
       red "未安装面板!"
       return
     fi
-    cd $workedir
-    if [ ! -e "config.json" ]; then
-      red "未安装面板!"
-      return
-    fi
-    the_domain=$(jq -r ".domain" config.json)
-    #获取二级域名前缀
-    subdomain=$(echo $the_domain | cut -d. -f1)
-    uninstallProc $subdomain $the_domain
+    uninstallProc $workedir "nezha-dashboard"
     green "卸载完毕!"
   fi
 }
