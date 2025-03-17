@@ -1272,7 +1272,7 @@ EOF
   if [[ "$ver" == "1" ]]; then
     nohup ./nezha-agent ${args} -s "${nezha_domain}:${nezha_port}" -p "${nezha_pwd}" >/dev/null 2>&1 &
   else
-    nohup ./nezha-agent -c $yamlcfg 2>&1 &
+    nohup ./nezha-agent -c $yamlcfg >/dev/null 2>&1 &
   fi
   green "哪吒探针成功启动!"
 

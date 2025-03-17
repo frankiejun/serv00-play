@@ -171,6 +171,20 @@ startMtg() {
 
 }
 
+startNeZhaDashboard() {
+  cd ${installpath}/serv00-play/nezha-board
+  if checkProcAlive nezha-dashboard; then
+    stopNeZhaDashboard
+  fi
+  nohup ./nezha-dashboard -c config.yaml >borad.log 2>&1 &
+  if checkProcAlive nezha-dashboard; then
+    green "面板已启动!"
+  else
+    red "面板启动失败,请查看日志borad.log"
+  fi
+
+}
+
 startAlist() {
   alistpath="${installpath}/serv00-play/alist"
 
@@ -345,6 +359,17 @@ for obj in "${monitor[@]}"; do
         msg="nezha-agent 重启失败."
       else
         msg="nezha-agent 重启成功."
+      fi
+    fi
+  elif [ "$obj" == "nezha-dashboard" ]; then
+    if ! checkProcAlive "nezha-dashboard"; then
+      cd ${installpath}/serv00-play/nezha-board
+      startNeZhaDashboard
+      sleep 1
+      if ! checkProcAlive "nezha-dashboard"; then
+        msg="nezha-dashboard 重启失败."
+      else
+        msg="nezha-dashboard 重启成功."
       fi
     fi
   elif [ "$obj" == "mtg" ]; then
