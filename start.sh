@@ -140,6 +140,7 @@ createConfigFile() {
   echo "4. mtproto代理"
   echo "5. alist"
   echo "6. webssh"
+  echo "7. 哪吒面板"
   echo "88. 暂停所有保活功能"
   echo "99. 复通所有保活功能(之前有配置的情况下)"
   echo "0. 返回主菜单"
@@ -182,6 +183,9 @@ createConfigFile() {
       ;;
     6)
       item+=("webssh")
+      ;;
+    7)
+      item+=("nezha-dashboard")
       ;;
     88)
       #delCron
