@@ -1293,7 +1293,7 @@ updateAgent() {
   cd $workedir
 
   local_version="v"$(./nezha-agent -v)
-  latest_version=$(curl -sL https://github.com/nezhahq/agent/releases/latest | sed -n 's/.*tag\/\(v[0-9.]*\).*/\1/p' | head -1)
+  latest_version=$(curl -sL https://github.com/nezhahq/agent/releases/latest | sed -n 's/.*tag\/\(v[0-9.]*\).*/\1/p' | head -1 | sed 's/v//')
 
   if [[ "$local_version" != "$latest_version" ]]; then
     echo "发现新版本: $latest_version，当前版本: $local_version。正在更新..."
@@ -1461,11 +1461,9 @@ installNeZhaDashboard() {
     return 1
   fi
   read -p "请输入站点标题: " nz_site_title
-  # printf "请指定安装命令中预设的 nezha-agent 连接地址 （例如 example.com:12345）"
-  # read -r nz_hostport
   echo "请指定后台语言"
   echo "1. 中文（简体）"
-  echo "2. 中文（台灣）"
+  echo "2. 中文（繁体）"
   echo "3. English"
   while true; do
     read -p "请输入选项 [1-3]" option
