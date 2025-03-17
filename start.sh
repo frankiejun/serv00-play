@@ -1292,7 +1292,7 @@ updateAgent() {
   local workedir="${installpath}/serv00-play/nezha"
   cd $workedir
 
-  local_version="v"$(./nezha-agent -v)
+  local_version="v"$(./nezha-agent -v | awk '{print $3}')
   latest_version=$(curl -sL "https://api.github.com/repos/nezhahq/agent/releases/latest" | jq -r '.tag_name // empty')
 
   if [[ "$local_version" != "$latest_version" ]]; then
