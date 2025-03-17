@@ -252,7 +252,9 @@ tg_token=$(jq -r ".telegram_token // empty" config.json)
 
 if [[ -z "$tg_token" ]]; then
   echo "从msg.json获取 telegram_token"
-  TELEGRAM_TOKEN=$(jq -r '.telegram_token // empty' msg.json)
+  if [[ -e "msg.json" ]]; then
+    TELEGRAM_TOKEN=$(jq -r '.telegram_token // empty' msg.json)
+  fi
 else
   TELEGRAM_TOKEN=$tg_token
 fi
@@ -291,12 +293,16 @@ fi
 
 if [ -z "$BUTTON_URL" ]; then
   echo "从msg.json获取 button_url"
-  BUTTON_URL=$(jq -r ".button_url // empty" msg.json)
+  if [[ -e "msg.json" ]]; then
+    BUTTON_URL=$(jq -r ".button_url // empty" msg.json)
+  fi
 fi
 
 if [ -z "$PASS" ]; then
   echo "从msg.json获取 password"
-  PASS=$(jq -r ".password // empty" msg.json)
+  if [[ -e "msg.json" ]]; then
+    PASS=$(jq -r ".password // empty" msg.json)
+  fi
 fi
 
 export TELEGRAM_TOKEN TELEGRAM_USERID WXSENDKEY sendtype BUTTON_URL PASS
