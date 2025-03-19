@@ -1346,7 +1346,7 @@ startAgent() {
     red "未安装探针，请先安装！！!"
     return
   fi
-  cd $workedir
+  cd "${installpath}/serv00-play/nezha"
 
   local configfile="./nezha.json"
   if [ ! -e "$configfile" ]; then
