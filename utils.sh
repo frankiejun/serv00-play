@@ -558,7 +558,12 @@ download_from_net() {
   "alist")
     download_from_github_release "AlistGo" "alist" "alist-freebsd-amd64.tar.gz"
     ;;
-
+  "nezha-agent")
+    download_from_github_release "nezhahq" "agent" "nezha-agent_freebsd_amd64.zip"
+    ;;
+  "nezha-dashboard")
+    download_from_github_release "frankiejun" "freebsd-nezha" "dashboard.gz"
+    ;;
   esac
 }
 
@@ -597,8 +602,11 @@ check_from_github() {
   local user=$1
   local repository=$2
   local local_version="$3"
+  local url="https://github.com/${user}/${repository}"
+  local latestUrl="$url/releases/latest"
 
-  latest_version=$(curl -sL "https://api.github.com/repos/${user}/${repository}/releases/latest" | jq -r '.tag_name // empty')
+  latest_version=$(curl -sL $latestUrl | sed -n 's/.*tag\/\(v[0-9.]*\).*/\1/p' | head -1)
+  #latest_version=$(curl -sL "https://api.github.com/repos/${user}/${repository}/releases/latest" | jq -r '.tag_name // empty')
   if [[ "$local_version" != "$latest_version" ]]; then
     echo "发现新版本: $latest_version，当前版本: $local_version, 正在更新..."
     return 0
@@ -612,10 +620,10 @@ download_from_github_release() {
   local zippackage="$3"
 
   local url="https://github.com/${user}/${repository}"
-  # local latestUrl="$url/releases/latest"
+  local latestUrl="$url/releases/latest"
 
-  # local latest_version=$(curl -sL $latestUrl | sed -n 's/.*tag\/\(v[0-9.]*\).*/\1/p' | head -1)
-  latest_version=$(curl -sL "https://api.github.com/repos/${user}/${repository}/releases/latest" | jq -r '.tag_name // empty')
+  local latest_version=$(curl -sL $latestUrl | sed -n 's/.*tag\/\(v[0-9.]*\).*/\1/p' | head -1)
+  #latest_version=$(curl -sL "https://api.github.com/repos/${user}/${repository}/releases/latest" | jq -r '.tag_name // empty')
   local download_url="${url}/releases/download/$latest_version/$zippackage"
   curl -sL -o "$zippackage" "$download_url"
   if [[ ! -e "$zippackage" || -n $(file "$zippackage" | grep "text") ]]; then
