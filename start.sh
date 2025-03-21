@@ -1425,7 +1425,7 @@ installNeZhaDashboard() {
     red "面板已安装,重新安装请先卸载!"
     return 1
   fi
-  if ! download_from_net "dashboard"; then
+  if ! download_from_net "nezha-dashboard"; then
     return 1
   fi
   if [[ -e "dashboard" ]]; then
