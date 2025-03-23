@@ -635,9 +635,6 @@ download_from_github_release() {
   *.zip)
     unzip -o "$zippackage" -d .
     ;;
-  *.gz)
-    gzip -d "$zippackage"
-    ;;
   *.tar.gz | *.tgz)
     tar -xzf "$zippackage"
     ;;
@@ -646,6 +643,9 @@ download_from_github_release() {
     ;;
   *.tar.xz | *.txz)
     tar -xJf "$zippackage"
+    ;;
+  *.gz)
+    gzip -d "$zippackage"
     ;;
   *.tar)
     tar -xf "$zippackage"
