@@ -19,6 +19,7 @@ red() {
 }
 installpath="$HOME"
 baseurl="https://ss.fkj.pp.ua"
+linkBaseurl="https://la.fkj.pp.ua"
 
 checknezhaAgentAlive() {
   if ps aux | grep nezha-agent | grep -v "grep" >/dev/null; then
