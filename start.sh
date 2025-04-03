@@ -75,11 +75,12 @@ install() {
     read -p "$(yellow 设置完毕,需要重新登录才能生效，是否重新登录？[y/n] [y]:)" input
     input=${input:-y}
   fi
+  echo -e "${YELLOW}安装成功${RESET}"
 
   if [ "$input" = "y" ]; then
     kill -9 $PPID
   fi
-  echo -e "${YELLOW}安装成功${RESET}"
+
 }
 
 showSingBoxInfo() {
