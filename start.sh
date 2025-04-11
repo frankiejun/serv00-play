@@ -3198,6 +3198,8 @@ DSServ() {
     echo "3. 配置"
     echo "4. 开启服务"
     echo "5. 停止服务"
+    echo "9. 返回主菜单"
+    echo "0. 退出脚本"
     yellow "---------------------"
 
     read -p "请选择:" input
@@ -3421,7 +3423,7 @@ addDomain() {
          "expiry_date": "$expiry_date",
          "service_type": "伪装网站",
          "status": "在线"
-     }"
+     }" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
       red "域名信息录入失败!"
       return 1
