@@ -3388,7 +3388,7 @@ addDomain() {
     fi
     read -p "输入你的名字([xx的博客]里的xx):" name
     name=${name:-"樱花"}
-    sed -i "s/xx/$name/g" $target/index.html
+    sed -i.bak "s|xx|$name|g" $target/index.html
   fi
   if [[ "$choice" == "2" ]]; then
     cp websites/hr.html $target/index.html
