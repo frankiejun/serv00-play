@@ -3220,6 +3220,12 @@ DSServ() {
     5)
       stopDs
       ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
     *)
       echo "无效选项，请重试"
       ;;
