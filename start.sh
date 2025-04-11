@@ -3192,7 +3192,7 @@ DSServ() {
   while true; do
     yellow "---------------------"
     echo "Domains-Support:"
-    echo "服务状态: $(checkCronName domains-support)"
+    echo "服务状态: $(checkCronNameStatus domains-support)"
     echo "1. 新增域名"
     echo "2. 删除域名"
     echo "3. 配置"
