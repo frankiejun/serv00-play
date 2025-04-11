@@ -3463,6 +3463,7 @@ delDomain() {
     return 1
   fi
   cd $workdir
+  print_domains
   read -p "请输入要删除的域名:" domain
   if [[ -z "$domain" ]]; then
     red "输入不能为空!"
