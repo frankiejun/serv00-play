@@ -3478,10 +3478,24 @@ delDomain() {
   fi
   cd $workdir
   print_domains
-  read -p "请输入要删除的域名:" domain
+  read -p "请输入要删除的域名(-1删除所有，0返回上级菜单):" domain
   if [[ -z "$domain" ]]; then
     red "输入不能为空!"
     return 1
+  fi
+  if [[ "$domain" == "-1" ]]; then
+    read -p "是否删除所有域名? [y/n] [n]:" input
+    input=${input:-n}
+    if [[ "$input" != "y" ]]; then
+      return 1
+    fi
+    delete_all_domains
+    rm -rf "${installpath}/serv00-play/domains-support"
+    green "删除成功!"
+    return 0
+  fi
+  if [[ "$domain" == "0" ]]; then
+    return 0
   fi
   delete_domain "$domain"
   green "域名删除成功！"
