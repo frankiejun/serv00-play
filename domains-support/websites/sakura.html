@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>欢迎来到xx的博客</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Arial', sans-serif;
+        background-color: #fff0f5;
+        color: #333;
+        overflow-x: hidden;
+        position: relative;
+        min-height: 100vh;
+      }
+
+      /* 樱花样式 */
+      .sakura {
+        position: fixed;
+        top: -10%;
+        z-index: -1;
+        color: #ffb6c1;
+        animation: fall linear infinite;
+      }
+
+      @keyframes fall {
+        to {
+          transform: translateY(105vh);
+        }
+      }
+
+      /* 导航栏 */
+      nav {
+        background-color: rgba(255, 182, 193, 0.8);
+        padding: 15px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .nav-container {
+        width: 80%;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+        text-decoration: none;
+      }
+
+      .nav-links a {
+        color: white;
+        text-decoration: none;
+        margin-left: 20px;
+        font-weight: 500;
+      }
+
+      /* 主要内容 */
+      .container {
+        width: 80%;
+        margin: 30px auto;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      }
+
+      h1 {
+        color: #ff69b4;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      /* 文章样式 */
+      .article {
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 1px dashed #ffb6c1;
+      }
+
+      .article:last-child {
+        border-bottom: none;
+      }
+
+      .article h2 {
+        color: #ff69b4;
+        margin-top: 0;
+      }
+
+      .article .date {
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 15px;
+      }
+
+      .article p {
+        line-height: 1.6;
+      }
+
+      /* 页脚 */
+      footer {
+        text-align: center;
+        padding: 20px;
+        background-color: rgba(255, 182, 193, 0.8);
+        color: white;
+        margin-top: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 樱花背景将通过JS添加 -->
+
+    <!-- 导航栏 -->
+    <nav>
+      <div class="nav-container">
+        <a href="#" class="logo">xx的博客</a>
+        <div class="nav-links">
+          <a href="#">首页</a>
+          <a href="#">关于</a>
+          <a href="#">归档</a>
+          <a href="#">联系</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="container">
+      <h1>欢迎来到xx的博客</h1>
+
+      <div class="article">
+        <h2>春日赏樱小记</h2>
+        <div class="date">2025年3月15日</div>
+        <p>
+          今日阳光明媚，我独自前往城郊的樱花园赏花。园中樱花已盛开七分，粉白相间，美不胜收。微风拂过，花瓣纷纷扬扬落下，宛如一场粉色的雪。
+        </p>
+        <p>
+          游人如织，却不觉拥挤。或许是被这美景所感染，大家都轻声细语，生怕惊扰了这份宁静。我在一棵古老的樱花树下小憩，看着阳光透过花瓣在地上投下斑驳的影子，心中无比平静。
+        </p>
+        <p>
+          樱花花期短暂，正因如此才更显珍贵。人生亦如是，美好的事物总是转瞬即逝，我们更应珍惜当下，把握每一个绽放的瞬间。
+        </p>
+      </div>
+
+      <div class="article">
+        <h2>学习前端开发的感悟</h2>
+        <div class="date">2025年2月28日</div>
+        <p>
+          最近开始系统地学习前端开发，从HTML、CSS到JavaScript，一步步构建自己的知识体系。虽然有时会遇到困难，但解决问题的过程也充满了乐趣。
+        </p>
+        <p>
+          今天完成了这个博客网站的基本框架，虽然还很简陋，但看到自己的想法通过代码变成现实，那种成就感是无可比拟的。特别是实现了樱花飘落的效果，让整个页面生动起来。
+        </p>
+        <p>
+          学习编程就像是在学习一门新的语言，通过这种语言，我们可以与计算机交流，创造出无限可能。期待未来能做出更多有趣的项目！
+        </p>
+      </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>&copy; 2025 xx的博客 - 由serv00-play搭建</footer>
+
+    <!-- 樱花效果脚本 -->
+    <script>
+      // 创建樱花
+      function createSakura() {
+        const sakura = document.createElement('div')
+        sakura.innerHTML = '❀'
+        sakura.classList.add('sakura')
+
+        // 随机位置
+        const startPosX = Math.random() * window.innerWidth
+        sakura.style.left = startPosX + 'px'
+
+        // 随机大小
+        const size = Math.random() * 20 + 10
+        sakura.style.fontSize = size + 'px'
+
+        // 随机透明度
+        const opacity = Math.random() * 0.5 + 0.5
+        sakura.style.opacity = opacity
+
+        // 随机下落速度
+        const animationDuration = Math.random() * 10 + 10
+        sakura.style.animationDuration = animationDuration + 's'
+
+        // 随机延迟
+        const animationDelay = Math.random() * 5
+        sakura.style.animationDelay = animationDelay + 's'
+
+        document.body.appendChild(sakura)
+
+        // 樱花落下后移除
+        setTimeout(() => {
+          sakura.remove()
+        }, animationDuration * 1000)
+      }
+
+      // 初始创建一批樱花
+      for (let i = 0; i < 15; i++) {
+        setTimeout(createSakura, i * 300)
+      }
+
+      // 定期创建新樱花
+      setInterval(createSakura, 300)
+
+      function setBloggerName(name) {
+        document.title = `欢迎来到${name}的博客`
+        const h1 = document.querySelector('h1')
+        h1.textContent = `欢迎来到${name}的博客`
+        const footer = document.querySelector('footer')
+        footer.innerHTML = `&copy; 2025 ${name}的博客 - 由serv00-play搭建`
+      }
+
+      setBloggerName('xx')
+    </script>
+  </body>
+</html>

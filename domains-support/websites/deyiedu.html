@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>德一教育 - 后台管理系统</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+      }
+
+      body {
+        background-color: #f0f2f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-image: url('https://img.freepik.com/free-vector/hand-painted-watercolor-pastel-sky-background_23-2148902771.jpg');
+        background-size: cover;
+        background-position: center;
+      }
+
+      .login-container {
+        width: 100%;
+        max-width: 420px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .login-header {
+        background: linear-gradient(135deg, #1e88e5, #0d47a1);
+        color: white;
+        padding: 25px 30px;
+        text-align: center;
+        position: relative;
+      }
+
+      .login-header::before {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 10px solid #0d47a1;
+      }
+
+      .login-header h1 {
+        font-size: 26px;
+        font-weight: 600;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
+      }
+
+      .login-header p {
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .logo {
+        width: 50px;
+        height: 50px;
+        margin: 0 auto 15px;
+        background-color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1e88e5;
+        font-weight: bold;
+        font-size: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .login-form {
+        padding: 30px 40px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #555;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.3s;
+        background-color: #f9f9f9;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #1e88e5;
+        box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
+        background-color: white;
+      }
+
+      .error-message {
+        color: #f44336;
+        font-size: 13px;
+        margin-top: 5px;
+        display: none;
+        text-align: center;
+        background-color: rgba(244, 67, 54, 0.1);
+        padding: 8px;
+        border-radius: 4px;
+      }
+
+      .login-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #1e88e5, #0d47a1);
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 10px;
+        box-shadow: 0 2px 10px rgba(30, 136, 229, 0.3);
+      }
+
+      .login-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(30, 136, 229, 0.4);
+      }
+
+      .login-btn:active {
+        transform: translateY(0);
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        font-size: 13px;
+      }
+
+      .footer-links a {
+        color: #1e88e5;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .footer-links a:hover {
+        color: #0d47a1;
+        text-decoration: underline;
+      }
+
+      .system-version {
+        text-align: center;
+        margin-top: 25px;
+        font-size: 12px;
+        color: #888;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+      }
+
+      .remember-me {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .remember-me input {
+        margin-right: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <div class="logo">德一</div>
+        <h1>德一教育后台管理系统</h1>
+        <p>Deyi Education Management System</p>
+      </div>
+
+      <div class="login-form">
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="请输入管理员账号"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="请输入登录密码"
+              required
+            />
+            <div class="error-message" id="errorMessage">
+              用户名或密码错误，请重新输入
+            </div>
+          </div>
+
+          <div class="remember-me">
+            <input type="checkbox" id="remember" />
+            <label for="remember">记住登录状态</label>
+          </div>
+
+          <button type="submit" class="login-btn">登 录</button>
+
+          <div class="footer-links">
+            <a href="#">忘记密码?</a>
+            <a href="#">联系技术支持</a>
+          </div>
+        </form>
+
+        <div class="system-version">© 2023 德一教育集团 - 版本 v3.5.2</div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById('loginForm')
+        .addEventListener('submit', function (e) {
+          e.preventDefault()
+
+          // 显示错误信息
+          document.getElementById('errorMessage').style.display = 'block'
+
+          // 清空密码字段
+          document.getElementById('password').value = ''
+
+          // 给输入框添加错误样式
+          document.getElementById('username').style.borderColor = '#f44336'
+          document.getElementById('password').style.borderColor = '#f44336'
+
+          // 3秒后移除错误样式
+          setTimeout(function () {
+            document.getElementById('errorMessage').style.display = 'none'
+            document.getElementById('username').style.borderColor = '#ddd'
+            document.getElementById('password').style.borderColor = '#ddd'
+          }, 3000)
+        })
+    </script>
+  </body>
+</html>
