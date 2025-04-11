@@ -3251,11 +3251,12 @@ doDsConfig() {
     red "输入不能为空!"
     return 1
   fi
-  read -p "请输入URL:" url
+  read -p "请输入URL的域名:" url
   if [[ -z "$url" ]]; then
     red "输入不能为空!"
     return 1
   fi
+  url=$(echo "$url" | sed -E 's|^https?://||')
   write_ds_config $api_token $url
 }
 
@@ -3277,7 +3278,7 @@ configDs() {
   if ! doDsConfig; then
     return 1
   fi
-
+  green "配置成功!"
 }
 
 startDs() {
@@ -3297,7 +3298,7 @@ startDs() {
     red "配置文件错误，请检查!"
     return 1
   fi
-  echo "0 9 * * * curl -H \"Authorization: Bearer $api_token\" $url/api/check > /dev/null 2>&1 " >>mycron
+  echo "0 9 * * * curl -H \"Authorization: Bearer $api_token\" https://$url/api/check > /dev/null 2>&1 " >>mycron
   crontab mycron >/dev/null 2>&1
   rm mycron
 
