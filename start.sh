@@ -3375,13 +3375,25 @@ addDomain() {
   done
 
   if [[ "$choice" == "1" ]]; then
-    cp websites/sakura-blog.html $target/index.html
+    cp websites/sakura.html $target/index.html
+    if [ $? -ne 0 ]; then
+      red "安装失败!"
+      return 1
+    fi
   fi
   if [[ "$choice" == "2" ]]; then
     cp websites/hr.html $target/index.html
+    if [ $? -ne 0 ]; then
+      red "安装失败!"
+      return 1
+    fi
   fi
   if [[ "$choice" == "3" ]]; then
     cp websites/deyiedu.html $target/index.html
+    if [ $? -ne 0 ]; then
+      red "安装失败!"
+      return 1
+    fi
   fi
   if [[ "$choice" == "4" ]]; then
     read -p "输入网址html文件路径:" input
