@@ -3269,7 +3269,7 @@ configDs() {
   cd $workdir
   if [[ -e "config.json" ]]; then
     cat config.json
-    red "配置文件已存在，是否覆盖？[y/n] [n]:" input
+    read -p "配置文件已存在，是否覆盖？[y/n] [n]:" input
     input=${input:-n}
     if [[ "$input" == "n" ]]; then
       return 1
