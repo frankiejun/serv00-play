@@ -3386,6 +3386,9 @@ addDomain() {
       red "安装失败!"
       return 1
     fi
+    read -p "输入你的名字([xx的博客]里的xx):" name
+    name=${name:-"樱花"}
+    sed -i "s/xx/$name/g" $target/index.html
   fi
   if [[ "$choice" == "2" ]]; then
     cp websites/hr.html $target/index.html
@@ -3412,6 +3415,10 @@ addDomain() {
       return 1
     fi
     cp "$input" $target/index.html
+    if [ $? -ne 0 ]; then
+      red "安装失败!"
+      return 1
+    fi
   fi
 
   add_domain $domain $webIp
@@ -3436,6 +3443,12 @@ addDomain() {
 
       read -p "请输入到期日期(格式: YYYY-MM-DD):" expiry_date
       expiry_date=${expiry_date:-$(date -d "+1 year" +%Y-%m-%d)}
+
+      local host=$(hostname)
+      local username=$(whoami)
+
+      read -p "请输入备注(可选):" memo
+      memo=${memo:-"$host-$username"}
     fi
     curl -X POST "https://$url/api/addrec?token=$api_token" \
       -H "Content-Type: application/json" \
@@ -3446,7 +3459,8 @@ addDomain() {
          "registrar_link": "'"$registrar_link"'",
          "expiry_date": "'"$expiry_date"'",
          "service_type": "伪装网站",
-         "status": "在线"
+         "status": "在线",
+         "memo": "'"$memo"'"
      }' >/dev/null 2>&1
     if [ $? -ne 0 ]; then
       red "域名信息录入失败!"
