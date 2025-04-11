@@ -3338,6 +3338,7 @@ addDomain() {
     echo "申请证书失败!"
     return 1
   fi
+  cd $workdir
   target="$installpath/domains/$domain/public_html"
   if [[ ! -e "$target" ]]; then
     red "目标目录不存在!"
