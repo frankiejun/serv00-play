@@ -3434,16 +3434,16 @@ addDomain() {
     fi
     curl -X POST "https://$url/api/addrec?token=$api_token" \
       -H "Content-Type: application/json" \
-      -d "{
-         "domain": "$domain",
-         "registrar": "$registrar",
-         "registrar_date": "$registrar_date",
-          "registrar_link": "$registrar_link",
-         "expiry_date": "$expiry_date",
+      -d '{ 
+         "domain": "'"$domain"'",
+         "registrar": "'"$registrar"'",
+         "registrar_date": "'"$registrar_date"'",
+         "registrar_link": "'"$registrar_link"'",
+         "expiry_date": "'"$expiry_date"'",
          "service_type": "伪装网站",
          "status": "在线"
-     }" >/dev/null 2>&1
-    if [[ $? -ne 0 ]]; then
+     }' >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
       red "域名信息录入失败!"
       return 1
     fi
