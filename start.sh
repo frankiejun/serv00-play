@@ -3298,7 +3298,7 @@ startDs() {
     red "配置文件错误，请检查!"
     return 1
   fi
-  echo "0 9 * * * curl -H \"Authorization: Bearer $api_token\" https://$url/api/check > /dev/null 2>&1 " >>mycron
+  echo "0 9 * * * curl -H \"Authorization: Bearer $api_token\" https://$url/api/check > /dev/null 2>&1 #domains-support" >>mycron
   crontab mycron >/dev/null 2>&1
   rm mycron
 
@@ -3460,6 +3460,7 @@ addDomain() {
          "expiry_date": "'"$expiry_date"'",
          "service_type": "伪装网站",
          "status": "在线",
+         "tgsend": "1",
          "memo": "'"$memo"'"
      }' >/dev/null 2>&1
     if [ $? -ne 0 ]; then
