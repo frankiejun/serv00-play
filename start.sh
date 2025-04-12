@@ -3442,7 +3442,7 @@ addDomain() {
       registrar_date=${registrar_date:-$(date +%Y-%m-%d)}
 
       read -p "请输入到期日期(格式: YYYY-MM-DD):" expiry_date
-      expiry_date=${expiry_date:-$(date -d "+1 year" +%Y-%m-%d)}
+      expiry_date=${expiry_date:-$(date -v+1y +%Y-%m-%d)}
 
       local host=$(hostname)
       local username=$(whoami)
