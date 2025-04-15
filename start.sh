@@ -1673,6 +1673,12 @@ uninstallMtg() {
 }
 
 installMtg() {
+  local workedir="${installpath}/serv00-play/dmtg"
+  if [ ! -e "${workedir}" ]; then
+    mkdir -p "${workedir}"
+  fi
+  cd ${workedir}
+
   if [ ! -e "mtg" ]; then
     # read -p "请输入使用密码:" password
     if ! checkDownload "mtg"; then
