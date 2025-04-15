@@ -260,7 +260,7 @@ getDoMain() {
   if isServ00; then
     echo -n "serv00.com"
   else
-    echo -n "useruno.com"
+    echo -n "hostuno.com"
   fi
 }
 
