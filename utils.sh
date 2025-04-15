@@ -781,3 +781,19 @@ start_sing_box() {
   fi
 
 }
+
+checkCronNameStatus() {
+  if checkCronName $1; then
+    green "在线"
+  else
+    red "离线"
+  fi
+}
+checkCronName() {
+  local name=$1
+  if crontab -l | grep -q "$name"; then
+    return 0
+  else
+    return 1
+  fi
+}

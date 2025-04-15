@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>人力资源管理系统 - 登录</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background-color: #f5f7fa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-image: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+      }
+
+      .login-container {
+        width: 100%;
+        max-width: 400px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .login-header {
+        background: linear-gradient(to right, #3a7bd5, #00d2ff);
+        color: white;
+        padding: 25px;
+        text-align: center;
+      }
+
+      .login-header h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+
+      .login-header p {
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .login-form {
+        padding: 30px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #555;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        transition: border 0.3s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #3a7bd5;
+        box-shadow: 0 0 0 2px rgba(58, 123, 213, 0.2);
+      }
+
+      .error-message {
+        color: #e74c3c;
+        font-size: 13px;
+        margin-top: 5px;
+        display: none;
+      }
+
+      .login-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(to right, #3a7bd5, #00d2ff);
+        border: none;
+        border-radius: 5px;
+        color: white;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: opacity 0.3s;
+      }
+
+      .login-btn:hover {
+        opacity: 0.9;
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        font-size: 13px;
+      }
+
+      .footer-links a {
+        color: #3a7bd5;
+        text-decoration: none;
+      }
+
+      .footer-links a:hover {
+        text-decoration: underline;
+      }
+
+      .system-version {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 12px;
+        color: #999;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <h1>人力资源管理系统</h1>
+        <p>HR Management System v5.2</p>
+      </div>
+
+      <div class="login-form">
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="请输入用户名"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="请输入密码"
+              required
+            />
+            <div class="error-message" id="errorMessage">用户名或密码错误</div>
+          </div>
+
+          <button type="submit" class="login-btn">登录</button>
+
+          <div class="footer-links">
+            <a href="#">忘记密码?</a>
+            <a href="#">联系系统管理员</a>
+          </div>
+        </form>
+
+        <div class="system-version">© 2023 人力资源管理系统 - 版本 5.2.1</div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById('loginForm')
+        .addEventListener('submit', function (e) {
+          e.preventDefault()
+
+          // 显示错误信息
+          document.getElementById('errorMessage').style.display = 'block'
+
+          // 清空密码字段
+          document.getElementById('password').value = ''
+
+          // 给输入框添加错误样式
+          document.getElementById('username').style.borderColor = '#e74c3c'
+          document.getElementById('password').style.borderColor = '#e74c3c'
+
+          // 3秒后移除错误样式
+          setTimeout(function () {
+            document.getElementById('errorMessage').style.display = 'none'
+            document.getElementById('username').style.borderColor = '#ddd'
+            document.getElementById('password').style.borderColor = '#ddd'
+          }, 3000)
+        })
+    </script>
+  </body>
+</html>

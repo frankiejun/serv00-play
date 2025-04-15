@@ -2695,6 +2695,7 @@ makeWWW() {
   local proc=$1
   local port=$2
   local www_type=${3:-"proxy"}
+  local input=${4:-""}
 
   echo "正在处理服务IP,请等待..."
   is_self_domain=0
@@ -2704,8 +2705,10 @@ makeWWW() {
     webIp=$default_webip
   fi
   green "可用webip是: $webIp, 默认webip是: $default_webip"
-  read -p "是否使用自定义域名? [y/n] [n]:" input
-  input=${input:-n}
+  if [[ -z "$input" ]]; then
+    read -p "是否使用自定义域名? [y/n] [n]:" input
+    input=${input:-n}
+  fi
   if [[ "$input" == "y" ]]; then
     is_self_domain=1
     read -p "请输入域名(确保此前域名已指向webip):" domain
@@ -3188,6 +3191,323 @@ linkAliveServ() {
   #showMenu
 }
 
+DSServ() {
+  if ! checkInstalled "serv00-play"; then
+    return 1
+  fi
+  while true; do
+    yellow "---------------------"
+    echo "Domains-Support:"
+    echo "服务状态: $(checkCronNameStatus domains-support)"
+    echo "1. 新增域名"
+    echo "2. 删除域名"
+    echo "3. 配置"
+    echo "4. 开启服务"
+    echo "5. 停止服务"
+    echo "9. 返回主菜单"
+    echo "0. 退出脚本"
+    yellow "---------------------"
+
+    read -p "请选择:" input
+
+    case $input in
+    1)
+      addDomain
+      ;;
+    2)
+      delDomain
+      ;;
+    3)
+      configDs
+      ;;
+    4)
+      startDs
+      ;;
+    5)
+      stopDs
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
+    esac
+  done
+  showMenu
+
+}
+write_ds_config() {
+  local domain=$1
+  local url=$2
+  cat >config.json <<EOF
+  {
+    "API_TOKEN": "$domain",
+    "URL": "$url"
+  }
+EOF
+
+}
+doDsConfig() {
+  read -p "请输入api_token:" api_token
+  if [[ -z "$api_token" ]]; then
+    red "输入不能为空!"
+    return 1
+  fi
+  read -p "请输入URL的域名:" url
+  if [[ -z "$url" ]]; then
+    red "输入不能为空!"
+    return 1
+  fi
+  url=$(echo "$url" | sed -E 's|^https?://||')
+  write_ds_config $api_token $url
+}
+
+configDs() {
+  local workdir="${installpath}/serv00-play/domains-support"
+  if [[ ! -e $workdir ]]; then
+    red "未安装，请先安装!"
+    return 1
+  fi
+  cd $workdir
+  if [[ -e "config.json" ]]; then
+    cat config.json
+    read -p "配置文件已存在，是否覆盖？[y/n] [n]:" input
+    input=${input:-n}
+    if [[ "$input" == "n" ]]; then
+      return 1
+    fi
+  fi
+  if ! doDsConfig; then
+    return 1
+  fi
+  green "配置成功!"
+}
+
+startDs() {
+  local workdir="${installpath}/serv00-play/domains-support"
+  cd $workdir
+  if [[ ! -e "config.json" ]]; then
+    red "未配置，请先配置!"
+    return 1
+  fi
+  if checkCronName domains-support; then
+    red "服务已开启，请勿重复开启!"
+    return 1
+  fi
+  api_token=$(jq -r ".API_TOKEN" config.json)
+  url=$(jq -r ".URL" config.json)
+  if [[ -z "$api_token" || -z "$url" ]]; then
+    red "配置文件错误，请检查!"
+    return 1
+  fi
+  echo "0 9 * * * curl -H \"Authorization: Bearer $api_token\" https://$url/api/check > /dev/null 2>&1 #domains-support" >>mycron
+  crontab mycron >/dev/null 2>&1
+  rm mycron
+
+}
+
+stopDs() {
+  local workdir="${installpath}/serv00-play/domains-support"
+  cd $workdir
+  if [[ ! -e "config.json" ]]; then
+    red "未配置，请先配置!"
+    return 1
+  fi
+  if checkCronName domains-support; then
+    echo "正在停止服务..."
+    crontab -l | grep -v "domains-support" >mycron
+    crontab mycron >/dev/null 2>&1
+    rm mycron
+    green "服务已停止!"
+  else
+    red "服务未开启!"
+  fi
+}
+
+addDomain() {
+  local workdir="${installpath}/serv00-play/domains-support"
+  if [[ ! -e $workdir ]]; then
+    mkdir -p $workdir
+  fi
+  cd $workdir
+  domain=""
+  webIp=""
+  if ! makeWWW "" "" "php" "y"; then
+    echo "绑定域名失败!"
+    return 1
+  fi
+  if ! applyLE $domain $webIp; then
+    echo "申请证书失败!"
+    return 1
+  fi
+  cd $workdir
+  target="$installpath/domains/$domain/public_html"
+  if [[ ! -e "$target" ]]; then
+    red "目标目录不存在!"
+  fi
+
+  while true; do
+    echo "建站样式选择:"
+    echo "1. 樱花博客"
+    echo "2. 人力资源管理系统"
+    echo "3. 德一教育系统后台"
+    echo "4. 自定义网站"
+    echo "0. 返回上一级"
+
+    read -p "你的选择: " choice
+
+    case $choice in
+    1)
+      echo "你选择了樱花博客"
+      break
+      ;;
+    2)
+      echo "你选择了人力资源管理系统"
+      break
+      ;;
+    3)
+      echo "你选择了德一教育系统后台"
+      break
+      ;;
+    4)
+      break
+      ;;
+    0)
+      echo "返回上一级"
+      return
+      ;;
+    *)
+      echo "无效选择，请重新输入"
+      ;;
+    esac
+  done
+
+  if [[ "$choice" == "1" ]]; then
+    cp websites/sakura.html $target/index.html
+    if [ $? -ne 0 ]; then
+      red "安装失败!"
+      return 1
+    fi
+    read -p "输入你的名字([xx的博客]里的xx):" name
+    name=${name:-"樱花"}
+    sed -i.bak "s|xx|$name|g" $target/index.html
+  fi
+  if [[ "$choice" == "2" ]]; then
+    cp websites/hr.html $target/index.html
+    if [ $? -ne 0 ]; then
+      red "安装失败!"
+      return 1
+    fi
+  fi
+  if [[ "$choice" == "3" ]]; then
+    cp websites/deyiedu.html $target/index.html
+    if [ $? -ne 0 ]; then
+      red "安装失败!"
+      return 1
+    fi
+  fi
+  if [[ "$choice" == "4" ]]; then
+    read -p "输入网址html文件路径:" input
+    if [[ -z "$input" ]]; then
+      red "输入不能为空!"
+      return 1
+    fi
+    if [[ ! -e "$input" ]]; then
+      red "文件不存在!"
+      return 1
+    fi
+    cp "$input" $target/index.html
+    if [ $? -ne 0 ]; then
+      red "安装失败!"
+      return 1
+    fi
+  fi
+
+  add_domain $domain $webIp
+  if [[ -e "config.json" ]]; then
+    local api_token=$(jq -r ".API_TOKEN" config.json)
+    local url=$(jq -r ".URL" config.json)
+    if [[ -z "$api_token" || -z "$url" ]]; then
+      red "配置文件错误，请检查!"
+      return 1
+    fi
+    read -p "是否录入域名信息到数据库? [y/n] [n]:" input
+    input=${input:-n}
+    if [[ "$input" == "y" ]]; then
+      read -p "请输入注册商名称:" registrar
+      registrar=${registrar:-"注册商"}
+
+      read -p "请输入注册商链接(可选):" registrar_link
+      registrar_link=${registrar_link:-""}}
+
+      read -p "请输入注册日期(格式: YYYY-MM-DD):" registrar_date
+      registrar_date=${registrar_date:-$(date +%Y-%m-%d)}
+
+      read -p "请输入到期日期(格式: YYYY-MM-DD):" expiry_date
+      expiry_date=${expiry_date:-$(date -v+1y +%Y-%m-%d)}
+
+      local host=$(hostname)
+      local username=$(whoami)
+
+      read -p "请输入备注(可选):" memo
+      memo=${memo:-"$host-$username"}
+    fi
+    curl -X POST "https://$url/api/addrec?token=$api_token" \
+      -H "Content-Type: application/json" \
+      -d '{ 
+         "domain": "'"$domain"'",
+         "registrar": "'"$registrar"'",
+         "registrar_date": "'"$registrar_date"'",
+         "registrar_link": "'"$registrar_link"'",
+         "expiry_date": "'"$expiry_date"'",
+         "service_type": "伪装网站",
+         "status": "在线",
+         "tgsend": "1",
+         "memo": "'"$memo"'"
+     }' >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+      red "域名信息录入失败!"
+      return 1
+    fi
+  fi
+  green "域名的网站安装成功！"
+}
+
+delDomain() {
+  local workdir="${installpath}/serv00-play/domains-support"
+  if [[ ! -e $workdir ]]; then
+    red "未安装，请先安装!"
+    return 1
+  fi
+  cd $workdir
+  print_domains
+  read -p "请输入要删除的域名(-1删除所有，0返回上级菜单):" domain
+  if [[ -z "$domain" ]]; then
+    red "输入不能为空!"
+    return 1
+  fi
+  if [[ "$domain" == "-1" ]]; then
+    read -p "是否删除所有域名? [y/n] [n]:" input
+    input=${input:-n}
+    if [[ "$input" != "y" ]]; then
+      return 1
+    fi
+    delete_all_domains
+    rm -rf "${installpath}/serv00-play/domains-support"
+    green "删除成功!"
+    return 0
+  fi
+  if [[ "$domain" == "0" ]]; then
+    return 0
+  fi
+  delete_domain "$domain"
+  green "域名删除成功！"
+}
+
 keepAliveServ() {
   if ! checkInstalled "serv00-play"; then
     return 1
@@ -3442,7 +3762,7 @@ showMenu() {
 
   options=("安装/更新serv00-play项目" "sun-panel" "webssh" "阅后即焚" "linkalive" "设置保活的项目" "配置sing-box"
     "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "哪吒探针管理" "哪吒面板管理" "设置彩色开机字样" "显示本机IP"
-    "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "KeepAlive" "卸载")
+    "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "KeepAlive" "Domains-Support" "卸载")
 
   select opt in "${options[@]}"; do
     case $REPLY in
@@ -3522,6 +3842,9 @@ showMenu() {
       keepAliveServ
       ;;
     26)
+      DSServ
+      ;;
+    27)
       uninstall
       ;;
     0)

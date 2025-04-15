@@ -25,4 +25,11 @@ if [[ "$resp" =~ .*succesfully.*$ ]]; then
       ./tgsend.sh "$msg"
     fi
   fi
+elif [[ "$resp" =~ .*already.*$ ]]; then
+  echo "域名($domain)的SSL证书已存在,无需重复申请!"
+  crontab -l | grep -v "$domain" >tmpcron
+  crontab tmpcron
+  rm -rf tmpcron
+else
+  echo "申请SSL证书失败,请检查域名($domain)是否正确!"
 fi
