@@ -3442,7 +3442,7 @@ addDomain() {
       registrar=${registrar:-"注册商"}
 
       read -p "请输入注册商链接(可选):" registrar_link
-      registrar_link=${registrar_link:-""}}
+      registrar_link=${registrar_link:-""}
 
       read -p "请输入注册日期(格式: YYYY-MM-DD):" registrar_date
       registrar_date=${registrar_date:-$(date +%Y-%m-%d)}
