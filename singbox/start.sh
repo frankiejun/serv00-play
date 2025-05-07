@@ -98,7 +98,6 @@ EOF
   if [[ -e "${installpath}/serv00-play/linkalive/linkAlive.sh" ]]; then
     local domain=$(getUserDoMain)
     domain="${domain,,}"
-    local linkBaseurl="https://la.fkj.pp.ua"
     if [[ -e "${installpath}/domains/$domain/public_nodejs/config.json" ]]; then
       token=$(jq -r ".token" "${installpath}/domains/$domain/public_nodejs/config.json")
       if [[ -n "$token" ]]; then
