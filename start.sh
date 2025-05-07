@@ -3281,87 +3281,86 @@ EOF
 }
 
 batchAddDomains() {
-  batchAddDomains() {
-    local workdir="${installpath}/serv00-play/domains-support"
-    if [[ ! -e $workdir ]]; then
-      mkdir -p $workdir
-    fi
-    cd $workdir
+  local workdir="${installpath}/serv00-play/domains-support"
+  if [[ ! -e $workdir ]]; then
+    mkdir -p $workdir
+  fi
+  cd $workdir
 
-    read -p "请输入包含域名的文件路径(一行一个域名): " domains_file
-    if [[ ! -f "$domains_file" ]]; then
-      red "文件不存在，请检查路径!"
+  read -p "请输入包含域名的文件路径(一行一个域名): " domains_file
+  if [[ ! -f "$domains_file" ]]; then
+    red "文件不存在，请检查路径!"
+    return 1
+  fi
+
+  echo "建站样式选择:"
+  echo "1. 樱花博客"
+  echo "2. 人力资源管理系统"
+  echo "3. 德一教育系统后台"
+  echo "4. 自定义网站"
+  read -p "请选择建站样式(默认: 1): " style_choice
+  style_choice=${style_choice:-1}
+
+  local custom_file=""
+  if [[ "$style_choice" == "4" ]]; then
+    read -p "请输入自定义网站HTML文件路径: " custom_file
+    if [[ ! -f "$custom_file" ]]; then
+      red "自定义HTML文件不存在，请检查路径!"
       return 1
     fi
+  fi
 
-    echo "建站样式选择:"
-    echo "1. 樱花博客"
-    echo "2. 人力资源管理系统"
-    echo "3. 德一教育系统后台"
-    echo "4. 自定义网站"
-    read -p "请选择建站样式(默认: 1): " style_choice
-    style_choice=${style_choice:-1}
-
-    local custom_file=""
-    if [[ "$style_choice" == "4" ]]; then
-      read -p "请输入自定义网站HTML文件路径: " custom_file
-      if [[ ! -f "$custom_file" ]]; then
-        red "自定义HTML文件不存在，请检查路径!"
-        return 1
-      fi
+  while IFS= read -r domain; do
+    domain=$(echo "$domain" | xargs) # 去除前后空格
+    if [[ -z "$domain" ]]; then
+      continue
     fi
 
-    while IFS= read -r domain; do
-      domain=$(echo "$domain" | xargs) # 去除前后空格
-      if [[ -z "$domain" ]]; then
-        continue
-      fi
+    domain="${domain,,}" # 转小写
+    domainPath="$installpath/domains/$domain/public_html"
+    webIp=""
+    echo "正在处理域名: $domain"
+    if ! makeWWW "" "" "php" "y" "$domain"; then
+      red "绑定域名 $domain 失败!"
+      continue
+    fi
 
-      domain="${domain,,}" # 转小写
-      domainPath="$installpath/domains/$domain/public_html"
-      webIp=""
-      echo "正在处理域名: $domain"
-      if ! makeWWW "" "" "php" "y" "$domain"; then
-        red "绑定域名 $domain 失败!"
-        continue
-      fi
+    if ! applyLE "$domain" "$webIp" "y"; then
+      red "申请证书失败: $domain"
+    fi
 
-      if ! applyLE "$domain" "$webIp" "y"; then
-        red "申请证书失败: $domain"
-      fi
+    if [[ ! -d "$domainPath" ]]; then
+      red "目标目录不存在: $domainPath"
+      continue
+    fi
 
-      if [[ ! -d "$domainPath" ]]; then
-        red "目标目录不存在: $domainPath"
-        continue
-      fi
+    case "$style_choice" in
+    1)
+      cp websites/sakura.html "$domainPath/index.html"
+      sed -i.bak "s|xx|樱花|g" "$domainPath/index.html"
+      ;;
+    2)
+      cp websites/hr.html "$domainPath/index.html"
+      ;;
+    3)
+      cp websites/deyiedu.html "$domainPath/index.html"
+      ;;
+    4)
+      cp "$custom_file" "$domainPath/index.html"
+      ;;
+    *)
+      red "无效的建站样式选择!"
+      continue
+      ;;
+    esac
 
-      case "$style_choice" in
-      1)
-        cp websites/sakura.html "$domainPath/index.html"
-        sed -i.bak "s|xx|樱花|g" "$domainPath/index.html"
-        ;;
-      2)
-        cp websites/hr.html "$domainPath/index.html"
-        ;;
-      3)
-        cp websites/deyiedu.html "$domainPath/index.html"
-        ;;
-      4)
-        cp "$custom_file" "$domainPath/index.html"
-        ;;
-      *)
-        red "无效的建站样式选择!"
-        continue
-        ;;
-      esac
+    add_domain "$domain" "$webIp"
+    green "域名 $domain 的网站安装成功!"
+  done <"$domains_file"
 
-      add_domain "$domain" "$webIp"
-      green "域名 $domain 的网站安装成功!"
-    done <"$domains_file"
-
-    green "批量新增域名网站完成!"
-  }
+  green "批量新增域名网站完成!"
 }
+
 doDsConfig() {
   read -p "请输入api_token:" api_token
   if [[ -z "$api_token" ]]; then
