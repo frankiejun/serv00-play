@@ -2740,16 +2740,16 @@ makeWWW() {
   fi
 
   # 自定义域名的特殊处理
-  if [[ $is_self_domain -eq 1 ]]; then
-    host="$(hostname | cut -d '.' -f 1)"
-    sno=${host/s/web}
-    default_webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
-    rid=$(devil dns list "$domain" | grep "$default_webIp" | awk '{print $1}')
-    resp=$(echo "y" | devil dns del "$domain" $rid)
-    #echo "resp:$resp"
-  else
-    webIp=$(get_default_webip)
-  fi
+  # if [[ $is_self_domain -eq 1 ]]; then
+  #   host="$(hostname | cut -d '.' -f 1)"
+  #   sno=${host/s/web}
+  #   default_webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
+  #   rid=$(devil dns list "$domain" | grep "$default_webIp" | awk '{print $1}')
+  #   resp=$(echo "y" | devil dns del "$domain" $rid)
+  #   #echo "resp:$resp"
+  # else
+  #   webIp=$(get_default_webip)
+  # fi
   # 保存信息
   if [[ "$www_type" == "proxy" ]]; then
     cat >config.json <<EOF
