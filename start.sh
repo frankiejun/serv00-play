@@ -1102,6 +1102,9 @@ uninstall() {
 InitServer() {
   read -p "$(red "将初始化帐号系统，要继续？[y/n] [n]:")" input
   input=${input:-n}
+  if [[ "$input" != "y" ]]; then
+    return
+  fi
   read -p "是否保留用户配置？[y/n] [y]:" saveProfile
   saveProfile=${saveProfile:-y}
 
@@ -1111,7 +1114,7 @@ InitServer() {
     killUserProc
     green "清理磁盘中..."
     if [[ "$saveProfile" == "y" ]] || [[ "$saveProfile" == "Y" ]]; then
-      rm -rf ~/* 2>/dev/null
+      find ~ -mindepth 1 -maxdepth 1 ! -name "domains" ! -name "backups" ! -name "repo" ! -name "mail" ! -name ".*" -exec rm -rf {} + >/dev/null 2>&1
     else
       rm -rf ~/* ~/.* 2>/dev/null
       clean_all_domains
