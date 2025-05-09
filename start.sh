@@ -480,7 +480,7 @@ generate_config() {
     $([[ "$type" == "2" || "$type" =~ ^(3|4)\.[0-9]+$ ]] && cat temphy2.json)
    ],
     "outbounds": [
-    $([[ "$outbound" == "1" ]] && make_outbound_wireguard) 
+    $([[ "$outbound" == "1" ]] && make_outbound_wireguard)
     $([[ "$outbound" == "2" ]] && cat temp_outbound_socks5.json && rm -rf temp_outbound_socks5.json)
     {
       "type": "direct",
@@ -508,7 +508,7 @@ generate_config() {
         "protocol": "dns",
         "outbound": "dns-out"
       },
-      { 
+      {
         "ip_is_private": true,
         "outbound": "direct"
       },
@@ -2218,52 +2218,53 @@ get_default_webip() {
 }
 
 applyLE() {
-  local domain=$1
-  local webIp=$2
+  local l_domain=$1
+  local l_webip=$2
   local nointeraction=$3
   workpath="${installpath}/serv00-play/ssl"
   cd "$workpath"
 
-  if [[ -z "$domain" ]]; then
+  #echo "domain=$l_domain, webip=$l_webip, nointeraction=$nointeraction"
+  if [[ -z "$l_domain" ]]; then
     read -p "请输入待申请证书的域名:" domain
-    domain=${domain:-""}
-    if [[ -z "$domain" ]]; then
+    l_domain=${l_domain:-""}
+    if [[ -z "$l_domain" ]]; then
       red "域名不能为空"
       return 1
     fi
   fi
   inCron="0"
-  if crontab -l | grep -F "$domain" >/dev/null 2>&1; then
+  if crontab -l | grep -F "$l_domain" >/dev/null 2>&1; then
     inCron="1"
     if [[ -z "$nointeraction" ]]; then
       echo "该域名已配置定时申请证书，是否删除定时配置记录，改为手动申请？[y/n] [n]:" input
       input=${input:-n}
 
       if [[ "$input" == "y" ]]; then
-        crontab -l | grep -v "$domain" | crontab -
+        crontab -l | grep -v "$l_domain" | crontab -
       fi
     else
-      crontab -l | grep -v "$domain" | crontab -
+      crontab -l | grep -v "$l_domain" | crontab -
     fi
   fi
-  if [[ -z "$webIp" ]]; then
+  if [[ -z "$l_webip" ]]; then
     read -p "是否指定webip? [y/n] [n]:" input
     input=${input:-n}
 
     if [[ "$input" == "y" ]]; then
-      read -p "请输入webip:" webIp
-      if [[ -z "$webIp" ]]; then
-        red "webip 不能为空!!!"
+      read -p "请输入webIp:" l_webip
+      if [[ -z "$l_webip" ]]; then
+        red "webIp 不能为空!!!"
         return 1
       fi
     else
       host="$(hostname | cut -d '.' -f 1)"
       sno=${host/s/web}
-      webIp=$(devil vhost list public | grep "$sno" | awk '{print $1}')
+      l_webip=$(devil vhost list public | grep "$sno" | awk '{print $1}')
     fi
   fi
-  #echo "申请证书时，webip是: $webIp"
-  resp=$(devil ssl www add $webIp le le $domain)
+  #echo "申请证书时，webip是: $l_webip"
+  resp=$(devil ssl www add $l_webip le le $l_domain)
   if [[ ! "$resp" =~ .*succesfully.*$ ]]; then
     red "申请ssl证书失败！$resp"
     if [[ "$inCron" == "0" ]]; then
@@ -2715,7 +2716,7 @@ makeWWW() {
   local port=$2
   local www_type=${3:-"proxy"}
   local input=${4:-""}
-  local domain=${5:-""}
+  domain=${5:-"$domain"}
 
   echo "正在处理服务IP,请等待..."
   is_self_domain=0
@@ -3450,7 +3451,8 @@ addDomain() {
     echo "绑定域名失败!"
     return 1
   fi
-  if ! applyLE $domain $webIp; then
+  #echo "after makeWWW, domain=$domain,webIp=$webIp"
+  if ! applyLE "$domain" "$webIp" "n"; then
     echo "申请证书失败!"
     return 1
   fi
@@ -3568,7 +3570,7 @@ addDomain() {
     fi
     curl -X POST "https://$url/api/addrec?token=$api_token" \
       -H "Content-Type: application/json" \
-      -d '{ 
+      -d '{
          "domain": "'"$domain"'",
          "registrar": "'"$registrar"'",
          "registrar_date": "'"$registrar_date"'",
@@ -3828,7 +3830,7 @@ setKeepAliveInterval() {
 
 linkAliveStatment() {
   cat <<EOF
-     全新的保活方式，无需借助cron，也不需要第三方平台(github/青龙/vps等登录方式)进行保活。 
+     全新的保活方式，无需借助cron，也不需要第三方平台(github/青龙/vps等登录方式)进行保活。
   在使用代理客户端的同时自动保活，全程无感！
 EOF
 }
