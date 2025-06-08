@@ -2288,6 +2288,7 @@ applyLE() {
   else
     green "证书申请成功!"
   fi
+  cd -
 }
 
 selfSSL() {
@@ -2350,7 +2351,7 @@ EOF
   fi
 
   echo "导入成功！"
-
+  cd -
 }
 
 domainSSLServ() {
