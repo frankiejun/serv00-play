@@ -14,7 +14,11 @@ if [[ "$resp" =~ .*succesfully.*$ ]]; then
   crontab -l | grep -v "$domain" >tmpcron
   crontab tmpcron
   rm -rf tmpcron
-  config="../config.json"
+  if grep "telegram_token" ../config.json; then
+    config="../config.json"
+  else
+    config="../msg.json"
+  fi
   if [ -e "$config" ]; then
     TELEGRAM_TOKEN=$(jq -r ".telegram_token" "$config")
     TELEGRAM_USERID=$(jq -r ".telegram_userid" "$config")
