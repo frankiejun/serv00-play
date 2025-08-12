@@ -92,7 +92,6 @@ _捐赠将是对我最大的支持，它将激励我持续的创新和创作。�
 
 | 赞助人                                                                                                                 | 赞助方式                 | 备注 |
 | ---------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---- |
-| [HostVds](https://hostvds.com/?affiliate_uuid=2b9179a7-6900-4636-bed2-182b4db0168e)                                    | 提供服务器               | -    |
 | [YXVM](https://support.nodeget.com/page/promotion?id=105) 和 [NodeSupport](https://github.com/NodeSeekDev/NodeSupport) | 赞助本项目提供永久服务器 | --   |
 
 ## 项目鸣谢
@@ -105,5 +104,3 @@ _捐赠将是对我最大的支持，它将激励我持续的创新和创作。�
 
 本程序仅供学习了解, 非盈利目的，请于下载后 24 小时内删除, 不得用作任何商业用途, 代码、数据及图片均有所属版权, 如转载须注明来源。
 使用本程序必循遵守部署免责声明。使用本程序必循遵守部署服务器所在地、所在国家和用户所在国家的法律法规, 程序作者不对使用者任何不当行为负责。
-
-[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com 'Powered by DartNode - Free VPS for Open Source')
