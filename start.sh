@@ -2824,6 +2824,125 @@ startSunPanel() {
 
 }
 
+manageWxPushSkin() {
+  if ! checkInstalled "serv00-play"; then
+    return 1
+  fi
+  while true; do
+    yellow "---------------------"
+    echo "1. 安装"
+    echo "2. 卸载"
+    echo "9. 返回主菜单"
+    echo "0. 退出脚本"
+    yellow "---------------------"
+    read -p "请选择:" input
+
+    case $input in
+    1)
+      installWxPushSkin
+      ;;
+    2)
+      uninstallWxPushSkin
+      ;;
+    9)
+      break
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项，请重试"
+      ;;
+    esac
+  done
+  showMenu
+}
+
+installWxPushSkin() {
+  local workdir="${installpath}/serv00-play/wxpushskin"
+
+  if [[ ! -e "$workdir" ]]; then
+    mkdir -p $workdir
+  fi
+  cd $workdir
+
+  if ! check_domains_empty; then
+    red "已有安装如下服务，是否继续安装?"
+    print_domains
+    read -p "继续安装? [y/n] [n]:" input
+    input=${input:-n}
+    if [[ "$input" == "n" ]]; then
+      return 0
+    fi
+  fi
+
+  domain=""
+  webIp=""
+  if ! makeWWW "" "null" php; then
+    echo "绑定域名失败!"
+    return 1
+  fi
+
+	read -p "是否申请证书? [y/n] [n]:" input
+  input=${input:-'n'}
+  if [[ "$input" == "y" ]]; then
+    echo "正在申请证书，请等待..."
+    if ! applyLE $domain $webIp; then
+      echo "申请证书失败!"
+      return 1
+    fi
+  fi
+
+	domainPath="$installpath/domains/$domain/public_html"
+  cd $domainPath
+  echo "正在下载并安装 wxpushskin.html ..."
+  if ! checkDownload "wxpushskin.html"; then
+    return
+  fi
+  if [ -e "wxpushskin.html" ]; then
+	   mv wxpushskin.html index.html
+	   echo "已安装到 $domainPath/index.html"
+	else
+	   echo "下载失败!"
+	   return 1
+	fi
+
+  cd $workdir
+  add_domain $domain $webIp
+
+  echo "安装完成!"
+}
+
+uninstallWxPushSkin() {
+  local workdir="${installpath}/serv00-play/wxpushskin"
+
+  if [[ ! -e "$workdir" ]]; then
+    echo "已没有可以卸载的服务!"
+    return 1
+  fi
+
+  cd $workdir
+
+  if ! check_domains_empty; then
+    echo "目前已安装服务的域名有:"
+    print_domains
+    read -p "是否删除所有域名服务? [y/n] [n]:" input
+    input=${input:-n}
+    if [[ "$input" == "y" ]]; then
+      delete_all_domains
+      rm -rf "${installpath}/serv00-play/wxpushskin"
+    else
+      read -p "请输入要删除的服务的域名:" domain
+      delete_domain "$domain"
+    fi
+  else
+    echo "没有可卸载服务!"
+    echo "目前已安装服务的域名有:"
+    print_domains
+  fi
+
+}
+
 burnAfterReadingServ() {
   if ! checkInstalled "serv00-play"; then
     return 1
@@ -2878,7 +2997,7 @@ installBurnReading() {
 
   domain=""
   webIp=""
-  if ! makeWWW burnreading "null" php; then
+  if ! makeWWW "" "null" php; then
     echo "绑定域名失败!"
     return 1
   fi
@@ -2937,15 +3056,6 @@ uninstallBurnReading() {
     echo "没有可卸载服务!"
     echo "目前已安装服务的域名有:"
     print_domains
-  fi
-  read -p "是否删除所有域名服务? [y/n] [n]:" input
-  input=${input:-n}
-  if [[ "$input" == "y" ]]; then
-    delete_all_domains
-    rm -rf "${installpath}/serv00-play/burnreading"
-  else
-    read -p "请输入要删除的服务的域名:" domain
-    delete_domain "$domain"
   fi
 
 }
@@ -3878,7 +3988,7 @@ showMenu() {
 
   options=("安装/更新serv00-play项目" "sun-panel" "webssh" "阅后即焚" "linkalive" "设置保活的项目" "配置sing-box"
     "运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "哪吒探针管理" "哪吒面板管理" "设置彩色开机字样" "显示本机IP"
-    "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "KeepAlive" "Domains-Support" "卸载")
+    "mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "KeepAlive" "Domains-Support" "微信消息推送界面管理" "卸载")
 
   select opt in "${options[@]}"; do
     case $REPLY in
@@ -3960,7 +4070,10 @@ showMenu() {
     26)
       DSServ
       ;;
-    27)
+		27)
+			manageWxPushSkin
+			;;
+    28)
       uninstall
       ;;
     0)
