@@ -26,6 +26,8 @@ jobs:
           TELEGRAM_TOKEN: ${{secrets.TELEGRAM_TOKEN}}
           TELEGRAM_USERID: ${{secrets.TELEGRAM_USERID}}
           WXSENDKEY: ${{secrets.WXSENDKEY}}
+          WXPUSH_URL: ${{secrets.WXPUSH_URL}}
+          WX_TOKEN: ${{secrets.WX_TOKEN}}
           SENDTYPE: ${{secrets.SENDTYPE}}
           BUTTON_URL: ${{secrets.BUTTON_URL}}
           AUTOUPDATE: ${{vars.AUTOUPDATE}}

@@ -20,7 +20,9 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 | HOSTS_JSON      | 见示例 | 可存放 n 个服务器信息 (必选)                                                     |
 | TELEGRAM_TOKEN  | 略     | telegram 机器人的 token (发送 TG 消息必选)                                       |
 | TELEGRAM_USERID | 略     | 待通知的 teltegram 用户 ID (发送 TG 消息必选)                                    |
-| WXSENDKEY       | 略     | server 酱的 sendkey，用于接收微信消息 (发送微信消息必选)                         |
+| ~~WXSENDKEY~~       | ~~略~~    | ~~server 酱的 sendkey，用于接收微信消息 (发送微信消息必选)~~               |
+| WXPUSH_URL      | 略     | [wxpush](https://github.com/frankiejun/wxpush)项目的请求url                      |
+| WX_TOKEN        | 略     | [wxpush](https://github.com/frankiejun/wxpush)项目的API_TOKEN |
 | SENDTYPE        | 1      | 选择推送方式，1.Telegram, 2.微信, 3.都有 (发送消息必选)                          |
 | BUTTON_URL      | 略     | 设置 TG 推送消息中的按钮链接 (发送 TG 消息可选),支持#HOST，#USER，#PASS 等变量。 |
 | AUTOUPDATE      | Y/N    | 设置是否自动更新服务器上的代码,设置在 variable 变量中，值为 Y/N(默认: Y)         |
@@ -48,7 +50,8 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 关于如何配置 Telegram 以实现消息推送，可以看 [这个视频](https://www.youtube.com/watch?v=l8fPnMfq86c&t=3s)
 
-关于微信的配置，目前使用第三方平台提供的功能，可以到 [这里](https://sct.ftqq.com/r/13223) 注册并登录 server 酱，取得 sendKey
+关于微信的配置，使用我的项目[wxpush](https://github.com/frankiejun/wxpush)， 不会配可以看[这个视频](https://youtu.be/sE1Kcol_XRs?si=G-UbUGlMhyysv-US)  
+
 
 ## HOSTS_JSON 的配置实例
 
