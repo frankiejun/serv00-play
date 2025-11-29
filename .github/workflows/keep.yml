@@ -24,7 +24,6 @@ jobs:
           HOSTS_JSON: ${{ secrets.HOSTS_JSON }}
           TELEGRAM_TOKEN: ${{secrets.TELEGRAM_TOKEN}}
           TELEGRAM_USERID: ${{secrets.TELEGRAM_USERID}}
-          WXSENDKEY: ${{secrets.WXSENDKEY}}
           SENDTYPE: ${{secrets.SENDTYPE}}
           BUTTON_URL: ${{secrets.BUTTON_URL}}
           AUTOUPDATE: ${{vars.AUTOUPDATE}}
