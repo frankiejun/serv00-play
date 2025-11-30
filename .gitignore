@@ -9,3 +9,4 @@ vmess/list
 vmess/cloudflared
 vless/node_modules
 tools/
+.vscode/
