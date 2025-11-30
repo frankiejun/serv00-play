@@ -2831,7 +2831,8 @@ manageWxPushSkin() {
 	while true; do
 		yellow "---------------------"
 		echo "1. 安装"
-		echo "2. 卸载"
+		echo "2. 更新"
+		echo "3. 卸载"
 		echo "9. 返回主菜单"
 		echo "0. 退出脚本"
 		yellow "---------------------"
@@ -2842,6 +2843,9 @@ manageWxPushSkin() {
 			installWxPushSkin
 			;;
 		2)
+			updateWxPushSkin
+			;;
+		3)
 			uninstallWxPushSkin
 			;;
 		9)
@@ -2895,22 +2899,57 @@ installWxPushSkin() {
 
 	domainPath="$installpath/domains/$domain/public_html"
 	cd $domainPath
-	echo "正在下载并安装 wxpushskin.html ..."
-	if ! checkDownload "wxpushskin.html"; then
+	echo "正在下载并安装 wxpushskin ..."
+	if ! download_allcode_from_github_release "frankiejun" "wxpushSkin"; then
 		return
 	fi
-	if [ -e "wxpushskin.html" ]; then
-		mv wxpushskin.html index.html
+	if [ ! -e "tmp" ]; then
+		echo "下载失败!"
+		return 1
+	fi
+
+	if [ -e "./tmp/index.html" ]; then
+		mv ./tmp/index.html index.html
 		echo "已安装到 $domainPath/index.html"
 	else
 		echo "下载失败!"
 		return 1
 	fi
+	rm -rf ./tmp
 
 	cd $workdir
 	add_domain $domain $webIp
 
 	echo "安装完成!"
+}
+
+updateWxPushSkin() {
+	local workdir="${installpath}/serv00-play/wxpushskin"
+
+	if [[ ! -e "$workdir" ]]; then
+		mkdir -p $workdir
+	fi
+	cd $workdir
+	local domain=$(get_one_domain)
+	domainPath="$installpath/domains/$domain/public_html"
+	cd $domainPath
+	echo "正在下载并安装 wxpushskin ..."
+	if ! download_allcode_from_github_release "frankiejun" "wxpushSkin"; then
+		return
+	fi
+	if [ ! -e "tmp" ]; then
+		echo "下载失败!"
+		return 1
+	fi
+
+	if [ -e "./tmp/index.html" ]; then
+		mv ./tmp/index.html index.html
+		echo "已安装到 $domainPath/index.html"
+	else
+		echo "下载失败!"
+		return 1
+	fi
+	rm -rf ./tmp
 }
 
 uninstallWxPushSkin() {
@@ -3043,7 +3082,7 @@ uninstallBurnReading() {
 	if ! check_domains_empty; then
 		echo "目前已安装服务的域名有:"
 		print_domains
-		read -p "是否删除所有域名服务? [y/n] [n]:" input
+		read -p "是否删除所�����名服务? [y/n] [n]:" input
 		input=${input:-n}
 		if [[ "$input" == "y" ]]; then
 			delete_all_domains
@@ -3067,7 +3106,7 @@ websshServ() {
 	while true; do
 		yellow "---------------------"
 		echo "webssh:"
-		echo "服务状态: $(checkProcStatus wssh)"
+		echo "服务状��: $(checkProcStatus wssh)"
 		echo "1. 安装/修改配置"
 		echo "2. 启动"
 		echo "3. 停止"
