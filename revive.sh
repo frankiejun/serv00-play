@@ -28,11 +28,19 @@ for info in "${hosts_info[@]}"; do
 	pass=$(echo $info | jq -r ".password")
 
 	if [[ "$AUTOUPDATE" == "Y" ]]; then
+		echo "测试基础连接..."
+		timeout 5 nc -zv $PROXY_HOST $PROXY_PORT
+		if [ $? -eq 0 ]; then
+			echo "✓ 可以连接到代理服务器"
+		else
+			echo "✗ 无法连接到代理服务器"
+			exit 1
+		fi
 		script="/home/$user/serv00-play/keepalive.sh autoupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
 	else
 		script="/home/$user/serv00-play/keepalive.sh noupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
 	fi
-  #使用socks5代理进行登录
+	#使用socks5代理进行登录
 	if [[ "$PROXY_HOST" != "null" ]]; then
 		output=$(sshpass -p "$pass" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ProxyCommand="connect -S ${PROXY_HOST}:${PROXY_PORT} %h %p" -p "$port" "$user@$host" "bash -s" <<<"$script")
 	else
