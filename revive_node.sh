@@ -9,6 +9,8 @@ SENDTYPE=${SENDTYPE:-null}
 TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-null}
 TELEGRAM_USERID=${TELEGRAM_USERID:-null}
 WXSENDKEY=${WXSENDKEY:-null}
+WXPUSH_URL=${WXPUSH_URL:-null}
+WX_TOKEN=${WX_TOKEN:-null}
 BUTTON_URL=${BUTTON_URL:-null}
 LOGININFO=${LOGININFO:-N}
 TOKEN=${TOKEN:-""}
@@ -16,6 +18,8 @@ TOKEN=${TOKEN:-""}
 TOKEN=$(toBase64 $TOKEN)
 base64_TELEGRAM_TOKEN=$(toBase64 $TELEGRAM_TOKEN)
 Base64BUTTON_URL=$(toBase64 $BUTTON_URL)
+base64_WXPUSH_URL=$(toBase64 $WXPUSH_URL)
+base64_WX_TOKEN=$(toBase64 $WX_TOKEN)
 
 export TELEGRAM_TOKEN TELEGRAM_USERID BUTTON_URL
 
@@ -29,7 +33,7 @@ for info in "${hosts_info[@]}"; do
 
   echo "host: $host"
   bas64_pass=$(toBase64 $pass)
-  output=$(curl -s -o /dev/null -w "%{http_code}" "https://$user.serv00.net/keep?token=$TOKEN&autoupdate=$AUTOUPDATE&sendtype=$SENDTYPE&telegramtoken=$base64_TELEGRAM_TOKEN&telegramuserid=$TELEGRAM_USERID&wxsendkey=$WXSENDKEY&buttonurl=$Base64BUTTON_URL&password=$bas64_pass")
+  output=$(curl -s -o /dev/null -w "%{http_code}" "https://$user.serv00.net/keep?token=$TOKEN&autoupdate=$AUTOUPDATE&sendtype=$SENDTYPE&telegramtoken=$base64_TELEGRAM_TOKEN&telegramuserid=$TELEGRAM_USERID&wxsendkey=$WXSENDKEY&buttonurl=$Base64BUTTON_URL&password=$bas64_pass&wxpushurl=$base64_WXPUSH_URL&wxtoken=$base64_WX_TOKEN")
 
   if [ "$output" -eq 200 ]; then
     echo "连接成功，账号正常"

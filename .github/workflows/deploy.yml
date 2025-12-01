@@ -19,6 +19,7 @@ jobs:
         run: |
           sudo apt-get install sshpass
           sudo apt-get install jq
+          sudo apt-get install connect-proxy
 
       - name: 登录各个serv00并执行保活脚本
         env:
@@ -32,6 +33,11 @@ jobs:
           BUTTON_URL: ${{secrets.BUTTON_URL}}
           AUTOUPDATE: ${{vars.AUTOUPDATE}}
           LOGININFO: ${{vars.LOGININFO}}
+          PROXY_HOST: ${{vars.PROXY_HOST}}
+          PROXY_PORT: ${{vars.PROXY_PORT}}
+          PROXY_USER: ${{vars.PROXY_USER}}
+          PROXY_PASS: ${{vars.PROXY_PASS}}
+
         run: |
           chmod +x ./revive.sh
           ./revive.sh

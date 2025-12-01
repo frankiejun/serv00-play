@@ -157,6 +157,8 @@ app.get('/keep', validateToken, async (req, res) => {
   logError(`wxsendkey: ${req.query.wxsendkey}`)
   logError(`buttonurl: ${req.query.buttonurl}`)
   logError(`pass: ${req.query.pass}`)
+  logError(`wxpushurl: ${req.query.wxpushurl}`)
+  logError(`wxtoken: ${req.query.wxtoken}`)
 
   const params = {
     autoupdate: getAutoupdateStatus(req.query.autoupdate),
@@ -168,6 +170,8 @@ app.get('/keep', validateToken, async (req, res) => {
     wxsendkey: cleanAndDecode(req.query.wxsendkey),
     buttonurl: cleanAndDecode(req.query.buttonurl),
     pass: cleanAndDecode(req.query.password),
+    wxpushurl: cleanAndDecode(req.query.wxpushurl),
+    wxtoken: cleanAndDecode(req.query.wxtoken),
   }
 
   logError(
@@ -179,7 +183,7 @@ app.get('/keep', validateToken, async (req, res) => {
   )
   // 本地执行
   logError('本地执行keepalive')
-  const cmd = `cd ${serv00PlayDir} && nohup bash ${keepaliveScript} ${params.autoupdate} ${params.sendtype} ${params.telegramtoken} ${params.telegramuserid} ${params.wxsendkey} ${params.buttonurl} ${params.pass} > /dev/null 2>&1 &`
+  const cmd = `cd ${serv00PlayDir} && nohup bash ${keepaliveScript} ${params.autoupdate} ${params.sendtype} ${params.telegramtoken} ${params.telegramuserid} ${params.wxsendkey} ${params.buttonurl} ${params.pass} ${params.wxpushurl} ${params.wxtoken} > /dev/null 2>&1 &`
   logError('cmd:' + cmd)
   exec(cmd, (error) => {
     if (error) {
