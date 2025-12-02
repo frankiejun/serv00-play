@@ -100,5 +100,4 @@ fi
 if [[ "$LOGININFO" == "Y" ]]; then
 	chmod +x ./tgsend.sh
 	./tgsend.sh "$summary"
-	咋学史崇德v发23
 fi
