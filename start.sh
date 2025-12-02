@@ -3996,6 +3996,222 @@ setKeepAliveInterval() {
 	fi
 	green "更新成功"
 }
+installRedis() {
+	local workdir="${installpath}/serv00-play/redis"
+	if [[ ! -d "$workdir" ]]; then
+		mkdir -p "$workdir"
+	fi
+	# 使用 || 来处理 cd 失败的情况，增加脚本健壮性
+	cd "$workdir" || {
+		red "错误：无法进入工作目录 $workdir"
+		return 1
+	}
+
+	# 步骤 1: 检查 redis.conf，如果不存在则下载
+	if [ ! -f "redis.conf" ]; then
+		yellow "redis.conf 文件不存在，正在从 Redis 官方 GitHub 仓库下载..."
+		# 使用 curl 下载文件，-fsSL 参数可以在失败时静默处理并支持重定向
+		if ! curl -fsSL -o redis.conf https://raw.githubusercontent.com/redis/redis/7.4/redis.conf; then
+			red "下载 redis.conf 失败！请检查网络连接或稍后重试。"
+			return 1
+		fi
+		green "redis.conf 下载成功！"
+	else
+		yellow "检测到已存在的 redis.conf，将在此基础上进行修改。"
+	fi
+
+	# 步骤 2: 交互式获取配置信息
+	green "----------------------------------------"
+	loadPort
+	randomPort tcp redis
+	if [[ -n "$port" ]]; then
+		redis_port="$port"
+	else
+		red "未输入端口号"
+		return 1
+	fi
+
+	read -r -p "密码 (Password) [留空则禁用密码]: " redis_password
+
+	read -r -p "日志文件路径 (Log file path) [默认: \"\"]: " redis_logfile
+
+	read -r -p "是否允许所有网络接口访问 (全网监听)？(y/n) [默认: n]: " listen_all
+	listen_all=${listen_all:-n}
+	green "----------------------------------------"
+
+	# 步骤 3: 根据输入修改配置文件
+	yellow "正在根据您的输入修改 redis.conf..."
+
+	# 修改端口
+	sed -i "s/^port .*/port ${redis_port}/" redis.conf
+
+	# 修改密码
+	if [[ -n "$redis_password" ]]; then
+		# 如果 requirepass 存在且未被注释，则直接替换
+		if grep -q "^requirepass" redis.conf; then
+			sed -i "s/^requirepass .*/requirepass ${redis_password}/" redis.conf
+		# 如果 requirepass 存在但被注释，则取消注释并替换
+		elif grep -q "^# requirepass" redis.conf; then
+			sed -i "s/^# requirepass .*/requirepass ${redis_password}/" redis.conf
+		# 如果不存在，则追加
+		else
+			echo "requirepass ${redis_password}" >>redis.conf
+		fi
+		green "✓ 密码已设置"
+	else
+		# 如果用户输入为空，则注释掉密码设置
+		sed -i 's/^requirepass .*/# requirepass foobared/' redis.conf
+		yellow "✓ 密码已禁用"
+	fi
+
+	# 修改日志文件路径
+	sed -i "s|^logfile.*|logfile \"${redis_logfile}\"|" redis.conf
+	green "✓ 日志文件路径已设置"
+
+	# 修改网络监听
+	if [[ "$listen_all" == "y" || "$listen_all" == "Y" ]]; then
+		# 注释掉所有 bind 开头的行，以允许所有 IP 访问
+		sed -i 's/^bind /# bind /' redis.conf
+		green "✓ 已配置为全网监听"
+	else
+		# 确保只监听本地回环地址
+		sed -i 's/^# bind 127.0.0.1 -::1/bind 127.0.0.1 -::1/' redis.conf
+		green "✓ 已配置为仅本地监听"
+	fi
+
+	green "----------------------------------------"
+	green "redis.conf 配置修改完成！"
+}
+
+startRedis() {
+	local workdir="${installpath}/serv00-play/redis"
+	if [[ ! -d "$workdir" ]]; then
+		red "未安装redis，请先安装!"
+		return 1
+	fi
+	cd "$workdir"
+	if checkProcAlive "redis-server"; then
+		red "redis已启动，请勿重复启动!"
+		return 1
+	fi
+	echo "正在启动redis..."
+	screen -dmS myredis-session redis-server ./redis.conf
+	sleep 2
+	if checkProcAlive "redis-server"; then
+		green "启动成功！"
+	else
+		echo "启动失败!"
+	fi
+}
+stopRedis() {
+	local workdir="${installpath}/serv00-play/redis"
+	if [[ ! -d "$workdir" ]]; then
+		red "未安装redis，请先安装!"
+		return 1
+	fi
+	cd "$workdir"
+	if ! checkProcAlive "redis-server"; then
+		red "redis未启动!"
+		return 1
+	fi
+	echo "正在停止redis..."
+	stopProc "redis-server"
+	sleep 2
+	if ! checkProcAlive "redis-server"; then
+		green "停止成功！"
+	else
+		echo "未能停止，请手动杀进程!"
+	fi
+}
+
+uninstallRedis() {
+	local input=$1
+	local workdir="${installpath}/serv00-play/redis"
+	if [[ ! -d "$workdir" ]]; then
+		red "未安装redis，请先安装!"
+		return 1
+	fi
+	if [ -z "$input" ]; then
+		read -p "是否卸载? [y/n] [n]:" input
+		input=${input:-n}
+		if [[ "$input" != "y" ]]; then
+			return 1
+		fi
+	fi
+	stopRedis
+	rm -rf "$workdir"
+	green "卸载成功"
+}
+
+redisManage() {
+	while true; do
+		yellow "---------------------"
+		echo "redis管理:"
+		echo "服务状态: $(checkProcStatus redis-server)"
+		echo "1. 安装/修改配置"
+		echo "2. 启动"
+		echo "3. 停止"
+		echo "8. 卸载"
+		echo "9. 返回主菜单"
+		echo "0. 退出脚本"
+		yellow "---------------------"
+		read -p "请选择:" input
+		case $input in
+		1)
+			installRedis
+			;;
+		2)
+			startRedis
+			;;
+		3)
+			stopRedis
+			;;
+		8)
+			uninstallRedis
+			;;
+		9)
+			break
+			;;
+		0)
+			exit 0
+			;;
+		*)
+			echo "无效选项，请重试"
+			;;
+		esac
+	done
+	showMenu
+
+}
+
+devManage() {
+	if ! checkInstalled "serv00-play"; then
+		return 1
+	fi
+	while true; do
+		yellow "---------------------"
+		echo "开发工具管理:"
+		echo "1. redis"
+		echo "0. 退出脚本"
+		yellow "---------------------"
+
+		read -p "请选择:" input
+
+		case $input in
+		1)
+			redisManage
+			;;
+		0)
+			exit 0
+			;;
+		*)
+			echo "无效选项，请重试"
+			;;
+		esac
+	done
+	showMenu
+
+}
 
 linkAliveStatment() {
 	cat <<EOF
@@ -4043,7 +4259,8 @@ showMenu() {
 
 	options=("安装/更新serv00-play项目" "sun-panel" "webssh" "阅后即焚" "linkalive" "设置保活的项目" "配置sing-box"
 		"运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "哪吒探针管理" "哪吒面板管理" "设置彩色开机字样" "显示本机IP"
-		"mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "KeepAlive" "Domains-Support" "微信消息推送界面管理" "卸载")
+		"mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "KeepAlive" "Domains-Support" "微信消息推送界面管理"
+		"开发工具管理" "卸载")
 
 	select opt in "${options[@]}"; do
 		case $REPLY in
@@ -4129,6 +4346,9 @@ showMenu() {
 			manageWxPushSkin
 			;;
 		28)
+			devManage
+			;;
+		29)
 			uninstall
 			;;
 		0)
