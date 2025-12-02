@@ -34,10 +34,10 @@ jobs:
           BUTTON_URL: ${{secrets.BUTTON_URL}}
           AUTOUPDATE: ${{vars.AUTOUPDATE}}
           LOGININFO: ${{vars.LOGININFO}}
-          PROXY_HOST: ${{vars.PROXY_HOST}}
-          PROXY_PORT: ${{vars.PROXY_PORT}}
-          PROXY_USER: ${{vars.PROXY_USER}}
-          PROXY_PASS: ${{vars.PROXY_PASS}}
+          PROXY_HOST: ${{secrets.PROXY_HOST}}
+          PROXY_PORT: ${{secrets.PROXY_PORT}}
+          PROXY_USER: ${{secrets.PROXY_USER}}
+          PROXY_PASS: ${{secrets.PROXY_PASS}}
 
         run: |
           chmod +x ./revive.sh

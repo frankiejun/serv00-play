@@ -16,8 +16,8 @@ PROXY_PORT=${PROXY_PORT:-null}
 PROXY_USER=${PROXY_USER:-null}
 PROXY_PASS=${PROXY_PASS:-null}
 
-export SOCKS5_USER="$PROXY_USER"
-export SOCKS5_PASSWD="$PROXY_PASS"
+#export SOCKS5_USER="$PROXY_USER"
+#export SOCKS5_PASSWD="$PROXY_PASS"
 # 使用 jq 提取 JSON 数组，并将其加载为 Bash 数组
 hosts_info=($(echo "${HOSTS_JSON}" | jq -c ".info[]"))
 summary=""
@@ -28,6 +28,12 @@ for info in "${hosts_info[@]}"; do
 	pass=$(echo $info | jq -r ".password")
 
 	if [[ "$AUTOUPDATE" == "Y" ]]; then
+		script="/home/$user/serv00-play/keepalive.sh autoupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
+	else
+		script="/home/$user/serv00-play/keepalive.sh noupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
+	fi
+	#使用socks5代理进行登录
+	if [[ "$PROXY_HOST" != "null" ]]; then
 		echo "测试基础连接..."
 		timeout 5 nc -zv $PROXY_HOST $PROXY_PORT
 		if [ $? -eq 0 ]; then
@@ -36,12 +42,6 @@ for info in "${hosts_info[@]}"; do
 			echo "✗ 无法连接到代理服务器"
 			exit 1
 		fi
-		script="/home/$user/serv00-play/keepalive.sh autoupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
-	else
-		script="/home/$user/serv00-play/keepalive.sh noupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
-	fi
-	#使用socks5代理进行登录
-	if [[ "$PROXY_HOST" != "null" ]]; then
 		output=$(sshpass -p "$pass" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ProxyCommand="connect -S ${PROXY_HOST}:${PROXY_PORT} %h %p" -p "$port" "$user@$host" "bash -s" <<<"$script")
 	else
 		output=$(sshpass -p "$pass" ssh -o StrictHostKeyChecking=no -p "$port" "$user@$host" "bash -s" <<<"$script")
