@@ -145,6 +145,7 @@ createConfigFile() {
 	echo "5. alist"
 	echo "6. webssh"
 	echo "7. 哪吒面板"
+	echo "8. redis"
 	echo "88. 暂停所有保活功能"
 	echo "99. 复通所有保活功能(之前有配置的情况下)"
 	echo "0. 返回主菜单"
@@ -190,6 +191,9 @@ createConfigFile() {
 			;;
 		7)
 			item+=("nezha-dashboard")
+			;;
+		8)
+			item+=("redis-server")
 			;;
 		88)
 			#delCron
@@ -4095,7 +4099,7 @@ startRedis() {
 		return 1
 	fi
 	echo "正在启动redis..."
-	screen -dmS myredis-session redis-server ./redis.conf
+	nohup redis-server ./redis.conf >/dev/null 2>&1 &
 	sleep 2
 	if checkProcAlive "redis-server"; then
 		green "启动成功！"

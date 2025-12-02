@@ -287,22 +287,22 @@ fi
 
 wx_push_url=$(jq -r ".wxpush_url // empty" config.json)
 if [[ -z "$wx_push_url" ]]; then
-    echo "从msg.json获取wxpush_url"
-    if [[ -e "msg.json" ]]; then
-        WXPUSH_URL=$(jq -r ".wxpush_url // empty" msg.json)
-    fi
+	echo "从msg.json获取wxpush_url"
+	if [[ -e "msg.json" ]]; then
+		WXPUSH_URL=$(jq -r ".wxpush_url // empty" msg.json)
+	fi
 else
-    WXPUSH_URL=$wx_push_url
+	WXPUSH_URL=$wx_push_url
 fi
 
 wx_token=$(jq -r ".wx_token // empty" config.json)
 if [[ -z "$wx_token" ]]; then
-    echo "从msg.json获取wx_token"
-    if [[ -e "msg.json" ]]; then
-        WX_TOKEN=$(jq -r ".wx_token // empty" msg.json)
-    fi
+	echo "从msg.json获取wx_token"
+	if [[ -e "msg.json" ]]; then
+		WX_TOKEN=$(jq -r ".wx_token // empty" msg.json)
+	fi
 else
-    WX_TOKEN=$wx_token
+	WX_TOKEN=$wx_token
 fi
 
 send_type=$(jq -r ".sendtype // empty" config.json)
@@ -431,6 +431,18 @@ for obj in "${monitor[@]}"; do
 				msg="wssh 重启失败."
 			else
 				msg="wssh 重启成功."
+			fi
+		fi
+	elif [ "$obj" == "redis-server" ]; then
+		if ! checkProcAlive redis-server; then
+			echo "正在启动redis-server..."
+			cd ${installpath}/serv00-play/redis
+			nohup ./redis-server ./redis.conf >/dev/null 2>&1 &
+			sleep 2
+			if ! checkProcAlive redis-server; then
+				msg="redis-server 重启失败."
+			else
+				msg="redis-server 重启成功."
 			fi
 		fi
 	else
