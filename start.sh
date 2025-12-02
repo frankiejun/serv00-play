@@ -4047,16 +4047,16 @@ installRedis() {
 	yellow "正在根据您的输入修改 redis.conf..."
 
 	# 修改端口
-	sed -i "s/^port .*/port ${redis_port}/" redis.conf
+	sed -i '' "s/^port .*/port ${redis_port}/" redis.conf
 
 	# 修改密码
 	if [[ -n "$redis_password" ]]; then
 		# 如果 requirepass 存在且未被注释，则直接替换
 		if grep -q "^requirepass" redis.conf; then
-			sed -i "s/^requirepass .*/requirepass ${redis_password}/" redis.conf
+			sed -i '' "s/^requirepass .*/requirepass ${redis_password}/" redis.conf
 		# 如果 requirepass 存在但被注释，则取消注释并替换
 		elif grep -q "^# requirepass" redis.conf; then
-			sed -i "s/^# requirepass .*/requirepass ${redis_password}/" redis.conf
+			sed -i '' "s/^# requirepass .*/requirepass ${redis_password}/" redis.conf
 		# 如果不存在，则追加
 		else
 			echo "requirepass ${redis_password}" >>redis.conf
@@ -4064,22 +4064,22 @@ installRedis() {
 		green "✓ 密码已设置"
 	else
 		# 如果用户输入为空，则注释掉密码设置
-		sed -i 's/^requirepass .*/# requirepass foobared/' redis.conf
+		sed -i '' 's/^requirepass .*/# requirepass foobared/' redis.conf
 		yellow "✓ 密码已禁用"
 	fi
 
 	# 修改日志文件路径
-	sed -i "s|^logfile.*|logfile \"${redis_logfile}\"|" redis.conf
+	sed -i '' "s|^logfile.*|logfile \"${redis_logfile}\"|" redis.conf
 	green "✓ 日志文件路径已设置"
 
 	# 修改网络监听
 	if [[ "$listen_all" == "y" || "$listen_all" == "Y" ]]; then
 		# 注释掉所有 bind 开头的行，以允许所有 IP 访问
-		sed -i 's/^bind /# bind /' redis.conf
+		sed -i '' 's/^bind /# bind /' redis.conf
 		green "✓ 已配置为全网监听"
 	else
 		# 确保只监听本地回环地址
-		sed -i 's/^# bind 127.0.0.1 -::1/bind 127.0.0.1 -::1/' redis.conf
+		sed -i '' 's/^# bind 127.0.0.1 -::1/bind 127.0.0.1 -::1/' redis.conf
 		green "✓ 已配置为仅本地监听"
 	fi
 
