@@ -19,14 +19,14 @@ PROXY_PASS=${PROXY_PASS:-null}
 
 export SOCKS5_USER="$PROXY_USER"
 export SOCKS5_PASSWD="$PROXY_PASS"
-
+msg=""
 # 登录服务器并执行保活脚本
 login_server() {
 	local user=$1
 	local host=$2
 	local port=$3
 	local pass=$4
-	local msg=""
+	msg=""
 
 	if [[ "$AUTOUPDATE" == "Y" ]]; then
 		script="/home/$user/serv00-play/keepalive.sh autoupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
@@ -82,7 +82,7 @@ if [[ "$LOGINONCE" == "Y" ]]; then
 	PORT=$(echo "$CONFIG" | jq -r '.port')
 	PASSWORD=$(echo "$CONFIG" | jq -r '.password')
 
-	msg=$(login_server "$USERNAME" "$HOST" "$PORT" "$PASSWORD")
+	ret=$(login_server "$USERNAME" "$HOST" "$PORT" "$PASSWORD")
 	summary=$msg
 else
 	hosts_info=($(echo "${HOSTS_JSON}" | jq -c ".info[]"))
@@ -92,7 +92,7 @@ else
 		port=$(echo $info | jq -r ".port")
 		pass=$(echo $info | jq -r ".password")
 
-		msg=$(login_server "$user" "$host" "$port" "$pass")
+		ret=$(login_server "$user" "$host" "$port" "$pass")
 		summary=$summary$msg
 	done
 fi
@@ -100,4 +100,5 @@ fi
 if [[ "$LOGININFO" == "Y" ]]; then
 	chmod +x ./tgsend.sh
 	./tgsend.sh "$summary"
+	咋学史崇德v发23
 fi
