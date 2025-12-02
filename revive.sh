@@ -19,14 +19,14 @@ PROXY_PASS=${PROXY_PASS:-null}
 
 export SOCKS5_USER="$PROXY_USER"
 export SOCKS5_PASSWD="$PROXY_PASS"
-msg=""
+
 # 登录服务器并执行保活脚本
 login_server() {
 	local user=$1
 	local host=$2
 	local port=$3
 	local pass=$4
-	msg=""
+	local msg=""
 
 	if [[ "$AUTOUPDATE" == "Y" ]]; then
 		script="/home/$user/serv00-play/keepalive.sh autoupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
@@ -35,11 +35,11 @@ login_server() {
 	fi
 	#使用socks5代理进行登录
 	if [[ "$PROXY_HOST" != "null" ]]; then
-		echo "测试基础连接..."
+		echo "测试基础连接..." >&2
 		if timeout 5 nc -zv "$PROXY_HOST" "$PROXY_PORT" &>/dev/null; then
-			echo "✓ 可以连接到代理服务器"
+			echo "✓ 可以连接到代理服务器" >&2
 		else
-			echo "✗ 无法连接到代理服务器"
+			echo "✗ 无法连接到代理服务器" >&2
 			exit 1
 		fi
 		output=$(sshpass -p "$pass" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ProxyCommand="connect -S ${PROXY_HOST}:${PROXY_PORT} %h %p" -p "$port" "$user@$host" "bash -s" <<<"$script")
@@ -47,13 +47,13 @@ login_server() {
 		output=$(sshpass -p "$pass" ssh -o StrictHostKeyChecking=no -p "$port" "$user@$host" "bash -s" <<<"$script")
 	fi
 
-	echo "output:$output"
+	echo "output:$output" >&2
 
 	if echo "$output" | grep -q "keepalive.sh"; then
-		echo "登录成功"
+		echo "登录成功" >&2
 		msg="🟢主机 ${host}, 用户 ${user}， 登录成功!\n"
 	else
-		echo "登录失败"
+		echo "登录失败" >&2
 		msg="🔴主机 ${host}, 用户 ${user}， 登录失败!\n"
 		chmod +x ./tgsend.sh
 		export PASS=$pass
@@ -82,18 +82,16 @@ if [[ "$LOGINONCE" == "Y" ]]; then
 	PORT=$(echo "$CONFIG" | jq -r '.port')
 	PASSWORD=$(echo "$CONFIG" | jq -r '.password')
 
-	ret=$(login_server "$USERNAME" "$HOST" "$PORT" "$PASSWORD")
-	summary=$msg
+	summary=$(login_server "$USERNAME" "$HOST" "$PORT" "$PASSWORD")
 else
-	hosts_info=($(echo "${HOSTS_JSON}" | jq -c ".info[]"))
+	mapfile -t hosts_info < <(echo "${HOSTS_JSON}" | jq -c ".info[]")
 	for info in "${hosts_info[@]}"; do
-		user=$(echo $info | jq -r ".username")
-		host=$(echo $info | jq -r ".host")
-		port=$(echo $info | jq -r ".port")
-		pass=$(echo $info | jq -r ".password")
+		user=$(echo "$info" | jq -r ".username")
+		host=$(echo "$info" | jq -r ".host")
+		port=$(echo "$info" | jq -r ".port")
+		pass=$(echo "$info" | jq -r ".password")
 
-		ret=$(login_server "$user" "$host" "$port" "$pass")
-		summary=$summary$msg
+		summary=$summary$(login_server "$user" "$host" "$port" "$pass")
 	done
 fi
 
