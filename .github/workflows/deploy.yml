@@ -4,7 +4,7 @@ on:
   schedule:
     # 使用cron表达式定义任务运行的时间
     # github使用utc时间
-    - cron: '3 22 1 * *' #每个月1号的北京时间6点
+    - cron: '3 22 * * *' #北京时间6点
   workflow_dispatch:
 
 jobs:
@@ -34,6 +34,7 @@ jobs:
           BUTTON_URL: ${{secrets.BUTTON_URL}}
           AUTOUPDATE: ${{vars.AUTOUPDATE}}
           LOGININFO: ${{vars.LOGININFO}}
+          LOGINONCE: ${{vars.LOGINONCE}}
           PROXY_HOST: ${{secrets.PROXY_HOST}}
           PROXY_PORT: ${{secrets.PROXY_PORT}}
           PROXY_USER: ${{secrets.PROXY_USER}}
