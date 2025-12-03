@@ -239,7 +239,7 @@ if [[ "$autoUp" == "autoupdate" ]]; then
 	autoUpdate
 fi
 
-echo "Host:$host, user:$user"
+#echo "Host:$host, user:$user"
 cd ${installpath}/serv00-play/
 
 if [[ -n "$autoUp" ]]; then

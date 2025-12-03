@@ -47,7 +47,7 @@ login_server() {
 		output=$(sshpass -p "$pass" ssh -o StrictHostKeyChecking=no -p "$port" "$user@$host" "bash -s" <<<"$script")
 	fi
 
-	echo "output:$output" >&2
+	#echo "output:$output" >&2
 
 	if echo "$output" | grep -q "keepalive.sh"; then
 		echo "登录成功" >&2
