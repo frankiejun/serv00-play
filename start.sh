@@ -2274,7 +2274,7 @@ applyLE() {
 	resp=$(devil ssl www add $l_webip le le $l_domain)
 	if [[ ! "$resp" =~ .*succesfully.*$ ]]; then
 		red "申请ssl证书失败！$resp"
-		echo "inCron: $inCron"
+		#echo "inCron: $inCron"
 		if [[ "$inCron" == "0" ]]; then
 			if [[ -z "$nointeraction" ]]; then
 				read -p "是否配置定时任务自动申请SSL证书？ [y/n] [n]:" input
