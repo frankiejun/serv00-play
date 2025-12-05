@@ -20,6 +20,20 @@ PROXY_PASS=${PROXY_PASS:-null}
 export SOCKS5_USER="$PROXY_USER"
 export SOCKS5_PASSWD="$PROXY_PASS"
 
+sendMsg() {
+	local msg="$1"
+	if [ -n "$msg" ]; then
+		if [ "$SENDTYPE" == "1" ]; then
+			./tgsend.sh "$msg"
+		elif [ "$SENDTYPE" == "2" ]; then
+			./wxsend.sh "$msg"
+		elif [ "$SENDTYPE" == "3" ]; then
+			./tgsend.sh "$msg"
+			./wxsend.sh "$msg"
+		fi
+	fi
+}
+
 # 登录服务器并执行保活脚本
 login_server() {
 	local user=$1
