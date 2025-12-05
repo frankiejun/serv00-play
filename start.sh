@@ -3518,16 +3518,29 @@ batchAddDomains() {
 				if [[ -z "$zone_id" || "$zone_id" == "null" ]]; then
 					red "无法获取域名 $domain 的 Zone ID，请检查域名是否已添加到您的 Cloudflare 账户。"
 				else
-					# Check for existing A record
-					local existing_record=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records?type=A&name=${domain}" \
+					# Check for an existing A record for the exact domain name.
+					local existing_record_id=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records?type=A&name=${domain}" \
 						-H "X-Auth-Email: ${cf_email}" \
 						-H "X-Auth-Key: ${cf_api_token}" \
-						-H "Content-Type: application/json" | jq -r '.result[] | select(.content == "'"$webIp"'") | .id')
+						-H "Content-Type: application/json" | jq -r --arg domain "$domain" '.result[] | select(.name == $domain) | .id')
 
-					if [[ -n "$existing_record" ]]; then
-						green "✓ 域名 $domain 已存在指向 $webIp 的 A 记录，跳过。"
+					if [[ -n "$existing_record_id" && "$existing_record_id" != "null" ]]; then
+						# Update existing A record
+						yellow "✓ 域名 $domain 已存在 A 记录，正在更新 IP 地址为 $webIp..."
+						local update_record_response=$(curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records/${existing_record_id}" \
+							-H "X-Auth-Email: ${cf_email}" \
+							-H "X-Auth-Key: ${cf_api_token}" \
+							-H "Content-Type: application/json" \
+							--data '{"type":"A","name":"'"$domain"'","content":"'"$webIp"'","ttl":1,"proxied":false}')
+
+						if [[ $(echo "$update_record_response" | jq -r '.success') == "true" ]]; then
+							green "✓ 成功将域名 $domain 的 A 记录更新为 $webIp。"
+						else
+							red "更新域名 $domain 的 A 记录失败: $(echo "$update_record_response" | jq -r '.errors[0].message')"
+						fi
 					else
 						# Create new A record
+						yellow "正在为 $domain 创建新的 A 记录..."
 						local create_record_response=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" \
 							-H "X-Auth-Email: ${cf_email}" \
 							-H "X-Auth-Key: ${cf_api_token}" \
