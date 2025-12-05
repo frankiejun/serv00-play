@@ -3511,7 +3511,7 @@ batchAddDomains() {
 				# Get Zone ID using the domain itself
 				local zone_id=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${domain}" \
 					-H "X-Auth-Email: ${cf_email}" \
-					-H "Authorization: Bearer ${cf_api_token}" \
+					-H "X-Auth-Key: ${cf_api_token}" \
 					-H "Content-Type: application/json" | jq -r '.result[0].id')
 
 				if [[ -z "$zone_id" || "$zone_id" == "null" ]]; then
@@ -3520,7 +3520,7 @@ batchAddDomains() {
 					# Check for existing A record
 					local existing_record=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records?type=A&name=${domain}" \
 						-H "X-Auth-Email: ${cf_email}" \
-						-H "Authorization: Bearer ${cf_api_token}" \
+						-H "X-Auth-Key: ${cf_api_token}" \
 						-H "Content-Type: application/json" | jq -r '.result[] | select(.content == "'"$webIp"'") | .id')
 
 					if [[ -n "$existing_record" ]]; then
@@ -3529,7 +3529,7 @@ batchAddDomains() {
 						# Create new A record
 						local create_record_response=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" \
 							-H "X-Auth-Email: ${cf_email}" \
-							-H "Authorization: Bearer ${cf_api_token}" \
+							-H "X-Auth-Key: ${cf_api_token}" \
 							-H "Content-Type: application/json" \
 							--data '{"type":"A","name":"'"$domain"'","content":"'"$webIp"'","ttl":1,"proxied":false}')
 
