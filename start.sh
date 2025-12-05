@@ -2211,12 +2211,14 @@ cronLE() {
 		fi
 	fi
 	crontab -l >le.cron
+	# 生成0-59的随机数
+	local mm=$((RANDOM % 60))
 	if [[ $tm -eq 1 ]]; then
 		#每小时执行一次
-		echo "0 * * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
+		echo "$mm * * * * bash $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
 	else
 		#每tm小时执行一次
-		echo "0 */$tm * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
+		echo "$mm */$tm * * * bash $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
 	fi
 	crontab le.cron >/dev/null 2>&1
 	rm -rf le.cron
