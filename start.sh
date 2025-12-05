@@ -3588,6 +3588,9 @@ batchAddDomains() {
 			cp websites/resume.html "$domainPath/index.html"
 			;;
 		5)
+			cp websites/game.html "$domainPath/index.html"
+			;;
+		6)
 			cp "$custom_file" "$domainPath/index.html"
 			;;
 		*)
