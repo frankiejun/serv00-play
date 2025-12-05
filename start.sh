@@ -3456,15 +3456,35 @@ batchAddDomains() {
 	echo "2. 人力资源管理系统"
 	echo "3. 德一教育系统后台"
 	echo "4. 李明的英文简历"
-	echo "5. 自定义网站"
+	echo "5. 游戏殿堂"
+	echo "6. 以上随机选择"
+	echo "7. 自定义网站"
 	read -p "请选择建站样式(默认: 1): " style_choice
 	style_choice=${style_choice:-1}
 
 	local custom_file=""
-	if [[ "$style_choice" == "5" ]]; then
+	if [[ "$style_choice" == "7" ]]; then
 		read -p "请输入自定义网站HTML文件路径: " custom_file
 		if [[ ! -f "$custom_file" ]]; then
 			red "自定义HTML文件不存在，请检查路径!"
+			return 1
+		fi
+	fi
+
+	# Ask about Cloudflare DNS configuration
+	read -r -p "是否自动配置 Cloudflare 域名 DNS？(y/n) [默认: n]: " auto_cf_dns
+	auto_cf_dns=${auto_cf_dns:-n}
+	local cf_api_token=""
+	local cf_email=""
+	if [[ "$auto_cf_dns" == "y" || "$auto_cf_dns" == "Y" ]]; then
+		read -r -p "请输入 Cloudflare API Token: " cf_api_token
+		if [[ -z "$cf_api_token" ]]; then
+			red "API Token 不能为空！"
+			return 1
+		fi
+		read -r -p "请输入 Cloudflare 账户邮箱: " cf_email
+		if [[ -z "$cf_email" ]]; then
+			red "账户邮箱不能为空！"
 			return 1
 		fi
 	fi
@@ -3484,6 +3504,47 @@ batchAddDomains() {
 			continue
 		fi
 
+		# Auto-configure Cloudflare DNS if enabled
+		if [[ "$auto_cf_dns" == "y" || "$auto_cf_dns" == "Y" ]]; then
+			if [[ -n "$webIp" && -n "$cf_api_token" && -n "$cf_email" ]]; then
+				yellow "正在为 $domain 配置 Cloudflare DNS..."
+				# Get Zone ID using the domain itself
+				local zone_id=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${domain}" \
+					-H "X-Auth-Email: ${cf_email}" \
+					-H "Authorization: Bearer ${cf_api_token}" \
+					-H "Content-Type: application/json" | jq -r '.result[0].id')
+
+				if [[ -z "$zone_id" || "$zone_id" == "null" ]]; then
+					red "无法获取域名 $domain 的 Zone ID，请检查域名是否已添加到您的 Cloudflare 账户。"
+				else
+					# Check for existing A record
+					local existing_record=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records?type=A&name=${domain}" \
+						-H "X-Auth-Email: ${cf_email}" \
+						-H "Authorization: Bearer ${cf_api_token}" \
+						-H "Content-Type: application/json" | jq -r '.result[] | select(.content == "'"$webIp"'") | .id')
+
+					if [[ -n "$existing_record" ]]; then
+						green "✓ 域名 $domain 已存在指向 $webIp 的 A 记录，跳过。"
+					else
+						# Create new A record
+						local create_record_response=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" \
+							-H "X-Auth-Email: ${cf_email}" \
+							-H "Authorization: Bearer ${cf_api_token}" \
+							-H "Content-Type: application/json" \
+							--data '{"type":"A","name":"'"$domain"'","content":"'"$webIp"'","ttl":1,"proxied":false}')
+
+						if [[ $(echo "$create_record_response" | jq -r '.success') == "true" ]]; then
+							green "✓ 成功为 $domain 创建指向 $webIp 的 A 记录。"
+						else
+							red "为 $domain 创建 A 记录失败: $(echo "$create_record_response" | jq -r '.errors[0].message')"
+						fi
+					fi
+				fi
+			else
+				red "缺少 WebIP 或 Cloudflare 凭证，无法自动配置 DNS。"
+			fi
+		fi
+
 		if ! applyLE "$domain" "$webIp" "y"; then
 			red "申请证书失败: $domain"
 		fi
@@ -3493,7 +3554,12 @@ batchAddDomains() {
 			continue
 		fi
 
-		case "$style_choice" in
+		local final_style_choice="$style_choice"
+		if [[ "$final_style_choice" == "6" ]]; then
+			final_style_choice=$((RANDOM % 5 + 1))
+		fi
+
+		case "$final_style_choice" in
 		1)
 			cp websites/sakura.html "$domainPath/index.html"
 			sed -i.bak "s|xx|樱花|g" "$domainPath/index.html"
@@ -3629,7 +3695,8 @@ addDomain() {
 		echo "2. 人力资源管理系统"
 		echo "3. 德一教育系统后台"
 		echo "4. 李明的英文简历"
-		echo "5. 自定义网站"
+		echo "5. 游戏殿堂"
+		echo "6. 自定义网站"
 		echo "0. 返回上一级"
 
 		read -p "你的选择: " choice
@@ -3652,6 +3719,10 @@ addDomain() {
 			break
 			;;
 		5)
+			echo "你选择了游戏殿堂"
+			break
+			;;
+		6)
 			break
 			;;
 		0)
@@ -3696,6 +3767,13 @@ addDomain() {
 		fi
 	fi
 	if [[ "$choice" == "5" ]]; then
+		cp websites/game.html $target/index.html
+		if [ $? -ne 0 ]; then
+			red "安装失败!"
+			return 1
+		fi
+	fi
+	if [[ "$choice" == "6" ]]; then
 		read -p "输入网址html文件路径:" input
 		if [[ -z "$input" ]]; then
 			red "输入不能为空!"

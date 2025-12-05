@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏殿堂 - 游戏资讯与社区</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #0f1419;
+            color: #e6e6e6;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1e23;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #1a73e8;
+            border-radius: 5px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 头部导航 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: rgba(15, 20, 25, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #1a73e8;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            font-size: 2.5rem;
+            color: #1a73e8;
+            text-shadow: 0 0 10px rgba(26, 115, 232, 0.5);
+        }
+        
+        .logo-text {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #1a73e8, #6c5ce7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        .logo-subtitle {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: #ccc;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        nav a:hover {
+            color: white;
+            background: rgba(26, 115, 232, 0.1);
+        }
+        
+        nav a.active {
+            color: #1a73e8;
+            background: rgba(26, 115, 232, 0.15);
+        }
+        
+        nav a.active::after {
+            content: "";
+            position: absolute;
+            bottom: -2px;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background: #1a73e8;
+            border-radius: 2px;
+        }
+        
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            background: #1a1e23;
+            border: 1px solid #2d3748;
+            border-radius: 30px;
+            padding: 12px 20px 12px 45px;
+            color: white;
+            width: 250px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+            width: 300px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+        
+        .login-btn {
+            background: linear-gradient(45deg, #1a73e8, #6c5ce7);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(26, 115, 232, 0.4);
+        }
+        
+        /* 英雄区域 */
+        .hero {
+            margin: 40px 0 60px;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            height: 500px;
+        }
+        
+        .hero-slider {
+            position: relative;
+            height: 100%;
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .slide.active {
+            opacity: 1;
+        }
+        
+        .slide-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 50px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            z-index: 2;
+        }
+        
+        .slide-content h2 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .slide-content p {
+            font-size: 1.2rem;
+            color: #ddd;
+            max-width: 600px;
+            margin-bottom: 25px;
+        }
+        
+        .slide-btn {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 15px 35px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .slide-btn:hover {
+            background: #ff5252;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .slider-controls {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 3;
+        }
+        
+        .slider-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .slider-dot.active {
+            background: #1a73e8;
+            transform: scale(1.2);
+        }
+        
+        /* 热门游戏区 */
+        .games-section {
+            margin-bottom: 80px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            color: white;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, #1a73e8, #6c5ce7);
+            border-radius: 2px;
+        }
+        
+        .game-filters {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .filter-btn {
+            background: #1a1e23;
+            color: #ccc;
+            padding: 10px 25px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: #1a73e8;
+            color: white;
+        }
+        
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .game-card {
+            background: #1a1e23;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(26, 115, 232, 0.2);
+        }
+        
+        .game-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, #1a73e8, #6c5ce7);
+            z-index: 1;
+        }
+        
+        .game-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .game-card:hover .game-image {
+            transform: scale(1.05);
+        }
+        
+        .game-info {
+            padding: 25px;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .game-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 5px;
+        }
+        
+        .game-rating {
+            background: #ffb142;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .game-desc {
+            color: #aaa;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .game-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        
+        .game-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .tag {
+            background: rgba(26, 115, 232, 0.1);
+            color: #6ab0ff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .game-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .game-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a73e8;
+        }
+        
+        .game-btn {
+            background: #2d3748;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .game-btn:hover {
+            background: #1a73e8;
+            transform: translateY(-3px);
+        }
+        
+        /* 新闻区 */
+        .news-section {
+            margin-bottom: 80px;
+        }
+        
+        .news-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+        
+        .featured-news {
+            background: #1a1e23;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .featured-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+        
+        .featured-content {
+            padding: 30px;
+        }
+        
+        .featured-title {
+            font-size: 1.8rem;
+            color: white;
+            margin-bottom: 15px;
+        }
+        
+        .featured-excerpt {
+            color: #aaa;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .news-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .news-item {
+            background: #1a1e23;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .news-item:hover {
+            background: #202530;
+            transform: translateX(5px);
+        }
+        
+        .news-image {
+            width: 100px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .news-content h4 {
+            color: white;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .news-content p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        /* 页脚 */
+        footer {
+            background: #0a0d12;
+            padding: 60px 0 30px;
+            margin-top: 60px;
+            border-top: 2px solid #1a1e23;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-section h3 {
+            color: #1a73e8;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-section h3::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: #1a73e8;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .footer-links a:hover {
+            color: #1a73e8;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #1a1e23;
+            border-radius: 50%;
+            color: #aaa;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background: #1a73e8;
+            color: white;
+            transform: translateY(-5px);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #1a1e23;
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .news-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            header {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 0;
+            }
+            
+            .user-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .search-box input {
+                width: 200px;
+            }
+            
+            .hero {
+                height: 400px;
+            }
+            
+            .slide-content h2 {
+                font-size: 2.5rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 15px;
+            }
+            
+            .games-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            
+            .hero {
+                height: 350px;
+            }
+            
+            .slide-content {
+                padding: 30px;
+            }
+            
+            .slide-content h2 {
+                font-size: 2rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .search-box input {
+                width: 150px;
+            }
+            
+            .login-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .hero {
+                height: 300px;
+            }
+            
+            .slide-content h2 {
+                font-size: 1.8rem;
+            }
+            
+            .slide-content p {
+                font-size: 1rem;
+            }
+            
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .news-item {
+                flex-direction: column;
+            }
+            
+            .news-image {
+                width: 100%;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部导航 -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <div>
+                    <div class="logo-text">游戏殿堂</div>
+                    <div class="logo-subtitle">发现、分享、玩转游戏世界</div>
+                </div>
+            </div>
+            
+            <nav>
+                <ul>
+                    <li><a href="#" class="active"><i class="fas fa-home"></i> 首页</a></li>
+                    <li><a href="#"><i class="fas fa-fire"></i> 热门</a></li>
+                    <li><a href="#"><i class="fas fa-list"></i> 分类</a></li>
+                    <li><a href="#"><i class="fas fa-newspaper"></i> 资讯</a></li>
+                    <li><a href="#"><i class="fas fa-users"></i> 社区</a></li>
+                </ul>
+            </nav>
+            
+            <div class="user-actions">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" placeholder="搜索游戏...">
+                </div>
+                <a href="#" class="login-btn"><i class="fas fa-user"></i> 登录/注册</a>
+            </div>
+        </header>
+        
+        <!-- 英雄区域 -->
+        <section class="hero">
+            <div class="hero-slider">
+                <div class="slide active" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1400&q=80');">
+                    <div class="slide-content">
+                        <h2>次世代游戏体验</h2>
+                        <p>探索最新发布的AAA大作，感受前所未有的视觉冲击和沉浸式游戏体验。从开放世界到竞技对战，总有一款适合你。</p>
+                        <a href="#" class="slide-btn">立即体验 <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                
+                <div class="slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1400&q=80');">
+                    <div class="slide-content">
+                        <h2>独立游戏精选</h2>
+                        <p>发现那些充满创意和艺术感的独立游戏作品。这些游戏或许没有庞大的预算，却有着独特的玩法和感人的故事。</p>
+                        <a href="#" class="slide-btn">发现独立游戏 <i class="fas fa-search"></i></a>
+                    </div>
+                </div>
+                
+                <div class="slide" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1400&q=80');">
+                    <div class="slide-content">
+                        <h2>竞技游戏联赛</h2>
+                        <p>加入全球玩家的竞技场，体验紧张刺激的电竞赛事。从新手到职业选手，这里有你展示实力的舞台。</p>
+                        <a href="#" class="slide-btn">加入比赛 <i class="fas fa-trophy"></i></a>
+                    </div>
+                </div>
+                
+                <div class="slider-controls">
+                    <div class="slider-dot active" data-slide="0"></div>
+                    <div class="slider-dot" data-slide="1"></div>
+                    <div class="slider-dot" data-slide="2"></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 热门游戏区 -->
+        <section class="games-section">
+            <div class="section-header">
+                <h2 class="section-title">热门游戏推荐</h2>
+                <div class="game-filters">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="rpg">角色扮演</button>
+                    <button class="filter-btn" data-filter="fps">射击游戏</button>
+                    <button class="filter-btn" data-filter="strategy">策略游戏</button>
+                    <button class="filter-btn" data-filter="indie">独立游戏</button>
+                </div>
+            </div>
+            
+            <div class="games-grid">
+                <!-- 游戏卡片 1 -->
+                <div class="game-card" data-category="rpg">
+                    <img src="https://images.unsplash.com/photo-1534423861386-85a16f5d13fd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="星穹史诗" class="game-image">
+                    <div class="game-info">
+                        <div class="game-header">
+                            <div>
+                                <h3 class="game-title">星穹史诗</h3>
+                                <div class="game-meta">
+                                    <span><i class="fas fa-calendar"></i> 2023年发布</span>
+                                    <span><i class="fas fa-download"></i> 1200万+</span>
+                                </div>
+                            </div>
+                            <div class="game-rating">
+                                <i class="fas fa-star"></i> 9.2
+                            </div>
+                        </div>
+                        
+                        <p class="game-desc">在广阔的宇宙中展开史诗般的冒险，探索未知星球，与外星种族建立联系，揭开古老文明的神秘面纱。</p>
+                        
+                        <div class="game-tags">
+                            <span class="tag">角色扮演</span>
+                            <span class="tag">开放世界</span>
+                            <span class="tag">科幻</span>
+                        </div>
+                        
+                        <div class="game-actions">
+                            <div class="game-price">¥ 298</div>
+                            <a href="#" class="game-btn"><i class="fas fa-shopping-cart"></i> 购买</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 游戏卡片 2 -->
+                <div class="game-card" data-category="fps">
+                    <img src="https://images.unsplash.com/photo-1552820728-8b83bb6b773f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="暗影行动" class="game-image">
+                    <div class="game-info">
+                        <div class="game-header">
+                            <div>
+                                <h3 class="game-title">暗影行动</h3>
+                                <div class="game-meta">
+                                    <span><i class="fas fa-calendar"></i> 2022年发布</span>
+                                    <span><i class="fas fa-download"></i> 850万+</span>
+                                </div>
+                            </div>
+                            <div class="game-rating">
+                                <i class="fas fa-star"></i> 8.7
+                            </div>
+                        </div>
+                        
+                        <p class="game-desc">第一人称战术射击游戏，带领精英小队执行高风险任务。体验真实的武器系统和团队协作玩法。</p>
+                        
+                        <div class="game-tags">
+                            <span class="tag">第一人称射击</span>
+                            <span class="tag">战术</span>
+                            <span class="tag">多人合作</span>
+                        </div>
+                        
+                        <div class="game-actions">
+                            <div class="game-price">¥ 198</div>
+                            <a href="#" class="game-btn"><i class="fas fa-shopping-cart"></i> 购买</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 游戏卡片 3 -->
+                <div class="game-card" data-category="strategy">
+                    <img src="https://images.unsplash.com/photo-1542751110-97427bbecf20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="帝国纪元" class="game-image">
+                    <div class="game-info">
+                        <div class="game-header">
+                            <div>
+                                <h3 class="game-title">帝国纪元</h3>
+                                <div class="game-meta">
+                                    <span><i class="fas fa-calendar"></i> 2023年发布</span>
+                                    <span><i class="fas fa-download"></i> 560万+</span>
+                                </div>
+                            </div>
+                            <div class="game-rating">
+                                <i class="fas fa-star"></i> 9.0
+                            </div>
+                        </div>
+                        
+                        <p class="game-desc">建立你的帝国，从石器时代发展到太空时代。管理资源，发展科技，征服敌对文明，成为历史上最伟大的统治者。</p>
+                        
+                        <div class="game-tags">
+                            <span class="tag">策略</span>
+                            <span class="tag">模拟</span>
+                            <span class="tag">历史</span>
+                        </div>
+                        
+                        <div class="game-actions">
+                            <div class="game-price">¥ 248</div>
+                            <a href="#" class="game-btn"><i class="fas fa-shopping-cart"></i> 购买</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 游戏卡片 4 -->
+                <div class="game-card" data-category="indie">
+                    <img src="https://images.unsplash.com/photo-1551103782-8ab07afd45c1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="心灵之旅" class="game-image">
+                    <div class="game-info">
+                        <div class="game-header">
+                            <div>
+                                <h3 class="game-title">心灵之旅</h3>
+                                <div class="game-meta">
+                                    <span><i class="fas fa-calendar"></i> 2021年发布</span>
+                                    <span><i class="fas fa-download"></i> 320万+</span>
+                                </div>
+                            </div>
+                            <div class="game-rating">
+                                <i class="fas fa-star"></i> 9.5
+                            </div>
+                        </div>
+                        
+                        <p class="game-desc">一段关于生命、死亡和情感的动人旅程。通过精美的艺术风格和感人的故事，探索人类情感的深度。</p>
+                        
+                        <div class="game-tags">
+                            <span class="tag">独立游戏</span>
+                            <span class="tag">冒险</span>
+                            <span class="tag">情感叙事</span>
+                        </div>
+                        
+                        <div class="game-actions">
+                            <div class="game-price">¥ 88</div>
+                            <a href="#" class="game-btn"><i class="fas fa-shopping-cart"></i> 购买</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 游戏卡片 5 -->
+                <div class="game-card" data-category="fps">
+                    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="极限竞速" class="game-image">
+                    <div class="game-info">
+                        <div class="game-header">
+                            <div>
+                                <h3 class="game-title">极限竞速</h3>
+                                <div class="game-meta">
+                                    <span><i class="fas fa-calendar"></i> 2023年发布</span>
+                                    <span><i class="fas fa-download"></i> 750万+</span>
+                                </div>
+                            </div>
+                            <div class="game-rating">
+                                <i class="fas fa-star"></i> 8.9
+                            </div>
+                        </div>
+                        
+                        <p class="game-desc">体验最真实的赛车模拟，驾驶数百款授权车辆在全球知名赛道上驰骋。从街头赛到专业赛道，满足所有赛车爱好者的需求。</p>
+                        
+                        <div class="game-tags">
+                            <span class="tag">竞速</span>
+                            <span class="tag">模拟</span>
+                            <span class="tag">体育</span>
+                        </div>
+                        
+                        <div class="game-actions">
+                            <div class="game-price">¥ 228</div>
+                            <a href="#" class="game-btn"><i class="fas fa-shopping-cart"></i> 购买</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 游戏卡片 6 -->
+                <div class="game-card" data-category="rpg">
+                    <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="魔法学院" class="game-image">
+                    <div class="game-info">
+                        <div class="game-header">
+                            <div>
+                                <h3 class="game-title">魔法学院</h3>
+                                <div class="game-meta">
+                                    <span><i class="fas fa-calendar"></i> 2022年发布</span>
+                                    <span><i class="fas fa-download"></i> 410万+</span>
+                                </div>
+                            </div>
+                            <div class="game-rating">
+                                <i class="fas fa-star"></i> 8.5
+                            </div>
+                        </div>
+                        
+                        <p class="game-desc">在一所魔法学校中，学习各种魔法咒语，解开古老谜题，与同学建立友谊，共同对抗威胁魔法世界的黑暗力量。</p>
+                        
+                        <div class="game-tags">
+                            <span class="tag">角色扮演</span>
+                            <span class="tag">魔法</span>
+                            <span class="tag">冒险</span>
+                        </div>
+                        
+                        <div class="game-actions">
+                            <div class="game-price">¥ 168</div>
+                            <a href="#" class="game-btn"><i class="fas fa-shopping-cart"></i> 购买</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 新闻区 -->
+        <section class="news-section">
+            <div class="section-header">
+                <h2 class="section-title">最新游戏资讯</h2>
+            </div>
+            
+            <div class="
