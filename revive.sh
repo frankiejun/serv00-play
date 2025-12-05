@@ -22,6 +22,7 @@ export SOCKS5_PASSWD="$PROXY_PASS"
 
 sendMsg() {
 	local msg="$1"
+	chmod +x ./tgsend.sh ./wxsend.sh
 	if [ -n "$msg" ]; then
 		if [ "$SENDTYPE" == "1" ]; then
 			./tgsend.sh "$msg"
@@ -69,9 +70,8 @@ login_server() {
 	else
 		echo "登录失败" >&2
 		msg="🔴主机 ${host}, 用户 ${user}， 登录失败!\n"
-		chmod +x ./tgsend.sh
 		export PASS=$pass
-		./tgsend.sh "Host:$host, user:$user, 登录失败，请检查!"
+		sendMsg "Host:$host, user:$user, 登录失败，请检查!"
 	fi
 	echo -n "$msg"
 }
@@ -110,6 +110,5 @@ else
 fi
 
 if [[ "$LOGININFO" == "Y" ]]; then
-	chmod +x ./tgsend.sh
-	./tgsend.sh "$summary"
+	sendMsg "$summary"
 fi
