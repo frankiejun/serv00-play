@@ -2211,7 +2211,13 @@ cronLE() {
 		fi
 	fi
 	crontab -l >le.cron
-	echo "0 */$tm * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
+	if [[ $tm -eq 1 ]]; then
+		#每小时执行一次
+		echo "0 * * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
+	else
+		#每tm小时执行一次
+		echo "0 */$tm * * * $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
+	fi
 	crontab le.cron >/dev/null 2>&1
 	rm -rf le.cron
 	echo "设置完毕!"
@@ -3064,7 +3070,7 @@ installBurnReading() {
 	if [[ "$input" == "y" ]]; then
 		echo "正在申请证书，请等待..."
 		if ! applyLE $domain $webIp; then
-			echo "申请证书失败!"
+			echo "申请证书��败!"
 			return 1
 		fi
 	fi
@@ -3558,7 +3564,7 @@ batchAddDomains() {
 				red "缺少 WebIP 或 Cloudflare 凭证，无法自动配置 DNS。"
 			fi
 		fi
-
+		sleep 5
 		if ! applyLE "$domain" "$webIp" "y"; then
 			red "申请证书失败: $domain"
 		fi
