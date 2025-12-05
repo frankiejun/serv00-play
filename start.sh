@@ -2240,7 +2240,7 @@ applyLE() {
 			return 1
 		fi
 	fi
-	inCron="0"
+	local inCron="0"
 	if crontab -l | grep -F "$l_domain" >/dev/null 2>&1; then
 		inCron="1"
 		if [[ -z "$nointeraction" ]]; then
@@ -2274,6 +2274,7 @@ applyLE() {
 	resp=$(devil ssl www add $l_webip le le $l_domain)
 	if [[ ! "$resp" =~ .*succesfully.*$ ]]; then
 		red "申请ssl证书失败！$resp"
+		echo "inCron: $inCron"
 		if [[ "$inCron" == "0" ]]; then
 			if [[ -z "$nointeraction" ]]; then
 				read -p "是否配置定时任务自动申请SSL证书？ [y/n] [n]:" input
