@@ -44,9 +44,9 @@ login_server() {
 	local msg=""
 
 	if [[ "$AUTOUPDATE" == "Y" ]]; then
-		script="/home/$user/serv00-play/keepalive.sh autoupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
+		script="bash /home/$user/serv00-play/keepalive.sh autoupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
 	else
-		script="/home/$user/serv00-play/keepalive.sh noupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
+		script="bash /home/$user/serv00-play/keepalive.sh noupdate ${SENDTYPE} \"${TELEGRAM_TOKEN}\" \"${TELEGRAM_USERID}\" \"${WXSENDKEY}\" \"${BUTTON_URL}\" \"${pass}\" \"${WXPUSH_URL}\" \"${WX_TOKEN}\""
 	fi
 	#使用socks5代理进行登录
 	if [[ "$PROXY_HOST" != "null" ]]; then
