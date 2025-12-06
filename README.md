@@ -15,20 +15,24 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 
 ## 变量说明
 
-| 变量名          | 示例   | 备注                                                                             |
-| --------------- | ------ | -------------------------------------------------------------------------------- |
-| HOSTS_JSON      | 见示例 | 可存放 n 个服务器信息 (必选)                                                     |
-| TELEGRAM_TOKEN  | 略     | telegram 机器人的 token (发送 TG 消息必选)                                       |
-| TELEGRAM_USERID | 略     | 待通知的 teltegram 用户 ID (发送 TG 消息必选)                                    |
-| ~~WXSENDKEY~~       | ~~略~~    | ~~server 酱的 sendkey，用于接收微信消息 (发送微信消息必选)~~               |
-| WXPUSH_URL      | 略     | [wxpush](https://github.com/frankiejun/wxpush)项目的请求url                      |
-| WX_TOKEN        | 略     | [wxpush](https://github.com/frankiejun/wxpush)项目的API_TOKEN |
-| SENDTYPE        | 1      | 选择推送方式，1.Telegram, 2.微信, 3.都有 (发送消息必选)                          |
-| BUTTON_URL      | 略     | 设置 TG 推送消息中的按钮链接 (发送 TG 消息可选),支持#HOST，#USER，#PASS 等变量。 |
-| AUTOUPDATE      | Y/N    | 设置是否自动更新服务器上的代码,设置在 variable 变量中，值为 Y/N(默认: Y)         |
-| LOGININFO       | Y/N    | 在 variable 变量中设置(默认为 N)，Y:发送登录汇总消息 N:只在登录失败时发送        |
-| LOGINONCE       | Y/N    | 在 variable 变量中设置(默认为 N)，Y:每天只登录一个账号 N:每天登录所有账号送        |
-| TOKEN           | 123456 | 网页保活(keepalive)的密钥(必选)                                                  |
+| 变量名          | 示例        | 是否必须 | 变量类型   | 备注                                                                             |
+| --------------- | ----------- | -------- | ---------- | -------------------------------------------------------------------------------- |
+| HOSTS_JSON      | 见示例      | ✅        | secrets    | 可存放 n 个服务器信息 (必选)                                                     |
+| TELEGRAM_TOKEN  | 略          | ❌         | secrets    | telegram 机器人的 token (发送 TG 消息必选)                                       |
+| TELEGRAM_USERID | 略          | ❌         | secrets    | 待通知的 teltegram 用户 ID (发送 TG 消息必选)                                    |
+| ~~WXSENDKEY~~   | ~~略~~      | ❌        | secrets    | ~~server 酱的 sendkey，用于接收微信消息 (发送微信消息必选)~~               |
+| WXPUSH_URL      | 略          | ❌        | secrets    | [wxpush](https://github.com/frankiejun/wxpush)项目的请求url                      |
+| WX_TOKEN        | 略          | ❌        | secrets    | [wxpush](https://github.com/frankiejun/wxpush)项目的API_TOKEN |
+| SENDTYPE        | 1           | ❌         | secrets    | 选择推送方式，1.Telegram, 2.微信, 3.都有 (发送消息必选)                          |
+| BUTTON_URL      | 略          | ❌        | secrets    | 设置 TG 推送消息中的按钮链接 (发送 TG 消息可选),支持#HOST，#USER，#PASS 等变量。 |
+| AUTOUPDATE      | Y/N         | ❌        | variable   | 设置是否自动更新服务器上的代码,设置在 variable 变量中，值为 Y/N(默认: Y)         |
+| LOGININFO       | Y/N         | ❌        | variable   | 在 variable 变量中设置(默认为 N)，Y:发送登录汇总消息 N:只在登录失败时发送        |
+| LOGINONCE       | Y/N         | ❌        | variable   | 在 variable 变量中设置(默认为 N)，Y:每天只登录一个账号 N:每天登录所有账号送        |
+| TOKEN           | 123456      | ❌         | secrets    | 网页保活(keepalive)的密钥(必选)                                                  |
+| PROXY_HOST      | 127.0.0.1   | ❌        | secrets    | 代理服务器地址 (可选)                                                          |
+| PROXY_PORT      | 1080        | ❌        | secrets    | 代理服务器端口 (可选)                                                          |
+| PROXY_USER      | user        | ❌        | secrets    | 代理服务器用户名 (可选)                                                          |
+| PROXY_PASS      | password    | ❌        | secrets    | 代理服务器密码 (可选)                                                          |
 
 各主机保活时可不必输入消息通知参数，由 github 同一配置参数。
 
