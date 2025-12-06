@@ -20,7 +20,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
 | HOSTS_JSON      | 见示例      | ✅        | secrets    | 可存放 n 个服务器信息 (必选)                                                     |
 | TELEGRAM_TOKEN  | 略          | ❌         | secrets    | telegram 机器人的 token (发送 TG 消息必选)                                       |
 | TELEGRAM_USERID | 略          | ❌         | secrets    | 待通知的 teltegram 用户 ID (发送 TG 消息必选)                                    |
-| ~~WXSENDKEY~~   | ~~略~~      | ❌        | secrets    | ~~server 酱的 sendkey，用于接收微信消息 (发送微信消息必选)~~               |
+| ~~WXSENDKEY~~   | ~~略~~      | ~~❌~~        | ~~secrets~~    | ~~server 酱的 sendkey，用于接收微信消息 (发送微信消息必选)~~               |
 | WXPUSH_URL      | 略          | ❌        | secrets    | [wxpush](https://github.com/frankiejun/wxpush)项目的请求url                      |
 | WX_TOKEN        | 略          | ❌        | secrets    | [wxpush](https://github.com/frankiejun/wxpush)项目的API_TOKEN |
 | SENDTYPE        | 1           | ❌         | secrets    | 选择推送方式，1.Telegram, 2.微信, 3.都有 (发送消息必选)                          |
