@@ -186,11 +186,12 @@ get_webip() {
 
 	# 初始化最终 IP 变量
 	local final_ip="$(devil vhost list | grep web | awk '{print $1}')"
-
+	local hostmain=$(getDoMain)
+	hostmain="${hostmain%.com}"
 	# 遍历主机名称数组
 	for host in "${hosts[@]}"; do
 		# 获取 API 返回的数据
-		local response=$(curl -s "${baseurl}/api/getip?host=$host")
+		local response=$(curl -s "${baseurl}/api/getip?host=$host&type=$hostmain")
 
 		# 检查返回的结果是否包含 "not found"
 		if [[ "$response" =~ "not found" ]]; then
@@ -227,10 +228,12 @@ get_ip() {
 	# 初始化最终 IP 变量
 	local final_ip="$(curl -s icanhazip.com)"
 
+	local hostmain=$(getDoMain)
+	hostmain="${hostmain%.com}"
 	# 遍历主机名称数组
 	for host in "${hosts[@]}"; do
 		# 获取 API 返回的数据
-		local response=$(curl -s "${baseurl}/api/getip?host=$host")
+		local response=$(curl -s "${baseurl}/api/getip?host=$host&type=$hostmain")
 
 		# 检查返回的结果是否包含 "not found"
 		if [[ "$response" =~ "not found" ]]; then
@@ -755,13 +758,14 @@ show_ip_status() {
 	local hostname=$(hostname)
 	local host_number=$(echo "$hostname" | awk -F'[s.]' '{print $2}')
 	local hosts=("cache${host_number}.$(getDoMain)" "web${host_number}.$(getDoMain)" "$hostname")
-
+	local hostmain=$(getDoMain)
+	hostmain="${hostmain%.com}"
 	# 遍历主机名称数组
 	local i=0
 	for host in "${hosts[@]}"; do
 		((i++))
 		# 获取 API 返回的数据
-		local response=$(curl -s "${baseurl}/api/getip?host=$host")
+		local response=$(curl -s "${baseurl}/api/getip?host=$host&type=$hostmain")
 
 		# 检查返回的结果是否包含 "not found"
 		if [[ "$response" =~ "not found" ]]; then
