@@ -2241,7 +2241,7 @@ applyLE() {
 
 	#echo "domain=$l_domain, webip=$l_webip, nointeraction=$nointeraction"
 	if [[ -z "$l_domain" ]]; then
-		read -p "请输入待申请证书的域名:" domain
+		read -p "请输入待申请证书的域名:" l_domain
 		l_domain=${l_domain:-""}
 		if [[ -z "$l_domain" ]]; then
 			red "域名不能为空"
@@ -3070,7 +3070,7 @@ installBurnReading() {
 	read -p "是否申请证书? [y/n] [n]:" input
 	input=${input:-'n'}
 	if [[ "$input" == "y" ]]; then
-		echo "正在申请证书，请等待..."
+		echo "正在申请证书，请���待..."
 		if ! applyLE $domain $webIp; then
 			echo "申请证书��败!"
 			return 1
