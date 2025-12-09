@@ -2195,7 +2195,8 @@ portServ() {
 }
 
 cronLE() {
-	local nointeraction=$1
+	local l_domain=$1
+	local nointeraction=$2
 	if [[ -n "$nointeraction" ]]; then
 		tm=1
 	else
@@ -2215,10 +2216,10 @@ cronLE() {
 	local mm=$((RANDOM % 60))
 	if [[ $tm -eq 1 ]]; then
 		#每小时执行一次
-		echo "$mm * * * * bash $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
+		echo "$mm * * * * bash $workpath/cronSSL.sh $l_domain > /dev/null 2>&1 " >>le.cron
 	else
 		#每tm小时执行一次
-		echo "$mm */$tm * * * bash $workpath/cronSSL.sh $domain > /dev/null 2>&1 " >>le.cron
+		echo "$mm */$tm * * * bash $workpath/cronSSL.sh $l_domain > /dev/null 2>&1 " >>le.cron
 	fi
 	crontab le.cron >/dev/null 2>&1
 	rm -rf le.cron
@@ -2292,9 +2293,9 @@ applyLE() {
 			fi
 			if [[ "$input" == "y" ]]; then
 				if [[ -z "$nointeraction" ]]; then
-					cronLE
+					cronLE $l_domain
 				else
-					cronLE $nointeraction
+					cronLE $l_domain $nointeraction
 				fi
 			fi
 		fi
