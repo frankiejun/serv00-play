@@ -61,6 +61,26 @@ sendMsg() {
 	fi
 }
 
+cleanUselessProc() {
+	# 获取域名列表
+	local l_domains=$(ps aux | awk '{ print $11 $14}' | grep node | awk -F: '{gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2}')
+
+	echo "开始检查无用进程..."
+
+	# 直接使用devil列表进行查找
+	for domain in $l_domains; do
+		echo "检查域名: $domain"
+
+		# 在devil列表输出中查找包含该域名的行
+		result=$(devil www list | grep -w "$domain")
+
+		if [ -z "$result" ]; then
+			echo "发现无用进程，准备删除: $domain"
+			pgrep "$domain" | xargs kill
+		fi
+	done
+}
+
 checkResetCron() {
 	echo "run checkResetCron"
 	local msg=""
@@ -464,6 +484,6 @@ if [[ "$autoUpdateHyIP" == "Y" ]]; then
 fi
 
 devil info account &>/dev/null
-
+cleanUselessProc
 # 清理锁文件
 cleanup
