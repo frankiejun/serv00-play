@@ -76,7 +76,7 @@ cleanUselessProc() {
 
 		if [ -z "$result" ]; then
 			echo "发现无用进程，准备删除: $domain"
-			pgrep "$domain" | xargs kill
+			pgrep -f "$domain" | xargs kill
 		fi
 	done
 }
