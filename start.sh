@@ -2922,11 +2922,48 @@ installWxPushSkin() {
 		return 1
 	fi
 
-	if [ -e "./tmp/index.html" ]; then
-		mv ./tmp/index.html index.html
-		echo "已安装到 $domainPath/index.html"
+	# 遍历tmp目录中的所有子目录并显示给用户选择
+	echo "请选择要安装的皮肤主题:"
+	local dir_count=0
+	local dir_array=()
+	
+	# 查找tmp目录下的所有子目录
+	for dir in tmp/*/; do
+		if [ -d "$dir" ]; then
+			dir_count=$((dir_count + 1))
+			# 获取目录名（去掉路径）
+			dir_name=$(basename "$dir")
+			dir_array+=("$dir_name")
+			echo "$dir_count. $dir_name"
+		fi
+	done
+
+	if [ $dir_count -eq 0 ]; then
+		echo "未找到任何皮肤主题目录!"
+		rm -rf ./tmp
+		return 1
+	fi
+
+	# 用户选择
+	while true; do
+		read -p "请输入要安装的主题编号 (1-$dir_count): " choice
+		if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le $dir_count ]; then
+			break
+		else
+			echo "无效输入，请输入 1 到 $dir_count 之间的数字"
+		fi
+	done
+
+	# 获取用户选择的目录
+	selected_dir="tmp/${dir_array[$((choice-1))]}"
+	
+	# 检查所选目录中是否有index.html文件
+	if [ -e "$selected_dir/index.html" ]; then
+		mv "$selected_dir/index.html" index.html
+		echo "已安装 $selected_dir 主题到 $domainPath/index.html"
 	else
-		echo "下载失败!"
+		echo "所选主题目录中没有找到index.html文件!"
+		rm -rf ./tmp
 		return 1
 	fi
 	rm -rf ./tmp
@@ -2956,11 +2993,48 @@ updateWxPushSkin() {
 		return 1
 	fi
 
-	if [ -e "./tmp/index.html" ]; then
-		mv ./tmp/index.html index.html
-		echo "已安装到 $domainPath/index.html"
+	# 遍历tmp目录中的所有子目录并显示给用户选择
+	echo "请选择要更新的皮肤主题:"
+	local dir_count=0
+	local dir_array=()
+	
+	# 查找tmp目录下的所有子目录
+	for dir in tmp/*/; do
+		if [ -d "$dir" ]; then
+			dir_count=$((dir_count + 1))
+			# 获取目录名（去掉路径）
+			dir_name=$(basename "$dir")
+			dir_array+=("$dir_name")
+			echo "$dir_count. $dir_name"
+		fi
+	done
+
+	if [ $dir_count -eq 0 ]; then
+		echo "未找到任何皮肤主题目录!"
+		rm -rf ./tmp
+		return 1
+	fi
+
+	# 用户选择
+	while true; do
+		read -p "请输入要更新的主题编号 (1-$dir_count): " choice
+		if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le $dir_count ]; then
+			break
+		else
+			echo "无效输入，请输入 1 到 $dir_count 之间的数字"
+		fi
+	done
+
+	# 获取用户选择的目录
+	selected_dir="tmp/${dir_array[$((choice-1))]}"
+	
+	# 检查所选目录中是否有index.html文件
+	if [ -e "$selected_dir/index.html" ]; then
+		mv "$selected_dir/index.html" index.html
+		echo "已更新 $selected_dir 主题到 $domainPath/index.html"
 	else
-		echo "下载失败!"
+		echo "所选主题目录中没有找到index.html文件!"
+		rm -rf ./tmp
 		return 1
 	fi
 	rm -rf ./tmp
