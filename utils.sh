@@ -649,7 +649,9 @@ download_allcode_from_github_release() {
 	case "${repository}-${latest_version}.zip" in
 	*.zip)
 		unzip -o "${repository}-${latest_version}.zip" -d tmp
-		mv "tmp/${target_dir}/"* tmp
+		# 使用cp命令替代mv命令，避免"Directory not empty"错误
+		cp -r "tmp/${target_dir}/"* tmp/
+		rm -rf "tmp/${target_dir}"
 		;;
 	*.tar.gz)
 		tar -xzf "${repository}-${latest_version}.tar.gz" --xform="s|^[^/]*|tmp|"
