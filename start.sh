@@ -3882,6 +3882,13 @@ addDomain() {
 			return 1
 		fi
 	fi
+	if [[ "$choice" == "6" ]]; then
+		cp websites/christmas.html $target/index.html
+		if [ $? -ne 0 ]; then
+			red "安装失败!"
+			return 1
+		fi
+	fi
 	if [[ "$choice" == "99" ]]; then
 		read -p "输入网址html文件路径:" input
 		if [[ -z "$input" ]]; then
