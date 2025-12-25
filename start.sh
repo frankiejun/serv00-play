@@ -2926,7 +2926,7 @@ installWxPushSkin() {
 	echo "请选择要安装的皮肤主题:"
 	local dir_count=0
 	local dir_array=()
-	
+
 	# 查找tmp目录下的所有子目录
 	for dir in tmp/*/; do
 		if [ -d "$dir" ]; then
@@ -2955,8 +2955,8 @@ installWxPushSkin() {
 	done
 
 	# 获取用户选择的目录
-	selected_dir="tmp/${dir_array[$((choice-1))]}"
-	
+	selected_dir="tmp/${dir_array[$((choice - 1))]}"
+
 	# 检查所选目录中是否有index.html文件
 	if [ -e "$selected_dir/index.html" ]; then
 		mv "$selected_dir/index.html" index.html
@@ -2997,7 +2997,7 @@ updateWxPushSkin() {
 	echo "请选择要更新的皮肤主题:"
 	local dir_count=0
 	local dir_array=()
-	
+
 	# 查找tmp目录下的所有子目录
 	for dir in tmp/*/; do
 		if [ -d "$dir" ]; then
@@ -3026,8 +3026,8 @@ updateWxPushSkin() {
 	done
 
 	# 获取用户选择的目录
-	selected_dir="tmp/${dir_array[$((choice-1))]}"
-	
+	selected_dir="tmp/${dir_array[$((choice - 1))]}"
+
 	# 检查所选目录中是否有index.html文件
 	if [ -e "$selected_dir/index.html" ]; then
 		mv "$selected_dir/index.html" index.html
@@ -3541,13 +3541,14 @@ batchAddDomains() {
 	echo "3. 德一教育系统后台"
 	echo "4. 李明的英文简历"
 	echo "5. 游戏殿堂"
-	echo "6. 以上随机选择"
-	echo "7. 自定义网站"
+	echo "6. 圣诞节贺卡"
+	echo "98. 以上随机选择"
+	echo "99. 自定义网站"
 	read -p "请选择建站样式(默认: 1): " style_choice
 	style_choice=${style_choice:-1}
 
 	local custom_file=""
-	if [[ "$style_choice" == "7" ]]; then
+	if [[ "$style_choice" == "99" ]]; then
 		read -p "请输入自定义网站HTML文件路径: " custom_file
 		if [[ ! -f "$custom_file" ]]; then
 			red "自定义HTML文件不存在，请检查路径!"
@@ -3652,8 +3653,8 @@ batchAddDomains() {
 		fi
 
 		local final_style_choice="$style_choice"
-		if [[ "$final_style_choice" == "6" ]]; then
-			final_style_choice=$((RANDOM % 5 + 1))
+		if [[ "$final_style_choice" == "98" ]]; then
+			final_style_choice=$((RANDOM % 6 + 1))
 		fi
 
 		case "$final_style_choice" in
@@ -3674,8 +3675,12 @@ batchAddDomains() {
 			cp websites/game.html "$domainPath/index.html"
 			;;
 		6)
+			cp websites/christmas.html "$domainPath/index.html"
+			;;
+		99)
 			cp "$custom_file" "$domainPath/index.html"
 			;;
+
 		*)
 			red "无效的建站样式选择!"
 			continue
@@ -3796,8 +3801,8 @@ addDomain() {
 		echo "3. 德一教育系统后台"
 		echo "4. 李明的英文简历"
 		echo "5. 游戏殿堂"
-		echo "6. 自定义网站"
-		echo "0. 返回上一级"
+		echo "6. 圣诞节贺卡"
+		echo "99. 自定义网站"
 
 		read -p "你的选择: " choice
 
@@ -3823,6 +3828,10 @@ addDomain() {
 			break
 			;;
 		6)
+			echo "你选择了圣诞节贺卡"
+			break
+			;;
+		99)
 			break
 			;;
 		0)
@@ -3873,7 +3882,7 @@ addDomain() {
 			return 1
 		fi
 	fi
-	if [[ "$choice" == "6" ]]; then
+	if [[ "$choice" == "99" ]]; then
 		read -p "输入网址html文件路径:" input
 		if [[ -z "$input" ]]; then
 			red "输入不能为空!"

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圣诞快乐 - 暖心贺卡</title>
+    <style>
+        :root {
+            --gold: #ffd700;
+            --dark-blue: #020b1a;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--dark-blue);
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        /* 星空背景 */
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            z-index: 1;
+        }
+
+        /* 雪花动画 */
+        .snowflake {
+            color: #fff;
+            position: absolute;
+            top: -10px;
+            z-index: 5;
+            user-select: none;
+            cursor: default;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh); }
+        }
+
+        /* 贺卡主体 */
+        .card-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+            text-align: center;
+        }
+
+        /* 圣诞老人与鹿车 */
+        .santa-wrapper {
+            position: absolute;
+            top: 10%;
+            left: -300px;
+            font-size: 3rem;
+            animation: drive 15s linear infinite;
+        }
+
+        @keyframes drive {
+            0% { left: -300px; transform: scaleX(1); }
+            45% { left: 110%; transform: scaleX(1); }
+            50% { left: 110%; transform: scaleX(-1); }
+            95% { left: -300px; transform: scaleX(-1); }
+            100% { left: -300px; transform: scaleX(1); }
+        }
+
+        /* 圣诞树与礼物区 */
+        .decoration-zone {
+            display: flex;
+            align-items: flex-end;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .tree { font-size: 120px; filter: drop-shadow(0 0 10px #228b22); }
+        .gifts { font-size: 50px; cursor: pointer; transition: transform 0.3s; }
+        .gifts:hover { transform: scale(1.1); }
+        .socks { font-size: 40px; }
+
+        h1 {
+            font-size: 4rem;
+            text-shadow: 0 0 20px #ff0000, 0 0 30px #ffd700;
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #fff, 0 0 20px #ff0000; }
+            to { text-shadow: 0 0 20px #fff, 0 0 40px #ffd700; }
+        }
+
+        .message {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            max-width: 80%;
+        }
+
+        /* 音乐控制按钮样式 */
+        .music-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            color: #ffd700;
+            transition: all 0.3s;
+        }
+
+        .music-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* 播放时的旋转动画 */
+        .music-playing {
+            animation: rotate 3s linear infinite;
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <audio id="bgm" autoplay loop>
+        <source src="https://gfg.fkj.pp.ua/music/jingle-bells.mp3?pwd=getmusic" type="audio/mpeg">
+        您的浏览器不支持 audio 元素。
+    </audio>
+
+    <div class="stars"></div>
+
+    <div class="music-btn" id="musicBtn" title="播放/暂停音乐">
+        🎵
+    </div>
+
+    <div class="santa-wrapper">
+        🛷🦌🎅
+    </div>
+
+    <div class="card-container">
+        <h1>MERRY CHRISTMAS</h1>
+        
+        <div class="message">
+            <p>愿你的圣诞充满温馨与喜悦</p>
+            <p>在这个繁星闪烁的夜晚，所有的愿望都能成真 ✨</p>
+        </div>
+
+        <div class="decoration-zone">
+            <div class="socks">🧦</div>
+            <div class="gifts">🎁</div>
+            <div class="tree">🎄</div>
+            <div class="gifts">🎁</div>
+            <div class="socks">🧦</div>
+        </div>
+    </div>
+
+    <script>
+        // 1. 雪花生成逻辑
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.innerHTML = '❄';
+            snowflake.classList.add('snowflake');
+            snowflake.style.left = Math.random() * 100 + 'vw';
+            snowflake.style.animationDuration = Math.random() * 3 + 2 + 's';
+            snowflake.style.opacity = Math.random();
+            snowflake.style.fontSize = Math.random() * 20 + 10 + 'px';
+
+            document.body.appendChild(snowflake);
+
+            setTimeout(() => {
+                snowflake.remove();
+            }, 5000);
+        }
+        setInterval(createSnowflake, 100);
+
+        // 2. 音乐播放逻辑
+        const music = document.getElementById('bgm');
+        const musicBtn = document.getElementById('musicBtn');
+        let isPlaying = false;
+
+        function updateMusicIcon(playing) {
+            if (playing) {
+                musicBtn.classList.add('music-playing');
+                musicBtn.style.animationPlayState = 'running';
+            } else {
+                musicBtn.classList.remove('music-playing');
+                musicBtn.style.animationPlayState = 'paused';
+            }
+            isPlaying = playing;
+        }
+
+        function toggleMusic() {
+            if (isPlaying) {
+                music.pause();
+                updateMusicIcon(false);
+            } else {
+                music.play().then(() => {
+                    updateMusicIcon(true);
+                }).catch(e => {
+                    console.log("自动播放被阻止，等待用户点击");
+                });
+            }
+        }
+
+        // 核心：页面加载即尝试播放
+        window.addEventListener('load', () => {
+            music.play().then(() => {
+                // 如果成功，图标开始旋转
+                updateMusicIcon(true);
+                console.log("自动播放成功");
+            }).catch((error) => {
+                // 如果失败（被浏览器拦截），不做任何事，等待用户点击
+                console.log("自动播放被拦截，需要用户交互");
+                updateMusicIcon(false);
+            });
+        });
+
+        // 无论如何，第一次点击页面也尝试播放（作为备份）
+        document.body.addEventListener('click', function firstClick() {
+            if (!isPlaying) {
+                music.play().then(() => {
+                    updateMusicIcon(true);
+                });
+            }
+            document.body.removeEventListener('click', firstClick);
+        }, { once: true });
+
+        // 按钮手动控制
+        musicBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMusic();
+        });
+
+    </script>
+</body>
+</html>
