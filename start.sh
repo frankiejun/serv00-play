@@ -1087,6 +1087,171 @@ ImageRecovery() {
 
 }
 
+get_domain_webip() {
+	local domain=$1
+	if [[ -z "$domain" ]]; then
+		echo ""
+		return
+	fi
+	devil ssl www list | awk -v d="$domain" 'tolower($1)==tolower(d) {print $2; exit}'
+}
+
+delete_domain_service() {
+	local domain=$1
+	if [[ -z "$domain" ]]; then
+		return
+	fi
+	domain="${domain,,}"
+	local webip=$(get_domain_webip "$domain")
+	if [[ -n "$webip" ]]; then
+		devil ssl www del $webip $domain >/dev/null 2>&1
+	fi
+	devil www del $domain --remove >/dev/null 2>&1
+	rm -rf "${installpath}/domains/$domain"
+	green "已删除域名服务: $domain"
+}
+
+delete_domains_from_domainlist() {
+	local list_file=$1
+	if [[ ! -f "$list_file" ]]; then
+		red "domainlist文件不存在!"
+		return 1
+	fi
+	while read -r domain; do
+		domain=$(echo "$domain" | xargs)
+		if [[ -z "$domain" ]]; then
+			continue
+		fi
+		delete_domain_service "$domain"
+	done < <(awk 'NF && $1 != "Domain" {print $1}' "$list_file")
+}
+
+backupAll() {
+	local input=""
+	read -p "是否删除所有域名关联服务? [y/n] [n]:" input
+	input=${input:-n}
+	local domainlist_file="${installpath}/domainlist"
+	if [[ "$input" == "y" ]]; then
+		devil www list >"$domainlist_file"
+	fi
+	local tarfile="${installpath}/all.tar.gz"
+	tar -czf "$tarfile" --exclude="serv00-play" --exclude="backups" --exclude="all.tar.gz" -C "$installpath" .
+	if [[ $? -ne 0 ]]; then
+		red "备份失败!"
+		return 1
+	fi
+	green "备份完成: $tarfile"
+	if [[ "$input" == "y" ]]; then
+		delete_domains_from_domainlist "$domainlist_file"
+	fi
+}
+
+restore_domains_from_config() {
+	local workdir="${installpath}/serv00-play/domains-support"
+	local config_file="${workdir}/phpconfig.json"
+	if [[ ! -f "$config_file" ]]; then
+		red "未找到phpconfig.json!"
+		return 1
+	fi
+	cd $workdir
+	local domains=$(jq -r '.domains[].domain' "$config_file" 2>/dev/null)
+	if [[ -z "$domains" ]]; then
+		red "phpconfig.json中未找到域名!"
+		return 1
+	fi
+	while read -r domain; do
+		domain=$(echo "$domain" | xargs)
+		if [[ -z "$domain" ]]; then
+			continue
+		fi
+		domain="${domain,,}"
+		domainPath="$installpath/domains/$domain/public_html"
+		webIp=""
+		echo "正在恢复域名: $domain"
+		if ! makeWWW "" "" "php" "y" "$domain"; then
+			red "绑定域名 $domain 失败!"
+			continue
+		fi
+		if ! applyLE "$domain" "$webIp" "y"; then
+			red "申请证书失败: $domain"
+		fi
+		if [[ ! -d "$domainPath" ]]; then
+			red "目标目录不存在: $domainPath"
+			continue
+		fi
+		local style_choice=$((RANDOM % 6 + 1))
+		case "$style_choice" in
+		1)
+			cp websites/sakura.html "$domainPath/index.html"
+			sed -i.bak "s|xx|樱花|g" "$domainPath/index.html"
+			;;
+		2)
+			cp websites/hr.html "$domainPath/index.html"
+			;;
+		3)
+			cp websites/deyiedu.html "$domainPath/index.html"
+			;;
+		4)
+			cp websites/resume.html "$domainPath/index.html"
+			;;
+		5)
+			cp websites/game.html "$domainPath/index.html"
+			;;
+		6)
+			cp websites/christmas.html "$domainPath/index.html"
+			;;
+		esac
+		green "域名 $domain 的网站恢复完成!"
+	done <<<"$domains"
+}
+
+restoreAll() {
+	local tarfile="${installpath}/all.tar.gz"
+	if [[ ! -f "$tarfile" ]]; then
+		red "未发现备份文件: $tarfile"
+		return 1
+	fi
+	tar -xzf "$tarfile" -C "$installpath"
+	if [[ $? -ne 0 ]]; then
+		red "恢复失败!"
+		return 1
+	fi
+	green "文件恢复完成!"
+	restore_domains_from_config
+}
+
+backupRestoreServ() {
+	while true; do
+		yellow "---------------------"
+		echo "备份/恢复功能:"
+		echo "1. 备份"
+		echo "2. 恢复"
+		echo "9. 返回主菜单"
+		echo "0. 退出脚本"
+		yellow "---------------------"
+		read -p "请选择:" input
+
+		case $input in
+		1)
+			backupAll
+			;;
+		2)
+			restoreAll
+			;;
+		9)
+			break
+			;;
+		0)
+			exit 0
+			;;
+		*)
+			echo "无效选项，请重试"
+			;;
+		esac
+	done
+	showMenu
+}
+
 uninstall() {
 	local input=$1
 	if [ -z "$input" ]; then
@@ -4458,7 +4623,7 @@ showMenu() {
 	options=("安装/更新serv00-play项目" "sun-panel" "webssh" "阅后即焚" "linkalive" "设置保活的项目" "配置sing-box"
 		"运行sing-box" "停止sing-box" "显示sing-box节点信息" "快照恢复" "系统初始化" "前置工作及设置中国时区" "哪吒探针管理" "哪吒面板管理" "设置彩色开机字样" "显示本机IP"
 		"mtproto代理" "alist管理" "端口管理" "域名证书管理" "一键root" "自动检测主机IP状态" "一键更换hy2的IP" "KeepAlive" "Domains-Support" "微信消息推送界面管理"
-		"开发工具管理" "卸载")
+		"开发工具管理" "备份/恢复" "卸载")
 
 	select opt in "${options[@]}"; do
 		case $REPLY in
@@ -4547,6 +4712,9 @@ showMenu() {
 			devManage
 			;;
 		29)
+			backupRestoreServ
+			;;
+		30)
 			uninstall
 			;;
 		0)
