@@ -1127,30 +1127,35 @@ delete_domains_from_domainlist() {
 }
 
 backupAll() {
-	local input=""
-	read -p "是否删除所有域名关联服务? [y/n] [n]:" input
-	input=${input:-n}
+	local delete_choice=""
+	read -p "是否删除所有域名关联服务? [y/n] [n]:" delete_choice
+	delete_choice=${delete_choice:-n}
 	local domainlist_file="${installpath}/domainlist"
-	devil www list >"$domainlist_file"
 	local tarfile="${installpath}/all.tar.gz"
-	echo "正在备份中，请稍后（可能需要几分钟）..."
-	local files=("mail" "serv00-play" "domains" "$domainlist_file")
-	read -p "是否备份 .profile .bashrc .vimrc 文件? [y/n] [n]:" input
-	input=${input:-n}
-	if [[ "$input" == "y" ]]; then
+
+	local files=("mail" "serv00-play" "domains")
+	if [[ "$delete_choice" == "y" ]]; then
+		devil www list >"$domainlist_file"
+		files+=("$domainlist_file")
+	fi
+	local dotfile_choice=""
+	read -p "是否备份 .profile .bashrc .vimrc 文件? [y/n] [n]:" dotfile_choice
+	dotfile_choice=${dotfile_choice:-n}
+	if [[ "$dotfile_choice" == "y" ]]; then
 		for dotfile in .profile .bashrc .vimrc; do
 			if [[ -e "$installpath/$dotfile" ]]; then
 				files+=("$dotfile")
 			fi
 		done
 	fi
+	echo "正在备份中，请稍后（可能需要几分钟）..."
 	tar -czf "$tarfile" -C "$installpath" "${files[@]}"
 	if [[ $? -ne 0 ]]; then
 		red "备份失败!"
 		return 1
 	fi
 	green "备份完成: $tarfile"
-	if [[ "$input" == "y" ]]; then
+	if [[ "$delete_choice" == "y" ]]; then
 		delete_domains_from_domainlist "$domainlist_file"
 	fi
 }
