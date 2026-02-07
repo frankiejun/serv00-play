@@ -1135,7 +1135,7 @@ backupAll() {
 		devil www list >"$domainlist_file"
 	fi
 	local tarfile="${installpath}/all.tar.gz"
-	tar -czf "$tarfile" --exclude="serv00-play" --exclude="backups" --exclude="all.tar.gz" -C "$installpath" .
+	tar -czf "$tarfile" -C "$installpath" mail serv00-play domains "$domainlist_file" .profile .bashrc .vimrc
 	if [[ $? -ne 0 ]]; then
 		red "备份失败!"
 		return 1
