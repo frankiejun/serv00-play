@@ -1126,11 +1126,32 @@ delete_domains_from_domainlist() {
 	done < <(awk 'NF && $1 != "Domain" {print $1}' "$list_file")
 }
 
+delete_domains_from_phpconfig() {
+	local config_file=$1
+	if [[ ! -f "$config_file" ]]; then
+		red "未找到phpconfig.json!"
+		return 1
+	fi
+	local domains=$(jq -r '.domains[].domain' "$config_file" 2>/dev/null)
+	if [[ -z "$domains" ]]; then
+		red "phpconfig.json中未找到域名!"
+		return 1
+	fi
+	while read -r domain; do
+		domain=$(echo "$domain" | xargs)
+		if [[ -z "$domain" ]]; then
+			continue
+		fi
+		delete_domain_service "$domain"
+	done <<<"$domains"
+}
+
 backupAll() {
 	local delete_choice=""
 	read -p "是否删除所有域名关联服务? [y/n] [n]:" delete_choice
 	delete_choice=${delete_choice:-n}
 	local domainlist_file="${installpath}/domainlist"
+	local phpconfig_file="${installpath}/serv00-play/domains-support/phpconfig.json"
 	local tarfile="${installpath}/all.tar.gz"
 
 	local files=("mail" "serv00-play" "domains")
@@ -1156,7 +1177,7 @@ backupAll() {
 	fi
 	green "备份完成: $tarfile"
 	if [[ "$delete_choice" == "y" ]]; then
-		delete_domains_from_domainlist "$domainlist_file"
+		delete_domains_from_phpconfig "$phpconfig_file"
 	fi
 }
 
