@@ -1135,11 +1135,15 @@ backupAll() {
 	local tarfile="${installpath}/all.tar.gz"
 	echo "正在备份中，请稍后（可能需要几分钟）..."
 	local files=("mail" "serv00-play" "domains" "$domainlist_file")
-	for dotfile in .profile .bashrc .vimrc; do
-		if [[ -e "$installpath/$dotfile" ]]; then
-			files+=("$dotfile")
-		fi
-	done
+	read -p "是否备份 .profile .bashrc .vimrc 文件? [y/n] [n]:" input
+	input=${input:-n}
+	if [[ "$input" == "y" ]]; then
+		for dotfile in .profile .bashrc .vimrc; do
+			if [[ -e "$installpath/$dotfile" ]]; then
+				files+=("$dotfile")
+			fi
+		done
+	fi
 	tar -czf "$tarfile" -C "$installpath" "${files[@]}"
 	if [[ $? -ne 0 ]]; then
 		red "备份失败!"
