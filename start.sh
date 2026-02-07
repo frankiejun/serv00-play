@@ -1264,7 +1264,7 @@ restore_domains_from_config() {
 				continue
 			fi
 		fi
-		sleep 10 //等待dns记录生效
+		sleep 10
 		if ! applyLE "$domain" "$webIp" "y"; then
 			red "申请证书失败: $domain"
 		fi
