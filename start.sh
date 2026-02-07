@@ -1131,10 +1131,9 @@ backupAll() {
 	read -p "是否删除所有域名关联服务? [y/n] [n]:" input
 	input=${input:-n}
 	local domainlist_file="${installpath}/domainlist"
-	if [[ "$input" == "y" ]]; then
-		devil www list >"$domainlist_file"
-	fi
+	devil www list >"$domainlist_file"
 	local tarfile="${installpath}/all.tar.gz"
+	echo "正在备份中，请稍后（可能需要几分钟）..."
 	tar -czf "$tarfile" -C "$installpath" mail serv00-play domains "$domainlist_file" .profile .bashrc .vimrc
 	if [[ $? -ne 0 ]]; then
 		red "备份失败!"
