@@ -1164,6 +1164,23 @@ restore_domains_from_config() {
 		red "phpconfig.json中未找到域名!"
 		return 1
 	fi
+	read -r -p "是否自动配置 Cloudflare 域名 DNS？(y/n) [默认: n]: " auto_cf_dns
+	auto_cf_dns=${auto_cf_dns:-n}
+	local cf_api_token=""
+	local cf_email=""
+	if [[ "$auto_cf_dns" == "y" || "$auto_cf_dns" == "Y" ]]; then
+		read -r -p "请输入 Cloudflare API Token: " cf_api_token
+		if [[ -z "$cf_api_token" ]]; then
+			red "API Token 不能为空！"
+			return 1
+		fi
+		read -r -p "请输入 Cloudflare 账户邮箱: " cf_email
+		if [[ -z "$cf_email" ]]; then
+			red "账户邮箱不能为空！"
+			return 1
+		fi
+	fi
+	local failed_domains=()
 	while read -r domain; do
 		domain=$(echo "$domain" | xargs)
 		if [[ -z "$domain" ]]; then
@@ -1177,6 +1194,59 @@ restore_domains_from_config() {
 			red "绑定域名 $domain 失败!"
 			continue
 		fi
+		if [[ "$auto_cf_dns" == "y" || "$auto_cf_dns" == "Y" ]]; then
+			if [[ -n "$webIp" && -n "$cf_api_token" && -n "$cf_email" ]]; then
+				yellow "正在为 $domain 配置 Cloudflare DNS..."
+				local zone_id=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${domain}" \
+					-H "X-Auth-Email: ${cf_email}" \
+					-H "X-Auth-Key: ${cf_api_token}" \
+					-H "Content-Type: application/json" | jq -r '.result[0].id')
+
+				if [[ -z "$zone_id" || "$zone_id" == "null" ]]; then
+					red "无法获取域名 $domain 的 Zone ID，请检查域名是否已添加到您的 Cloudflare 账户。"
+					failed_domains+=("$domain")
+					continue
+				else
+					local existing_record_id=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records?type=A&name=${domain}" \
+						-H "X-Auth-Email: ${cf_email}" \
+						-H "X-Auth-Key: ${cf_api_token}" \
+						-H "Content-Type: application/json" | jq -r --arg domain "$domain" '.result[] | select(.name == $domain) | .id')
+
+					if [[ -n "$existing_record_id" && "$existing_record_id" != "null" ]]; then
+						yellow "✓ 域名 $domain 已存在 A 记录，正在更新 IP 地址为 $webIp..."
+						local update_record_response=$(curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records/${existing_record_id}" \
+							-H "X-Auth-Email: ${cf_email}" \
+							-H "X-Auth-Key: ${cf_api_token}" \
+							-H "Content-Type: application/json" \
+							--data '{"type":"A","name":"'"$domain"'","content":"'"$webIp"'","ttl":1,"proxied":false}')
+
+						if [[ $(echo "$update_record_response" | jq -r '.success') != "true" ]]; then
+							red "更新域名 $domain 的 A 记录失败: $(echo "$update_record_response" | jq -r '.errors[0].message')"
+							failed_domains+=("$domain")
+							continue
+						fi
+					else
+						yellow "正在为 $domain 创建新的 A 记录..."
+						local create_record_response=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" \
+							-H "X-Auth-Email: ${cf_email}" \
+							-H "X-Auth-Key: ${cf_api_token}" \
+							-H "Content-Type: application/json" \
+							--data '{"type":"A","name":"'"$domain"'","content":"'"$webIp"'","ttl":1,"proxied":false}')
+
+						if [[ $(echo "$create_record_response" | jq -r '.success') != "true" ]]; then
+							red "为 $domain 创建 A 记录失败: $(echo "$create_record_response" | jq -r '.errors[0].message')"
+							failed_domains+=("$domain")
+							continue
+						fi
+					fi
+				fi
+			else
+				red "缺少 WebIP 或 Cloudflare 凭证，无法自动配置 DNS。"
+				failed_domains+=("$domain")
+				continue
+			fi
+		fi
+		sleep 10 //等待dns记录生效
 		if ! applyLE "$domain" "$webIp" "y"; then
 			red "申请证书失败: $domain"
 		fi
@@ -1208,6 +1278,12 @@ restore_domains_from_config() {
 		esac
 		green "域名 $domain 的网站恢复完成!"
 	done <<<"$domains"
+	if [[ ${#failed_domains[@]} -gt 0 ]]; then
+		red "以下域名 DNS 配置失败，请手动修改 DNS 后再进行批量导入域名:"
+		for d in "${failed_domains[@]}"; do
+			echo "$d"
+		done
+	fi
 }
 
 restoreAll() {
