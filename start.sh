@@ -1150,27 +1150,15 @@ backupAll() {
 	local delete_choice=""
 	read -p "是否删除所有域名关联服务? [y/n] [n]:" delete_choice
 	delete_choice=${delete_choice:-n}
-	local domainlist_file="${installpath}/domainlist"
 	local phpconfig_file="${installpath}/serv00-play/domains-support/phpconfig.json"
 	local tarfile="${installpath}/all.tar.gz"
-
-	local files=("mail" "serv00-play" "domains")
-	if [[ "$delete_choice" == "y" ]]; then
-		devil www list >"$domainlist_file"
-		files+=("$domainlist_file")
-	fi
-	local dotfile_choice=""
-	read -p "是否备份 .profile .bashrc .vimrc 文件? [y/n] [n]:" dotfile_choice
-	dotfile_choice=${dotfile_choice:-n}
-	if [[ "$dotfile_choice" == "y" ]]; then
-		for dotfile in .profile .bashrc .vimrc; do
-			if [[ -e "$installpath/$dotfile" ]]; then
-				files+=("$dotfile")
-			fi
-		done
+	local phpconfig_rel="serv00-play/domains-support/phpconfig.json"
+	if [[ ! -f "$phpconfig_file" ]]; then
+		red "未找到phpconfig.json!"
+		return 1
 	fi
 	echo "正在备份中，请稍后（可能需要几分钟）..."
-	tar -czf "$tarfile" -C "$installpath" "${files[@]}"
+	tar -czf "$tarfile" -C "$installpath" "$phpconfig_rel"
 	if [[ $? -ne 0 ]]; then
 		red "备份失败!"
 		return 1
@@ -1318,6 +1306,7 @@ restore_domains_from_config() {
 
 restoreAll() {
 	local tarfile="${installpath}/all.tar.gz"
+	local phpconfig_file="${installpath}/serv00-play/domains-support/phpconfig.json"
 	if [[ ! -f "$tarfile" ]]; then
 		red "未发现备份文件: $tarfile"
 		return 1
@@ -1325,6 +1314,10 @@ restoreAll() {
 	tar -xzf "$tarfile" -C "$installpath"
 	if [[ $? -ne 0 ]]; then
 		red "恢复失败!"
+		return 1
+	fi
+	if [[ ! -f "$phpconfig_file" ]]; then
+		red "未恢复到phpconfig.json!"
 		return 1
 	fi
 	green "文件恢复完成!"
