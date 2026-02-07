@@ -1134,7 +1134,13 @@ backupAll() {
 	devil www list >"$domainlist_file"
 	local tarfile="${installpath}/all.tar.gz"
 	echo "正在备份中，请稍后（可能需要几分钟）..."
-	tar -czf "$tarfile" -C "$installpath" mail serv00-play domains "$domainlist_file" .profile .bashrc .vimrc
+	local files=("mail" "serv00-play" "domains" "$domainlist_file")
+	for dotfile in .profile .bashrc .vimrc; do
+		if [[ -e "$installpath/$dotfile" ]]; then
+			files+=("$dotfile")
+		fi
+	done
+	tar -czf "$tarfile" -C "$installpath" "${files[@]}"
 	if [[ $? -ne 0 ]]; then
 		red "备份失败!"
 		return 1
