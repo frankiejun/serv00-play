@@ -86,7 +86,7 @@ if [[ "$LOGINONCE" == "Y" ]]; then
 	SERVER_COUNT=$(echo "$HOSTS_JSON" | jq '.info | length')
 
 	# 计算今天应该登录哪个服务器（取模运算）
-	INDEX=$(((DAY_OF_YEAR - 1) % SERVER_COUNT))
+	INDEX=$(((10#$DAY_OF_YEAR - 1) % SERVER_COUNT))
 
 	# 获取对应的服务器配置
 	CONFIG=$(echo "$HOSTS_JSON" | jq ".info[$INDEX]")
